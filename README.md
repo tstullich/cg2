@@ -1,7 +1,7 @@
 This will be the repository for our CG-2 work.
 Here are some instructions to get started. Feel free to expand on what I wrote here if needed.
 
-# Installation (Write me a mail/Whatsapp)
+# Installation Requirements (Write me a mail/Whatsapp)
 1. Get [GLFW](http://www.glfw.org/index.html)
   * This will be useful for dealing with creating windows and OpenGL contexts
 2. Make sure you also have an updated version of clang installed that supports c++17 features
