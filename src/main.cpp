@@ -24,9 +24,9 @@ int main() {
 
   GLFWwindow* window = glfwCreateWindow(800, 600, "CG2", NULL, NULL);
   if (window == NULL) {
-      std::cout << "Failed to create GLFW window" << std::endl;
-      glfwTerminate();
-      return -1;
+    std::cout << "Failed to create GLFW window" << std::endl;
+    glfwTerminate();
+    return -1;
   }
 
   glfwMakeContextCurrent(window);
