@@ -1,23 +1,14 @@
 #include "parser.hpp"
 
-/**
- * Attempts to open the file passed in through the
- * fileName parameter. The parser will assume that
- * we the given file has the OFF file format and
- * will perform some basic checks to make sure
- * that the file is valid.
- *
- * Returns a boolean to indicate if the file was opened
- * successfully or not.
- *
- */
 bool Parser::open(const std::string &fileName) {
   inputStream.open(fileName, std::fstream::in);
   if (inputStream.is_open()) {
     std::string off;
     inputStream >> off;
     if (off != "OFF") {
-      std::cout << "OFF file does not start with 'OFF' declaration. Invalid file format" << std::endl;
+      std::cout << "OFF file does not start with 'OFF' declaration. Invalid "
+                   "file format"
+                << std::endl;
       return false;
     }
 
@@ -69,6 +60,4 @@ std::vector<Face> Parser::getFaces() {
   return faces;
 }
 
-void Parser::close() {
-  inputStream.close();
-}
+void Parser::close() { inputStream.close(); }

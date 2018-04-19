@@ -7,10 +7,10 @@
  * easy data access, but we can refine this class later on.
  */
 class Vertex {
-  public:
-    Vertex(float x, float y, float z) : x(x), y(y), z(z) {}
-    float x;
-    float y;
-    float z;
+public:
+  Vertex(float x, float y, float z) : x(x), y(y), z(z) {}
+  float x;
+  float y;
+  float z;
 };
 #endif // VERTEX_HPP
