@@ -5,7 +5,7 @@ SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 LDFLAGS := -lglfw -ldl -lGL
 CPPFLAGS := --std=c++17
-CXXFLAGS := -Wall -Iinclude
+CXXFLAGS := -Wall -O3 -Iinclude
 
 cg2: $(OBJ_FILES)
 	$(CC) $(LDFLAGS) -o $@ $^
