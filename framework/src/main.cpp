@@ -1,12 +1,20 @@
-
+#include <iostream>
 
 #include "parser.hpp"
 
 int main(int argc, char *argv[])
 {
-  Parser p;
-  if (!p.open("src/off_files/dragon.off")) {
-    std::cout << "Unable to open file" << std::endl;
+  if (argc != 2) {
+    std::cout << "Unable to open a file. Please specify a file with the"
+              << " executable." << std::endl;
+    return 1;
   }
+
+  Parser p;
+  if (!p.open(argv[1])) {
+    std::cout << "Unable to open file " << argv[1] << std::endl;
+    return 1;
+  }
+
   return 0;
 }
