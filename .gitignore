@@ -1,4 +1,8 @@
 *.o
 *.swp
 cg2
+main
 Makefile
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
