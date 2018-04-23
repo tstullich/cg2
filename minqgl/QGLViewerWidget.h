@@ -2,29 +2,25 @@
  *
  * CG2 Sandbox - TU-Berlin Computer Graphics - SS13
  * Author : Olivier Rouiller
- *	
+ *
 \*===========================================================================*/
-
 
 #ifndef QGLVIEWERWIDGET_H
 #define QGLVIEWERWIDGET_H
 
-
 //== INCLUDES =================================================================
 
+#include <iostream>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-#include <iostream>
-
 
 #include <QtOpenGL/qgl.h>
-#include <QFileDialog>
 #include <QElapsedTimer>
+#include <QFileDialog>
 #include <QMainWindow>
 
 #include <glm/glm.hpp>
-
 
 //== FORWARD DECLARATIONS =====================================================
 
@@ -34,150 +30,125 @@ class QAction;
 
 //== CLASS DEFINITION =========================================================
 
-  
-class QGLViewerWidget : public QGLWidget
-{
-	Q_OBJECT
-  
-public:
-	typedef QGLWidget Super;
-   
-	// Default constructor.
-	QGLViewerWidget( QWidget* _parent=0 );
+class QGLViewerWidget : public QGLWidget {
+  Q_OBJECT
 
-	// 
-	QGLViewerWidget( QGLFormat& _fmt, QWidget* _parent=0 );
+ public:
+  typedef QGLWidget Super;
 
-	// Destructor.	
-	virtual ~QGLViewerWidget();
+  // Default constructor.
+  QGLViewerWidget(QWidget* _parent = 0);
 
-private:
+  //
+  QGLViewerWidget(QGLFormat& _fmt, QWidget* _parent = 0);
 
-	void init(void);
+  // Destructor.
+  virtual ~QGLViewerWidget();
 
-// Specific to algorithms
-protected :
+ private:
+  void init(void);
 
-	// TODO : Implement a method to load a point set from a OFF File
-	bool loadPointSet(const char* filename);
+  // Specific to algorithms
+ protected:
+  // TODO : Implement a method to load a point set from a OFF File
+  bool loadPointSet(const char* filename);
 
-	// draw the scene: will be called by the painGL() method.
-	virtual void drawScene();
+  // draw the scene: will be called by the painGL() method.
+  virtual void drawScene();
 
-protected:
-	void setDefaultMaterial(void);
-	void setDefaultLight(void);
-	
-private slots:  
-	 // popup menu clicked
-	void slotSnapshot( void );
-  
-	// open point set
-	void queryOpenPointSetFile()
-	{
-		QString fileName = QFileDialog::getOpenFileName(this,
-			tr("Open point set file"),
-			tr(""),
-			tr("OFF Files (*.off);;"
-			"All Files (*)"));
-		if (!fileName.isEmpty())
-		{
-			loadPointSet(fileName.toLocal8Bit());
-		}
-	}
+ protected:
+  void setDefaultMaterial(void);
+  void setDefaultLight(void);
 
+ private slots:
+  // popup menu clicked
+  void slotSnapshot(void);
 
-/********************************************************************/
-//   STANDARD OPENGL QT STUFS
-/********************************************************************/
+  // open point set
+  void queryOpenPointSetFile() {
+    QString fileName =
+        QFileDialog::getOpenFileName(this, tr("Open point set file"), tr(""),
+                                     tr("OFF Files (*.off);;"
+                                        "All Files (*)"));
+    if (!fileName.isEmpty()) {
+      loadPointSet(fileName.toLocal8Bit());
+    }
+  }
 
-public:
+  /********************************************************************/
+  //   STANDARD OPENGL QT STUFS
+  /********************************************************************/
 
-	/* Sets the center and size of the whole scene. 
-	The _center is used as fixpoint for rotations and for adjusting
-	the camera/viewer (see view_all()). */
-	void setScenePos( const glm::vec3& center, float radius );  
+ public:
+  /* Sets the center and size of the whole scene.
+  The _center is used as fixpoint for rotations and for adjusting
+  the camera/viewer (see view_all()). */
+  void setScenePos(const glm::vec3& center, float radius);
 
-	/* view the whole scene: the eye point is moved far enough from the
-	center so that the whole scene is visible. */
-	void viewAll();
+  /* view the whole scene: the eye point is moved far enough from the
+  center so that the whole scene is visible. */
+  void viewAll();
 
-	float getRadius() const 
-	{ 
-		return radius; 
-	}
-	const glm::vec3& getCenter() const 
-	{ 
-		return center; 
-	}
+  float getRadius() const { return radius; }
+  const glm::vec3& getCenter() const { return center; }
 
-	const GLdouble* getModelviewMatrix() const  { return modelviewMatrix;  }
-	const GLdouble* getProjectionMatrix() const { return projectionMatrix; }
+  const GLdouble* getModelviewMatrix() const { return modelviewMatrix; }
+  const GLdouble* getProjectionMatrix() const { return projectionMatrix; }
 
-	float fovy() const { return 45.0f; }
+  float fovy() const { return 45.0f; }
 
-	QAction* findAction(const char *name);
-	void addAction(QAction* action, const char* name);
-	void removeAction(const char* name);
-	void removeAction(QAction* action);
+  QAction* findAction(const char* name);
+  void addAction(QAction* action, const char* name);
+  void removeAction(const char* name);
+  void removeAction(QAction* action);
 
-	 
-private: // inherited
+ private:  // inherited
+  // initialize OpenGL states (triggered by Qt)
+  void initializeGL();
 
-	// initialize OpenGL states (triggered by Qt)
-	void initializeGL();
+  // draw the scene (triggered by Qt)
+  void paintGL();
 
-	// draw the scene (triggered by Qt)
-	void paintGL();
+  // handle resize events (triggered by Qt)
+  void resizeGL(int w, int h);
 
-	// handle resize events (triggered by Qt)
-	void resizeGL( int w, int h );
+ protected:
+  // Qt mouse events
+  virtual void mousePressEvent(QMouseEvent*);
+  virtual void mouseReleaseEvent(QMouseEvent*);
+  virtual void mouseMoveEvent(QMouseEvent*);
+  virtual void wheelEvent(QWheelEvent*);
+  virtual void keyPressEvent(QKeyEvent*);
 
-protected:
-   
-	// Qt mouse events
-	virtual void mousePressEvent( QMouseEvent* );
-	virtual void mouseReleaseEvent( QMouseEvent* );
-	virtual void mouseMoveEvent( QMouseEvent* );
-	virtual void wheelEvent( QWheelEvent* );
-	virtual void keyPressEvent( QKeyEvent* );
+ private:
+  // updates projection matrix
+  void updateProjectionMatrix();
 
-private:
-   
-	// updates projection matrix
-	void updateProjectionMatrix();
+  // translate the scene and update modelview matrix
+  void translate(const glm::vec3& trans);
 
-	// translate the scene and update modelview matrix
-	void translate(const glm::vec3& trans);
+  // rotate the scene (around its center) and update modelview matrix
+  void rotate(const glm::vec3& axis, float angle);
 
-	// rotate the scene (around its center) and update modelview matrix
-	void rotate(const glm::vec3& axis, float angle);
+  glm::vec3 center;
+  float radius;
 
-	glm::vec3  center;
-	float radius;
-	      
-	GLdouble    projectionMatrix[16],
-				modelviewMatrix[16];
+  GLdouble projectionMatrix[16], modelviewMatrix[16];
 
+  // popup menu for draw mode selection
+  QMenu* popupMenu;
+  QActionGroup* drawModesGroup;
+  typedef std::map<QString, QAction*> ActionMap;
+  ActionMap namesToActions;
 
-	// popup menu for draw mode selection
-	QMenu*               popupMenu;
-	QActionGroup*        drawModesGroup;
-	typedef std::map<QString,QAction*> ActionMap;
-	ActionMap            namesToActions;
+  // virtual trackball: map 2D screen point to unit sphere
+  bool mapToSphere(const QPoint& point, glm::vec3& result);
 
-	// virtual trackball: map 2D screen point to unit sphere
-	bool mapToSphere(const QPoint& point, glm::vec3& result);
-
-	QPoint           lastPoint2D;
-	glm::vec3			lastPoint3D;
-	bool             lastPointOk;
-	
-
+  QPoint lastPoint2D;
+  glm::vec3 lastPoint3D;
+  bool lastPointOk;
 };
 
-
 //=============================================================================
-#endif // OPENMESHAPPS_QGLVIEWERWIDGET_HH
+#endif  // OPENMESHAPPS_QGLVIEWERWIDGET_HH
 //=============================================================================
-
