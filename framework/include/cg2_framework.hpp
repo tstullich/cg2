@@ -1,5 +1,5 @@
-#ifndef CG2_FRAMEWORK_H
-#define CG2_FRAMEWORK_H
+#ifndef CG2_FRAMEWORK_HPP
+#define CG2_FRAMEWORK_HPP
 
 #include <iostream>
 #include <memory>
@@ -9,60 +9,55 @@
 #include "point.hpp"
 
 class Node;
-typedef std::vector<Point>  PointList;
+typedef std::vector<Point> PointList;
 typedef std::vector<std::shared_ptr<Point>> PointPointerList;
-typedef std::vector<std::shared_ptr<Node>>  NodeList;
+typedef std::vector<std::shared_ptr<Node>> NodeList;
 
-// ----------------------------------------------------------------
-class Node { // example of a node in spatial data structure
-    // ----------------------------------------------------------------
+// example of a node in spatial data structure
+class Node {
+
 public:
-    PointPointerList plist; // list of pointers to points
-    // contained in this node
-    NodeList         nlist; // list of children
+  PointPointerList plist; // list of pointers to points
+  // contained in this node
+  NodeList nlist; // list of children
 };
 
-// ----------------------------------------------------------------
-class DistFunc { // abstract distance function interface
-    // ----------------------------------------------------------------
+// abstract distance function interface
+class DistFunc {
+
 public:
-    virtual ~DistFunc() {}
-    virtual float dist(Point& a, Point& b) = 0;
-    virtual float dist(Point& a, Node& n)  = 0;
+  virtual ~DistFunc() {}
+  virtual float dist(const Point &a, const Point &b) = 0;
+  virtual float dist(const Point &a, const Node &n) = 0;
 };
 
-// ----------------------------------------------------------------
-class EuclDist : public DistFunc { // euclidian distance
-    // ----------------------------------------------------------------
+// euclidian distance
+class EuclDist : public DistFunc {
+
 public:
-    float dist(Point& a, Point& b);
-    float dist(Point& a, Node& n);
+  float dist(const Point &a, const Point &b);
+  float dist(const Point &a, const Node &n);
 };
 
-// ----------------------------------------------------------------
 class KDTree {
-    // ----------------------------------------------------------------
-public:
-    KDTree(std::shared_ptr<PointList> plist, std::shared_ptr<DistFunc> dfunc);
-    PointPointerList  collectKNearest(Point& p, int knearest);
-    PointPointerList  collectInRadius(Point& p, float radius);
-    void              draw();
-    void              draw(const PointPointerList& plist);
-    int               size();
-    std::shared_ptr<PointList>        getPoints();
 
-    friend std::ostream& operator<<(std::ostream& os,
-                                    const KDTree& sds);
+public:
+  KDTree(std::unique_ptr<PointList> plist, std::shared_ptr<DistFunc> dfunc);
+  PointPointerList collectKNearest(const Point &p, int knearest);
+  PointPointerList collectInRadius(const Point &p, float radius);
+  void draw();
+  void draw(const PointPointerList &plist);
+  int size();
+  std::shared_ptr<PointList> getPoints();
+
+  friend std::ostream &operator<<(std::ostream &os, const KDTree &sds);
 
 private:
-    std::shared_ptr<PointList> _plist;    // stores the (unorganized) pointset
-    std::shared_ptr<Node>      _rootnode; // root (head) of spatial data structure
-    std::shared_ptr<DistFunc>  _dfunc;    // generic distance function
+  std::shared_ptr<PointList> _plist; // stores the (unorganized) pointset
+  std::shared_ptr<Node> _rootnode;   // root (head) of spatial data structure
+  std::shared_ptr<DistFunc> _dfunc;  // generic distance function
 };
 
-// ----------------------------------------------------------------
-std::ostream& operator << (std::ostream& os, // for debugging
-                           const PointPointerList& l);
-// ----------------------------------------------------------------
-
-#endif
+std::ostream &operator<<(std::ostream &os, // for debugging
+                         const PointPointerList &l);
+#endif // CG2_FRAMEWORK_HPP

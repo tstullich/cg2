@@ -20,32 +20,32 @@ bool Parser::open(const std::string &fileName) {
   return inputStream.is_open();
 }
 
-std::vector<Point> Parser::getPoints() {
+std::unique_ptr<std::vector<Point>> Parser::getPoints() {
   if (!inputStream.is_open()) {
     std::cout << "Unable to open file!" << std::endl;
-    return std::vector<Point>();
+    return std::make_unique<std::vector<Point>>();
   }
 
-  std::vector<Point> points(numPoints, Point(0, 0, 0));
+  auto points = std::make_unique<std::vector<Point>>(numPoints, Point(0, 0, 0));
   float x, y, z;
   for (int i = 0; i < numPoints; i++) {
     inputStream >> x >> y >> z;
 
-    points[i].x = x;
-    points[i].y = y;
-    points[i].z = z;
+    points->at(i).x = x;
+    points->at(i).y = y;
+    points->at(i).z = z;
   }
 
   return points;
 }
 
-std::vector<Face> Parser::getFaces() {
+std::unique_ptr<std::vector<Face>> Parser::getFaces() {
   if (!inputStream.is_open()) {
     std::cout << "Unable to open file!" << std::endl;
-    return std::vector<Face>();
+    return std::make_unique<std::vector<Face>>();
   }
 
-  std::vector<Face> faces(numFaces);
+  auto faces = std::make_unique<std::vector<Face>>(numFaces);
   int vertexCount, faceIndex;
   for (int i = 0; i < numFaces; i++) {
     inputStream >> vertexCount;
@@ -54,7 +54,7 @@ std::vector<Face> Parser::getFaces() {
       inputStream >> faceIndex;
       face.add(faceIndex);
     }
-    faces[i] = face;
+    faces->at(i) = face;
   }
 
   return faces;

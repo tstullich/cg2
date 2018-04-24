@@ -1,9 +1,8 @@
 #include "cg2_framework.hpp"
-
 #include <cmath>
 
 // ----------------------------------------------------------------
-float EuclDist::dist(Point& a, Point& b) {
+float EuclDist::dist(const Point& a, const Point& b) {
   // ----------------------------------------------------------------
   float xd = a.x - b.x;
   float yd = a.y - b.y;
@@ -12,7 +11,7 @@ float EuclDist::dist(Point& a, Point& b) {
 }
 
 // ----------------------------------------------------------------
-float EuclDist::dist(Point& a, Node& n) {
+float EuclDist::dist(const Point& a, const Node& n) {
   // ----------------------------------------------------------------
   // return 0.0 if point is within node n
   // and the euclidian distance otherwise
@@ -22,9 +21,9 @@ float EuclDist::dist(Point& a, Node& n) {
 }
 
 // ----------------------------------------------------------------
-KDTree::KDTree(std::shared_ptr<PointList> plist,
+KDTree::KDTree(std::unique_ptr<PointList> plist,
                std::shared_ptr<DistFunc> dfunc)
-    : _plist(plist), _dfunc(dfunc) {
+    : _plist(std::move(plist)), _dfunc(dfunc) {
   // dummy datastructure (one node with references to all points)
   _rootnode = std::make_shared<Node>();
 
@@ -32,7 +31,7 @@ KDTree::KDTree(std::shared_ptr<PointList> plist,
 }
 
 // ----------------------------------------------------------------
-PointPointerList KDTree::collectKNearest(Point& p, int knearest) {
+PointPointerList KDTree::collectKNearest(const Point& p, int knearest) {
   // ----------------------------------------------------------------
 
   // !NOTE: bogus implementation of k-nearest neighbor search
@@ -43,7 +42,7 @@ PointPointerList KDTree::collectKNearest(Point& p, int knearest) {
 }
 
 // ----------------------------------------------------------------
-PointPointerList KDTree::collectInRadius(Point& p, float radius) {
+PointPointerList KDTree::collectInRadius(const Point& p, float radius) {
   // ----------------------------------------------------------------
 
   // dummy brute force implementation
