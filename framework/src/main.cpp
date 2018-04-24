@@ -1,9 +1,9 @@
 #include <iostream>
 
+#include "cg2_framework.hpp"
 #include "parser.hpp"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   if (argc != 2) {
     std::cout << "Unable to open a file. Please specify a file with the"
               << " executable." << std::endl;

@@ -1,4 +1,4 @@
-#include "cg2_framework.h"
+#include "cg2_framework.hpp"
 
 #include <cmath>
 
@@ -27,9 +27,6 @@ KDTree::KDTree(std::shared_ptr<PointList> plist,
     : _plist(plist), _dfunc(dfunc) {
   // dummy datastructure (one node with references to all points)
   _rootnode = std::make_shared<Node>();
-  for (unsigned int i = 0; i < _plist->size(); i++) {
-    _rootnode->plist.push_back(&(*_plist)[i]);
-  }
 
   // TODO build true spatial datastructure etc...
 }
@@ -40,11 +37,6 @@ PointPointerList KDTree::collectKNearest(Point& p, int knearest) {
 
   // !NOTE: bogus implementation of k-nearest neighbor search
   PointPointerList pl;
-  int i = 0, numelem = static_cast<int>(_rootnode->plist.size());
-  while (i < knearest && i < numelem) {
-    pl.push_back(_rootnode->plist[i]);
-    i++;
-  }
   return pl;
 
   // TODO use spatial data structure for sub-linear search etc...
@@ -56,11 +48,6 @@ PointPointerList KDTree::collectInRadius(Point& p, float radius) {
 
   // dummy brute force implementation
   PointPointerList plist;
-  for (int i = 0; i < static_cast<int>(_plist->size()); i++) {
-    if (_dfunc->dist(p, (*_plist)[i]) < radius) {
-      plist.push_back(&(*_plist)[i]);
-    }
-  }
   return plist;
 
   // TODO use spatial data structure for sub-linear search etc...

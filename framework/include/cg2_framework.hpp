@@ -1,9 +1,9 @@
 #ifndef CG2_FRAMEWORK_H
 #define CG2_FRAMEWORK_H
 
+#include <iostream>
 #include <memory>
 #include <vector>
-#include <iostream>
 
 #include "parser.hpp"
 #include "point.hpp"
@@ -53,8 +53,6 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os,
                                     const KDTree& sds);
-
-    // etc ...
 
 private:
     std::shared_ptr<PointList> _plist;    // stores the (unorganized) pointset
