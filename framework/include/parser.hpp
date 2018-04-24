@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "face.hpp"
-#include "vertex.hpp"
+#include "point.hpp"
 
 class Parser {
 public:
@@ -29,7 +29,7 @@ public:
    * Currently keeping this in a vector until we can figure
    * out what else we need to do with the data
    */
-  std::vector<Vertex> getVertices();
+  std::vector<Point> getPoints();
 
   /**
    * Parses the number of faces contained in the OFF file
@@ -51,7 +51,7 @@ public:
 
 private:
   std::ifstream inputStream;
-  int numVertices;
+  int numPoints;
   int numFaces;
   int numEdges;
 };

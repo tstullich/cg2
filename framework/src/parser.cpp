@@ -12,7 +12,7 @@ bool Parser::open(const std::string &fileName) {
       return false;
     }
 
-    inputStream >> numVertices;
+    inputStream >> numPoints;
     inputStream >> numFaces;
     inputStream >> numEdges;
   }
@@ -20,23 +20,23 @@ bool Parser::open(const std::string &fileName) {
   return inputStream.is_open();
 }
 
-std::vector<Vertex> Parser::getVertices() {
+std::vector<Point> Parser::getPoints() {
   if (!inputStream.is_open()) {
     std::cout << "Unable to open file!" << std::endl;
-    return std::vector<Vertex>();
+    return std::vector<Point>();
   }
 
-  std::vector<Vertex> vertices(numVertices, Vertex(0, 0, 0));
+  std::vector<Point> points(numPoints, Point(0, 0, 0));
   float x, y, z;
-  for (int i = 0; i < numVertices; i++) {
+  for (int i = 0; i < numPoints; i++) {
     inputStream >> x >> y >> z;
 
-    vertices[i].x = x;
-    vertices[i].y = y;
-    vertices[i].z = z;
+    points[i].x = x;
+    points[i].y = y;
+    points[i].z = z;
   }
 
-  return vertices;
+  return points;
 }
 
 std::vector<Face> Parser::getFaces() {
