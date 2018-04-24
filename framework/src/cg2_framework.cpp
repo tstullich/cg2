@@ -22,8 +22,8 @@ float EuclDist::dist(const Point& a, const Node& n) {
 
 // ----------------------------------------------------------------
 KDTree::KDTree(std::unique_ptr<PointList> plist,
-               std::shared_ptr<DistFunc> dfunc)
-    : _plist(std::move(plist)), _dfunc(dfunc) {
+               std::unique_ptr<DistFunc> dfunc)
+    : _plist(std::move(plist)), _dfunc(std::move(dfunc)) {
   // dummy datastructure (one node with references to all points)
   _rootnode = std::make_shared<Node>();
 

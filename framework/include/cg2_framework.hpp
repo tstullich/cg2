@@ -26,7 +26,6 @@ public:
 class DistFunc {
 
 public:
-  virtual ~DistFunc() {}
   virtual float dist(const Point &a, const Point &b) = 0;
   virtual float dist(const Point &a, const Node &n) = 0;
 };
@@ -42,7 +41,7 @@ public:
 class KDTree {
 
 public:
-  KDTree(std::unique_ptr<PointList> plist, std::shared_ptr<DistFunc> dfunc);
+  KDTree(std::unique_ptr<PointList> plist, std::unique_ptr<DistFunc> dfunc);
   PointPointerList collectKNearest(const Point &p, int knearest);
   PointPointerList collectInRadius(const Point &p, float radius);
   void draw();
@@ -55,7 +54,7 @@ public:
 private:
   std::shared_ptr<PointList> _plist; // stores the (unorganized) pointset
   std::shared_ptr<Node> _rootnode;   // root (head) of spatial data structure
-  std::shared_ptr<DistFunc> _dfunc;  // generic distance function
+  std::unique_ptr<DistFunc> _dfunc;  // generic distance function
 };
 
 std::ostream &operator<<(std::ostream &os, // for debugging

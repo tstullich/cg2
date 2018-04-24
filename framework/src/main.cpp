@@ -16,5 +16,14 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  // Start the construction of a tree
+  KDTree tree(p.getPoints(), std::make_unique<EuclDist>());
+  auto points = tree.getPoints();
+  for (auto p : *points) {
+    std::cout << "Point: (" << p.x << ", " << p.y << ", " << p.z << ")"
+              << std::endl;
+  }
+
+  p.close();
   return 0;
 }
