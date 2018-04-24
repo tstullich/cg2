@@ -1,23 +1,17 @@
 #ifndef CG2_FRAMEWORK_H
 #define CG2_FRAMEWORK_H
 
+#include <memory>
 #include <vector>
 #include <iostream>
 
-class Point;
+#include "parser.hpp"
+#include "point.hpp"
+
 class Node;
 typedef std::vector<Point>  PointList;
-typedef std::vector<Point*> PointPointerList;
-typedef std::vector<Node*>  NodeList;
-
-// ----------------------------------------------------------------
-class Point { // example of a generic point in 3-space
-    // ----------------------------------------------------------------
-public:
-    Point(float _x, float _y, float _z):
-            x(_x), y(_y), z(_z) {}
-    float x,y,z;
-};
+typedef std::vector<std::shared_ptr<Point>> PointPointerList;
+typedef std::vector<std::shared_ptr<Node>>  NodeList;
 
 // ----------------------------------------------------------------
 class Node { // example of a node in spatial data structure
@@ -46,28 +40,26 @@ public:
 };
 
 // ----------------------------------------------------------------
-class SDS { // for 's'patial 'd'ata 's'tructure
+class KDTree {
     // ----------------------------------------------------------------
 public:
-    SDS(PointList* plist, DistFunc* dfunc);
+    KDTree(std::shared_ptr<PointList> plist, std::shared_ptr<DistFunc> dfunc);
     PointPointerList  collectKNearest(Point& p, int knearest);
     PointPointerList  collectInRadius(Point& p, float radius);
     void              draw();
     void              draw(const PointPointerList& plist);
     int               size();
-    PointList*        getPoints();
+    std::shared_ptr<PointList>        getPoints();
 
     friend std::ostream& operator<<(std::ostream& os,
-                                    const SDS& sds);
+                                    const KDTree& sds);
 
     // etc ...
 
 private:
-    PointList* _plist;    // stores the (unorganized) pointset
-    Node*      _rootnode; // root (head) of spatial data structure
-    DistFunc*  _dfunc;    // generic distance function
-
-    // etc ...
+    std::shared_ptr<PointList> _plist;    // stores the (unorganized) pointset
+    std::shared_ptr<Node>      _rootnode; // root (head) of spatial data structure
+    std::shared_ptr<DistFunc>  _dfunc;    // generic distance function
 };
 
 // ----------------------------------------------------------------
