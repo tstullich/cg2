@@ -52,9 +52,9 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const KDTree &sds);
 
 private:
-  std::shared_ptr<PointList> _plist; // stores the (unorganized) pointset
-  std::shared_ptr<Node> _rootnode;   // root (head) of spatial data structure
-  std::unique_ptr<DistFunc> _dfunc;  // generic distance function
+  std::shared_ptr<PointList> plist; // stores the (unorganized) pointset
+  std::shared_ptr<Node> rootnode;   // root (head) of spatial data structure
+  std::unique_ptr<DistFunc> dfunc;  // generic distance function
 };
 
 std::ostream &operator<<(std::ostream &os, // for debugging
