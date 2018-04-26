@@ -12,5 +12,15 @@ public:
   float x;
   float y;
   float z;
+
+  float fetchPointValue(int axis) {
+    if (axis == 0) {
+      return x;
+    }
+    if (axis == 1) {
+      return y;
+    }
+    return z;
+  }
 };
 #endif // POINT_HPP
