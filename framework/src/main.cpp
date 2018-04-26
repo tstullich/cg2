@@ -18,8 +18,7 @@ int main(int argc, char *argv[]) {
 
   // Start the construction of a tree
   KDTree tree(p.getPoints(), std::make_unique<EuclDist>());
-  auto points = tree.getPoints();
-  for (auto p : *points) {
+  for (auto p : *tree.getPoints()) {
     std::cout << "Point: (" << p.x << ", " << p.y << ", " << p.z << ")"
               << std::endl;
   }

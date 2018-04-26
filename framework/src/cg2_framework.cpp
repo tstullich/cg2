@@ -19,11 +19,12 @@ KDTree::KDTree(std::unique_ptr<PointList> plist,
                std::unique_ptr<DistFunc> dfunc)
     : plist(std::move(plist)), dfunc(std::move(dfunc)) {
   // dummy datastructure (one node with references to all points)
-  rootnode = std::make_shared<Node>();
+  rootnode = buildTree(0);
 }
 
 // TODO use spatial data structure for sub-linear search etc...
 PointPointerList KDTree::collectKNearest(const Point& p, int knearest) {
+  auto closestPoints = std::priority_queue<Point>();
   PointPointerList pl;
   return pl;
 }
@@ -62,4 +63,23 @@ std::ostream& operator<<(std::ostream& os, const PointPointerList& l) {
        << (*l[i]).z << std::endl;
   }
   return os;
+}
+
+std::shared_ptr<Node> KDTree::buildTree(int depth) {
+  if (depth == finalDepth) {
+    // Need to return here since we have reached our final depth
+  }
+
+  int axis = depth % kDimension;
+
+  sortPoints(axis);
+
+  return std::make_shared<Node>();
+}
+
+void KDTree::sortPoints(int dimension) {
+  if (dimension < 0 || dimension > 2) {
+    // Invalid index given. Won't sort
+    return;
+  }
 }

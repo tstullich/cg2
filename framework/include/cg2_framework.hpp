@@ -1,8 +1,10 @@
 #ifndef CG2_FRAMEWORK_HPP
 #define CG2_FRAMEWORK_HPP
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
+#include <queue>
 #include <vector>
 
 #include "parser.hpp"
@@ -52,9 +54,33 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const KDTree &sds);
 
 private:
+
+  /**
+   * Starting code to build the KDTree. It should at the end
+   * return the root node of the tree so that we can use it
+   * in the constructor of the tree
+   */
+  std::shared_ptr<Node> buildTree(int depth);
+
+  /**
+   * Function that will sort our list based on a given dimension.
+   * The values should be as follows:
+   * 0 - Sort for the X axis
+   * 1 - Sort for the Y axis
+   * 2 - Sort for the Z axis
+   *
+   */
+  void sortPoints(int axis);
+
   std::shared_ptr<PointList> plist; // stores the (unorganized) pointset
   std::shared_ptr<Node> rootnode;   // root (head) of spatial data structure
   std::unique_ptr<DistFunc> dfunc;  // generic distance function
+
+  // How deep we want to make our recursion for the tree
+  const int finalDepth = 8;
+
+  // The number of dimensions for the KD Tree.
+  const int kDimension = 3;
 };
 
 std::ostream &operator<<(std::ostream &os, // for debugging
