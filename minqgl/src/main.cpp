@@ -22,7 +22,7 @@
 
 #include <QGLContext>
 
-#include "QGLViewerWidget.h"
+#include "QGLViewerWidget.hpp"
 
 void createMenu(QMainWindow* w);
 

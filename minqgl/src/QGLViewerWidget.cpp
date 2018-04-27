@@ -15,6 +15,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <queue>
 #include <sstream>
 
@@ -35,7 +36,9 @@
 #include <QMouseEvent>
 // --------------------
 
-#include "QGLViewerWidget.h"
+#include "QGLViewerWidget.hpp"
+#include "cg2_framework.hpp"
+#include "parser.hpp"
 
 #if !defined(M_PI)
 #define M_PI 3.1415926535897932
@@ -45,7 +48,6 @@ const double TRACKBALL_RADIUS = 0.6;
 
 using namespace Qt;
 using namespace glm;
-using namespace std;
 
 //== IMPLEMENTATION ==========================================================
 
@@ -64,7 +66,7 @@ QGLViewerWidget::QGLViewerWidget(QGLFormat& _fmt, QWidget* _parent)
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::init(void) {
+void QGLViewerWidget::init() {
   // qt stuff
   setAttribute(Qt::WA_NoSystemBackground, true);
   setFocusPolicy(Qt::StrongFocus);
@@ -76,7 +78,21 @@ void QGLViewerWidget::init(void) {
 
 QGLViewerWidget::~QGLViewerWidget() {}
 
-bool QGLViewerWidget::loadPointSet(const char* filename) { return true; }
+bool QGLViewerWidget::loadPointSet(const char* filename) {
+  Parser p;
+  if (!p.open(filename)) {
+    std::cout << "Unable to open file " << std::endl;
+    return false;
+  }
+
+  KDTree tree(p.getPoints(), std::make_unique<EuclDist>());
+  for (auto p : *tree.getPoints()) {
+    std::cout << "Point: (" << p.x << ", " << p.y << ", " << p.z << ")"
+              << std::endl;
+  }
+
+  return true;
+}
 
 //----------------------------------------------------------------------------
 

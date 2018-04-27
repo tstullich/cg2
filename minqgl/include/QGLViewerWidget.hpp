@@ -50,7 +50,6 @@ class QGLViewerWidget : public QGLWidget {
 
   // Specific to algorithms
  protected:
-  // TODO : Implement a method to load a point set from a OFF File
   bool loadPointSet(const char* filename);
 
   // draw the scene: will be called by the painGL() method.
