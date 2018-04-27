@@ -18,8 +18,7 @@ float EuclDist::dist(const Point &a, const Node &n) {
 KDTree::KDTree(std::unique_ptr<PointList> plist,
                std::unique_ptr<DistFunc> dfunc)
     : plist(std::move(plist)), dfunc(std::move(dfunc)) {
-  // dummy datastructure (one node with references to all points)
-  rootnode = buildTree(0);
+  buildTree();
 }
 
 // TODO use spatial data structure for sub-linear search etc...
@@ -64,16 +63,64 @@ std::ostream &operator<<(std::ostream &os, const PointPointerList &l) {
   return os;
 }
 
-std::shared_ptr<Node> KDTree::buildTree(int depth) {
-  if (depth == finalDepth) {
-    // Need to return here since we have reached our final depth
+bool KDTree::buildTree() {
+
+  rootnode = std::make_shared<Node>();
+
+  for(unsigned int i=0; i < plist->size(); i++) {
+    rootnode->plist.push_back(std::make_shared<Point>(plist->at(i)));
   }
 
-  // TODO Do a sort as proof
-  // int axis = depth % kDimension;
-  // sortPoints(axis);
+  std::cout << "Start to build KDTree from " << rootnode->plist.size() << " data points." << std::endl;
+  recursiveTreeExtend(0, rootnode);
 
-  return std::make_shared<Node>();
+  return true;
+}
+
+void KDTree::recursiveTreeExtend(unsigned int depth, std::shared_ptr<Node> node) {
+
+  if (node->plist.size() <= maxPoints || depth >= maxDepth) {
+    // Need to return here since we have reached our break condition
+    std::cout << "LeafNode: data points = " << node->plist.size() << " depth = " << depth << std::endl;
+    return;
+  }
+
+  int axis = depth % kDimension;
+  // TODO integrate sorting
+  //sortPoints(node->plist, axis);
+
+  std::vector<PointPointerList> parts = splitList(node->plist);
+
+  for(unsigned int i = 0; i < parts.size(); i++) {
+    Node child;
+    child.parent = node;
+    child.plist = parts[i];
+    std::shared_ptr<Node> pChild = std::make_shared<Node>(child);
+    node->nlist.push_back(pChild);
+    recursiveTreeExtend(depth + 1, pChild);
+  }
+}
+
+/**
+ * Splits the given list into two lists of nearly equal size.
+ *
+ * TODO make faster
+ */
+std::vector<PointPointerList> KDTree::splitList(PointPointerList &list) {
+
+  PointPointerList firstList;
+  for(unsigned int i = 0; i < list.size()/2; i++)
+    firstList.push_back(list[i]);
+
+  PointPointerList secondList;
+  for(unsigned int i = list.size()/2; i < list.size(); i++)
+    secondList.push_back(list[i]);
+
+  std::vector<PointPointerList> lists;
+  lists.push_back(firstList);
+  lists.push_back(secondList);
+
+  return lists;
 }
 
 int KDTree::partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
