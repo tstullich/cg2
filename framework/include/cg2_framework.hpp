@@ -19,6 +19,7 @@ typedef std::vector<std::shared_ptr<Node>> NodeList;
 class Node {
 
 public:
+  std::shared_ptr<Node> parent = nullptr; // parent node
   PointPointerList plist; // list of pointers to points
   // contained in this node
   NodeList nlist; // list of children
@@ -54,12 +55,18 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const KDTree &sds);
 
 private:
+
   /**
-   * Starting code to build the KDTree. It should at the end
-   * return the root node of the tree so that we can use it
-   * in the constructor of the tree
+   * Builds a KDTree from plist and saves the root to rootnode.
    */
-  std::shared_ptr<Node> buildTree(int depth);
+  bool buildTree();
+
+  /**
+   * Recursively creates new children to KDTree nodes.
+   */
+  void recursiveTreeExtend(unsigned int depth, std::shared_ptr<Node> node);
+
+  std::vector<PointPointerList> splitList(PointPointerList &list);
 
   int partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
                     int leftIndex, int rightIndex, int pivot, int axis);
@@ -117,7 +124,10 @@ private:
   std::unique_ptr<DistFunc> dfunc;
 
   // How deep we want to make our recursion for the tree
-  const int finalDepth = 8;
+  const unsigned int maxDepth = 8;
+
+  // How many points are enough to not split further?
+  const unsigned int maxPoints = 30;
 
   // The number of dimensions for the KD Tree.
   const int kDimension = 3;

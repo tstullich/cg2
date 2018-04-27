@@ -85,8 +85,8 @@ bool QGLViewerWidget::loadPointSet(const char* filename) {
 
   pointList = p.getPoints();
 
-  /*
   KDTree tree(p.getPoints(), std::make_unique<EuclDist>());
+  /*
   for (auto p : *tree.getPoints()) {
     std::cout << "Point: (" << p.x << ", " << p.y << ", " << p.z << ")"
               << std::endl;
