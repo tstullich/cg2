@@ -5,6 +5,10 @@
  *
 \*===========================================================================*/
 
+// main window settings (relativ size to screen resolution)
+#define WINDOW_SCALE     0.8
+#define WINDOW_PLACEMENT (1-WINDOW_SCALE)/2
+
 #include <qdockwidget.h>
 #include <QApplication>
 #include <QFileDialog>
@@ -13,6 +17,7 @@
 #include <QMessageBox>
 #include <fstream>
 #include <iostream>
+#include <QDesktopWidget>
 
 #ifndef __APPLE__
 #include <GL/glut.h>
@@ -48,7 +53,13 @@ int main(int argc, char** argv) {
 
   createMenu(mainWin);
 
-  mainWin->resize(1024, 768);
+  QDesktopWidget widget;
+  QRect mainScreenSize = widget.availableGeometry(widget.primaryScreen());
+  int screenHeight = mainScreenSize.height();
+  int screenWidth = mainScreenSize.width();
+
+  mainWin->resize(WINDOW_SCALE*screenWidth, WINDOW_SCALE*screenHeight);
+  mainWin->move(WINDOW_PLACEMENT*screenWidth, WINDOW_PLACEMENT*screenHeight);
   mainWin->show();
 
   return app.exec();
