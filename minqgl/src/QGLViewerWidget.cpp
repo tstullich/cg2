@@ -37,8 +37,6 @@
 // --------------------
 
 #include "QGLViewerWidget.hpp"
-#include "cg2_framework.hpp"
-#include "parser.hpp"
 
 #if !defined(M_PI)
 #define M_PI 3.1415926535897932
@@ -85,13 +83,36 @@ bool QGLViewerWidget::loadPointSet(const char* filename) {
     return false;
   }
 
+  pointList = p.getPoints();
+
+  /*
   KDTree tree(p.getPoints(), std::make_unique<EuclDist>());
   for (auto p : *tree.getPoints()) {
     std::cout << "Point: (" << p.x << ", " << p.y << ", " << p.z << ")"
               << std::endl;
   }
+  */
 
   return true;
+}
+
+bool QGLViewerWidget::drawPointSet() {
+
+  if(pointList != nullptr && pointList->size() > 0) {
+    glDisable(GL_LIGHTING);
+
+    glEnable(GL_POINT_SMOOTH);
+    glPointSize(3.0f);
+    glBegin(GL_POINTS);
+    glColor3f(0, 0, 0);
+    for(unsigned int i = 0; i < pointList->size(); i++) {
+      Point p = (*pointList)[i];
+      glVertex3f(p.x, p.y, p.z);
+    }
+    glEnd();
+    return true;
+  }
+  return false;
 }
 
 //----------------------------------------------------------------------------
@@ -183,6 +204,7 @@ void QGLViewerWidget::paintGL() {
   glLoadMatrixd(modelviewMatrix);
 
   drawScene();
+  drawPointSet();
 }
 
 //----------------------------------------------------------------------------
@@ -427,6 +449,7 @@ void QGLViewerWidget::addAction(QAction* act, const char* name) {
   namesToActions[name] = act;
   Super::addAction(act);
 }
+
 void QGLViewerWidget::removeAction(QAction* act) {
   ActionMap::iterator it = namesToActions.begin(), e = namesToActions.end();
   ActionMap::iterator found = e;

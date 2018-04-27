@@ -11,6 +11,7 @@
 //== INCLUDES =================================================================
 
 #include <iostream>
+#include <memory>
 #include <map>
 #include <string>
 #include <vector>
@@ -21,6 +22,11 @@
 #include <QMainWindow>
 
 #include <glm/glm.hpp>
+
+// --------------------
+#include "cg2_framework.hpp"
+#include "parser.hpp"
+// --------------------
 
 //== FORWARD DECLARATIONS =====================================================
 
@@ -50,10 +56,17 @@ class QGLViewerWidget : public QGLWidget {
 
   // Specific to algorithms
  protected:
+  // loads data points from OFF file using the parser
   bool loadPointSet(const char* filename);
 
-  // draw the scene: will be called by the painGL() method.
+  // draw the scene: will be called by the paintGL() method.
   virtual void drawScene();
+
+  // draws the given point list
+  bool drawPointSet();
+
+  // list of data points
+  std::shared_ptr<PointList> pointList;
 
  protected:
   void setDefaultMaterial(void);
