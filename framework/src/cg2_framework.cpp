@@ -79,6 +79,7 @@ bool KDTree::buildTree(Borders &outerBox) {
                                           " z = ["<< outerBox.zMin << ", " << outerBox.zMax << "]" <<
                                           std::endl;
   recursiveTreeExtend(0, rootnode);
+  std::cout << "KDTree built successful!" << std::endl;
 
   return true;
 }
