@@ -1,5 +1,6 @@
 *.o
 *.swp
+*.orig
 cg2
 main
 Makefile

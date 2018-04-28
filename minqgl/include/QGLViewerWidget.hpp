@@ -54,6 +54,8 @@ class QGLViewerWidget : public QGLWidget {
  private:
   void init(void);
 
+  bool flag_drawTree = false; // used in key event handler
+
   // Specific to algorithms
  protected:
   // loads data points from OFF file using the parser

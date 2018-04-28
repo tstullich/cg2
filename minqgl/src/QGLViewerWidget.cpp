@@ -19,6 +19,8 @@
 #include <queue>
 #include <sstream>
 
+#include <cstdlib>
+
 // --------------------
 #ifndef __APPLE__
 #include <GL/glut.h>
@@ -209,8 +211,93 @@ void QGLViewerWidget::paintGL() {
 
 //----------------------------------------------------------------------------
 
+void drawBox(double x_0, double x_1, double y_0, double y_1, double z_0, double z_1) {
+  glBegin(GL_LINE_LOOP);
+    glVertex3f(x_0, y_0, z_0);
+    glVertex3f(x_0, y_0, z_1);
+    glVertex3f(x_0, y_1, z_1);
+    glVertex3f(x_0, y_1, z_0);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP);
+    glVertex3f(x_1, y_0, z_0);
+    glVertex3f(x_1, y_0, z_1);
+    glVertex3f(x_1, y_1, z_1);
+    glVertex3f(x_1, y_1, z_0);
+  glEnd();
+
+  glBegin(GL_LINES);
+    glVertex3f(x_0, y_0, z_0);
+    glVertex3f(x_1, y_0, z_0);
+
+    glVertex3f(x_0, y_0, z_1);
+    glVertex3f(x_1, y_0, z_1);
+
+    glVertex3f(x_0, y_1, z_1);
+    glVertex3f(x_1, y_1, z_1);
+
+    glVertex3f(x_0, y_1, z_0);
+    glVertex3f(x_1, y_1, z_0);
+
+  glEnd();
+}
+
+void drawTree(double x_0, double x_1, double y_0, double y_1, double z_0, double z_1, int depth) {
+  if (depth >= 3) {
+      return;
+  }
+
+  int axes = depth % 3;
+  double randNum = double(rand() % 100) / 100;
+
+  if (axes == 0) {        // split along x
+      double x_new = x_0 + ((x_1-x_0) * randNum);
+      glColor3f(1.0f,0,0);
+      glVertex3f(x_new, y_0, z_0);
+      glVertex3f(x_new, y_0, z_1);
+      glColor3f(0.25f,0,0);
+      glVertex3f(x_new, y_1, z_1);
+      glVertex3f(x_new, y_1, z_0);
+
+      drawTree(x_0, x_new, y_0, y_1, z_0, z_1, depth+1);
+      drawTree(x_new, x_1, y_0, y_1, z_0, z_1, depth+1);
+  } else if (axes == 1) { // split along y
+      double y_new = y_0 + ((y_1-y_0) * randNum);
+      glColor3f(0,1.0f,0);
+      glVertex3f(x_0, y_new, z_0);
+      glVertex3f(x_0, y_new, z_1);
+      glColor3f(0,0.25f,0);
+      glVertex3f(x_1, y_new, z_1);
+      glVertex3f(x_1, y_new, z_0);
+
+      drawTree(x_0, x_1, y_0, y_new, z_0, z_1, depth+1);
+      drawTree(x_0, x_1, y_new, y_1, z_0, z_1, depth+1);
+  } else if (axes == 2) { // split along z
+      double z_new = z_0 + ((z_1-z_0) * randNum);
+      glColor3f(0,0,1.0f);
+      glVertex3f(x_0, y_0, z_new);
+      glVertex3f(x_0, y_1, z_new);
+      glColor3f(0,0,0.25f);
+      glVertex3f(x_1, y_1, z_new);
+      glVertex3f(x_1, y_0, z_new);
+
+      drawTree(x_0, x_1, y_0, y_1, z_0, z_new, depth+1);
+      drawTree(x_0, x_1, y_0, y_1, z_new, z_1, depth+1);
+  } else {
+      std::cout << "drawTree() error" << std::endl;
+  }
+}
+
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
+
+  if (flag_drawTree) {
+      srand(1234);  // to get the same result for redraws
+      drawBox(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f);
+      glBegin(GL_QUADS);
+      drawTree(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 0);
+      glEnd();
+  }
 
   // Draw a coordinate system
   glBegin(GL_LINES);
@@ -335,6 +422,10 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent* _event) {
   switch (_event->key()) {
     case Key_Print:
       slotSnapshot();
+      break;
+
+    case Key_T:
+      flag_drawTree = flag_drawTree ? false : true;
       break;
 
     case Key_H:
