@@ -26,10 +26,20 @@ std::unique_ptr<std::vector<Point>> Parser::getPoints() {
     return std::make_unique<std::vector<Point>>();
   }
 
+  // clears limits of outer box
+  clearOuterBox();
+
   auto points = std::make_unique<std::vector<Point>>(numPoints, Point(0, 0, 0));
   float x, y, z;
   for (int i = 0; i < numPoints; i++) {
     inputStream >> x >> y >> z;
+
+    outerBox.xMin = std::min(outerBox.xMin, x);
+    outerBox.xMax = std::max(outerBox.xMax, x);
+    outerBox.yMin = std::min(outerBox.yMin, y);
+    outerBox.yMax = std::max(outerBox.yMax, y);
+    outerBox.zMin = std::min(outerBox.zMin, z);
+    outerBox.zMax = std::max(outerBox.zMax, z);
 
     points->at(i).x = x;
     points->at(i).y = y;
@@ -38,6 +48,15 @@ std::unique_ptr<std::vector<Point>> Parser::getPoints() {
 
   return points;
 }
+
+void Parser::clearOuterBox() {
+  outerBox.xMin = std::numeric_limits<double>::max();
+  outerBox.xMax = std::numeric_limits<double>::min();
+  outerBox.yMin = std::numeric_limits<double>::max();
+  outerBox.yMax = std::numeric_limits<double>::min();
+  outerBox.zMin = std::numeric_limits<double>::max();
+  outerBox.zMax = std::numeric_limits<double>::min();
+};
 
 std::unique_ptr<std::vector<Face>> Parser::getFaces() {
   if (!inputStream.is_open()) {

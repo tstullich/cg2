@@ -6,9 +6,20 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <limits>
 
 #include "face.hpp"
 #include "point.hpp"
+
+// limits of a particular cell are saved here
+struct Borders {
+  float xMin = std::numeric_limits<float>::max();
+  float xMax = std::numeric_limits<float>::min();
+  float yMin = std::numeric_limits<float>::max();
+  float yMax = std::numeric_limits<float>::min();
+  float zMin = std::numeric_limits<float>::max();
+  float zMax = std::numeric_limits<float>::min();
+};
 
 class Parser {
 public:
@@ -50,7 +61,14 @@ public:
    */
   void close();
 
+  /**
+   * Holds the characteristics of a box containing all parsed data points.
+   */
+  Borders outerBox;
+
 private:
+  void clearOuterBox();
+
   std::ifstream inputStream;
   int numPoints;
   int numFaces;

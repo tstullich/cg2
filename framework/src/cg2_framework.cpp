@@ -16,10 +16,10 @@ float EuclDist::dist(const Point &a, const Node &n) {
 
 // TODO build true spatial datastructure etc...
 KDTree::KDTree(std::unique_ptr<PointList> plist,
-               std::unique_ptr<DistFunc> dfunc)
+               std::unique_ptr<DistFunc> dfunc,
+               Borders outerBox)
     : plist(std::move(plist)), dfunc(std::move(dfunc)) {
-  // dummy datastructure (one node with references to all points)
-  rootnode = buildTree(0);
+  buildTree(outerBox);
 }
 
 // TODO use spatial data structure for sub-linear search etc...
@@ -64,16 +64,89 @@ std::ostream &operator<<(std::ostream &os, const PointPointerList &l) {
   return os;
 }
 
-std::shared_ptr<Node> KDTree::buildTree(int depth) {
-  if (depth == finalDepth) {
-    // Need to return here since we have reached our final depth
+bool KDTree::buildTree(Borders &outerBox) {
+
+  rootnode = std::make_shared<Node>();
+  rootnode->borders = outerBox;
+
+  for(unsigned int i=0; i < plist->size(); i++) {
+    rootnode->plist.push_back(std::make_shared<Point>(plist->at(i)));
   }
 
-  // TODO Do a sort as proof
-  // int axis = depth % kDimension;
-  // sortPoints(axis);
+  std::cout << "Start to build KDTree from " << rootnode->plist.size() << " data points." << std::endl;
+  std::cout << "Outer box characteristics : x = ["<< outerBox.xMin << ", " << outerBox.xMax << "]" <<
+                                          " y = ["<< outerBox.yMin << ", " << outerBox.yMax << "]" <<
+                                          " z = ["<< outerBox.zMin << ", " << outerBox.zMax << "]" <<
+                                          std::endl;
+  recursiveTreeExtend(0, rootnode);
 
-  return std::make_shared<Node>();
+  return true;
+}
+
+void KDTree::recursiveTreeExtend(unsigned int depth, std::shared_ptr<Node> node) {
+
+  if (node->plist.size() <= maxPoints || depth >= maxDepth) {
+    // Need to return here since we have reached our break condition
+    //std::cout << "LeafNode: data points = " << node->plist.size() << " depth = " << depth << std::endl;
+    return;
+  }
+
+  node->split.axis = depth % kDimension;
+  // TODO integrate sorting
+  //sortPoints(node->plist, axis);
+  unsigned int medianIndex = node->plist.size()/2;
+  node->split.value = node->split.axis<2 ? (node->split.axis<1 ? node->plist[medianIndex]->x :
+    node->plist[medianIndex]->y) : node->plist[medianIndex]->z;
+  std::vector<PointPointerList> parts = splitList(node->plist, medianIndex);
+
+  for(unsigned int i = 0; i < parts.size(); i++) {
+    Node child;
+    child.parent = node;
+    child.plist = parts[i];
+    if(node->split.axis != 0) {
+      child.borders.xMin = node->borders.xMin;
+      child.borders.xMax = node->borders.xMax;
+    } else {
+      child.borders.xMin = i % 2 == 0 ? node->borders.xMin : node->split.value;
+      child.borders.xMax = i % 2 == 0 ? node->split.value : node->borders.xMax;
+    }
+    if(node->split.axis != 1) {
+      child.borders.yMin = node->borders.yMin;
+      child.borders.yMax = node->borders.yMax;
+    } else {
+      child.borders.yMin = i % 2 == 0 ? node->borders.yMin : node->split.value;
+      child.borders.yMax = i % 2 == 0 ? node->split.value : node->borders.yMax;
+    }
+    if(node->split.axis != 2) {
+      child.borders.zMin = node->borders.zMin;
+      child.borders.zMax = node->borders.zMax;
+    } else {
+      child.borders.zMin = i % 2 == 0 ? node->borders.zMin : node->split.value;
+      child.borders.zMax = i % 2 == 0 ? node->split.value : node->borders.zMax;
+    }
+
+    std::shared_ptr<Node> pChild = std::make_shared<Node>(child);
+    node->nlist.push_back(pChild);
+    recursiveTreeExtend(depth + 1, pChild);
+  }
+}
+
+std::vector<PointPointerList> KDTree::splitList(PointPointerList &list, unsigned int index) {
+
+  // TODO make faster
+  PointPointerList firstList;
+  for(unsigned int i = 0; i < index; i++)
+    firstList.push_back(list[i]);
+
+  PointPointerList secondList;
+  for(unsigned int i = index; i < list.size(); i++)
+    secondList.push_back(list[i]);
+
+  std::vector<PointPointerList> lists;
+  lists.push_back(firstList);
+  lists.push_back(secondList);
+
+  return lists;
 }
 
 int KDTree::partitionList(const std::vector<std::shared_ptr<Point>> &pointList,

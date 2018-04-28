@@ -15,13 +15,22 @@ typedef std::vector<Point> PointList;
 typedef std::vector<std::shared_ptr<Point>> PointPointerList;
 typedef std::vector<std::shared_ptr<Node>> NodeList;
 
+// characteristics of the split plane
+struct Split {
+  unsigned int axis;
+  float value;
+};
+
 // example of a node in spatial data structure
 class Node {
 
 public:
+  std::shared_ptr<Node> parent = nullptr; // parent node
   PointPointerList plist; // list of pointers to points
   // contained in this node
   NodeList nlist; // list of children
+  Borders borders;
+  Split split;
 };
 
 // abstract distance function interface
@@ -43,7 +52,7 @@ public:
 class KDTree {
 
 public:
-  KDTree(std::unique_ptr<PointList> plist, std::unique_ptr<DistFunc> dfunc);
+  KDTree(std::unique_ptr<PointList> plist, std::unique_ptr<DistFunc> dfunc, Borders outerBox);
   PointPointerList collectKNearest(const Point &p, int knearest);
   PointPointerList collectInRadius(const Point &p, float radius);
   void draw();
@@ -54,15 +63,24 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const KDTree &sds);
 
 private:
+
   /**
-   * Starting code to build the KDTree. It should at the end
-   * return the root node of the tree so that we can use it
-   * in the constructor of the tree
+   * Builds a KDTree from plist and saves the root to rootnode.
    */
-  std::shared_ptr<Node> buildTree(int depth);
+  bool buildTree(Borders &outerBox);
+
+  /**
+   * Recursively creates new children to KDTree nodes.
+   */
+  void recursiveTreeExtend(unsigned int depth, std::shared_ptr<Node> node);
+
+  /**
+   * Splits the given list at given index into two lists.
+   */
+  std::vector<PointPointerList> splitList(PointPointerList &list, unsigned int index);
 
   int partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
-                    int leftIndex, int rightIndex, int pivot, int axis);
+                    int leftIndex,int rightIndex, int pivot, int axis);
 
   /**
    * This is the final step of the Median of Medians algorithm
@@ -117,7 +135,10 @@ private:
   std::unique_ptr<DistFunc> dfunc;
 
   // How deep we want to make our recursion for the tree
-  const int finalDepth = 8;
+  const unsigned int maxDepth = 8;
+
+  // How many points are enough to not split further?
+  const unsigned int maxPoints = 50;
 
   // The number of dimensions for the KD Tree.
   const int kDimension = 3;
