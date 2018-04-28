@@ -54,6 +54,7 @@ class QGLViewerWidget : public QGLWidget {
  private:
   std::shared_ptr<KDTree> kdtree;
   bool flag_drawTree = false; // used in key event handler
+  unsigned drawLevelsOfTree = 8;
 
   void init(void);
 
