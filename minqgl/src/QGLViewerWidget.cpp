@@ -89,6 +89,8 @@ bool QGLViewerWidget::loadPointSet(const char* filename) {
   kdtree = newTree;
   pointList = kdtree->getPoints();
 
+  updateGL();
+
   /*
   for (auto p : *tree.getPoints()) {
     std::cout << "Point: (" << p.x << ", " << p.y << ", " << p.z << ")"
@@ -469,6 +471,8 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent* _event) {
       qApp->quit();
   }
   _event->ignore();
+
+  updateGL();
 }
 
 //----------------------------------------------------------------------------
