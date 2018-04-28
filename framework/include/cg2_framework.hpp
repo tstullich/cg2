@@ -59,6 +59,7 @@ public:
   void draw(const PointPointerList &plist);
   int size();
   std::shared_ptr<PointList> getPoints();
+  std::shared_ptr<Node> getRootnode();
 
   friend std::ostream &operator<<(std::ostream &os, const KDTree &sds);
 

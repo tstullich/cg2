@@ -52,14 +52,17 @@ class QGLViewerWidget : public QGLWidget {
   virtual ~QGLViewerWidget();
 
  private:
-  void init(void);
-
+  std::shared_ptr<KDTree> kdtree;
   bool flag_drawTree = false; // used in key event handler
+
+  void init(void);
 
   // Specific to algorithms
  protected:
   // loads data points from OFF file using the parser
   bool loadPointSet(const char* filename);
+
+  void drawKDTree();
 
   // draw the scene: will be called by the paintGL() method.
   virtual void drawScene();

@@ -44,6 +44,8 @@ void KDTree::draw(const PointPointerList &plist) {}
 
 std::shared_ptr<PointList> KDTree::getPoints() { return plist; }
 
+std::shared_ptr<Node> KDTree::getRootnode() { return rootnode; }
+
 std::ostream &operator<<(std::ostream &os, const KDTree &sds) {
   int numelem = static_cast<int>(sds.plist->size());
   os << "num points in set: " << numelem << std::endl;

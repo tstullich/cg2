@@ -85,8 +85,9 @@ bool QGLViewerWidget::loadPointSet(const char* filename) {
     return false;
   }
 
-  KDTree tree(p.getPoints(), std::make_unique<EuclDist>(), p.outerBox);
-  pointList = tree.getPoints();
+  std::shared_ptr<KDTree> newTree(new KDTree(p.getPoints(), std::make_unique<EuclDist>(), p.outerBox));
+  kdtree = newTree;
+  pointList = kdtree->getPoints();
 
   /*
   for (auto p : *tree.getPoints()) {
@@ -211,35 +212,41 @@ void QGLViewerWidget::paintGL() {
 
 //----------------------------------------------------------------------------
 
-void drawBox(double x_0, double x_1, double y_0, double y_1, double z_0, double z_1) {
-  glBegin(GL_LINE_LOOP);
-    glVertex3f(x_0, y_0, z_0);
-    glVertex3f(x_0, y_0, z_1);
-    glVertex3f(x_0, y_1, z_1);
-    glVertex3f(x_0, y_1, z_0);
-  glEnd();
+void drawBox(struct Borders borders) {
+    double x_0 = borders.xMin;
+    double x_1 = borders.xMax;
+    double y_0 = borders.yMin;
+    double y_1 = borders.yMax;
+    double z_0 = borders.zMin;
+    double z_1 = borders.zMax;
 
-  glBegin(GL_LINE_LOOP);
-    glVertex3f(x_1, y_0, z_0);
-    glVertex3f(x_1, y_0, z_1);
-    glVertex3f(x_1, y_1, z_1);
-    glVertex3f(x_1, y_1, z_0);
-  glEnd();
+    glBegin(GL_LINE_LOOP);
+        glVertex3f(x_0, y_0, z_0);
+        glVertex3f(x_0, y_0, z_1);
+        glVertex3f(x_0, y_1, z_1);
+        glVertex3f(x_0, y_1, z_0);
+    glEnd();
 
-  glBegin(GL_LINES);
-    glVertex3f(x_0, y_0, z_0);
-    glVertex3f(x_1, y_0, z_0);
+    glBegin(GL_LINE_LOOP);
+        glVertex3f(x_1, y_0, z_0);
+        glVertex3f(x_1, y_0, z_1);
+        glVertex3f(x_1, y_1, z_1);
+        glVertex3f(x_1, y_1, z_0);
+    glEnd();
 
-    glVertex3f(x_0, y_0, z_1);
-    glVertex3f(x_1, y_0, z_1);
+    glBegin(GL_LINES);
+        glVertex3f(x_0, y_0, z_0);
+        glVertex3f(x_1, y_0, z_0);
 
-    glVertex3f(x_0, y_1, z_1);
-    glVertex3f(x_1, y_1, z_1);
+        glVertex3f(x_0, y_0, z_1);
+        glVertex3f(x_1, y_0, z_1);
 
-    glVertex3f(x_0, y_1, z_0);
-    glVertex3f(x_1, y_1, z_0);
+        glVertex3f(x_0, y_1, z_1);
+        glVertex3f(x_1, y_1, z_1);
 
-  glEnd();
+        glVertex3f(x_0, y_1, z_0);
+        glVertex3f(x_1, y_1, z_0);
+    glEnd();
 }
 
 void drawTree(double x_0, double x_1, double y_0, double y_1, double z_0, double z_1, int depth) {
@@ -288,29 +295,83 @@ void drawTree(double x_0, double x_1, double y_0, double y_1, double z_0, double
   }
 }
 
+void recursiveDrawKDTree(std::shared_ptr<Node> node) {
+    double x_0 = node->borders.xMin;
+    double x_1 = node->borders.xMax;
+    double y_0 = node->borders.yMin;
+    double y_1 = node->borders.yMax;
+    double z_0 = node->borders.zMin;
+    double z_1 = node->borders.zMax;
+    unsigned axis = node->split.axis;
+    double splitVal = node->split.value;
+
+    if (axis == 0) {        // split along x
+        double x_new = splitVal;
+        glColor3f(1.0f,0,0);
+        glVertex3f(x_new, y_0, z_0);
+        glVertex3f(x_new, y_0, z_1);
+        glColor3f(0.25f,0,0);
+        glVertex3f(x_new, y_1, z_1);
+        glVertex3f(x_new, y_1, z_0);
+    } else if (axis == 1) { // split along y
+        double y_new = splitVal;
+        glColor3f(0,1.0f,0);
+        glVertex3f(x_0, y_new, z_0);
+        glVertex3f(x_0, y_new, z_1);
+        glColor3f(0,0.25f,0);
+        glVertex3f(x_1, y_new, z_1);
+        glVertex3f(x_1, y_new, z_0);
+    } else if (axis == 2) { // split along z
+        double z_new = splitVal;
+        glColor3f(0,0,1.0f);
+        glVertex3f(x_0, y_0, z_new);
+        glVertex3f(x_0, y_1, z_new);
+        glColor3f(0,0,0.25f);
+        glVertex3f(x_1, y_1, z_new);
+        glVertex3f(x_1, y_0, z_new);
+    } else {
+        std::cout << "recursiveDrawKDTree() error" << std::endl;
+    }
+
+    // recursively traverse the tree
+    if (node->nlist.size() > 0) {
+        if (node->nlist[0]->nlist.size() > 0)   // avoid leaf nodes
+            recursiveDrawKDTree(node->nlist[0]);
+        if (node->nlist[1]->nlist.size() > 0)   // avoid leaf nodes
+            recursiveDrawKDTree(node->nlist[1]);
+    }
+}
+
+void QGLViewerWidget::drawKDTree() {
+    if (kdtree == nullptr)
+        return;
+
+    drawBox(kdtree->getRootnode()->borders);
+
+    glBegin(GL_QUADS);
+    recursiveDrawKDTree(kdtree->getRootnode());
+    glEnd();
+}
+
 void QGLViewerWidget::drawScene() {
-  glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHTING);
 
-  if (flag_drawTree) {
-      srand(1234);  // to get the same result for redraws
-      drawBox(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f);
-      glBegin(GL_QUADS);
-      drawTree(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 0);
-      glEnd();
-  }
+    if (flag_drawTree) {
+        drawKDTree();
+    }
 
-  // Draw a coordinate system
-  glBegin(GL_LINES);
-  glColor3f(1, 0, 0);
-  glVertex3f(0, 0, 0);
-  glVertex3f(1, 0, 0);
-  glColor3f(0, 1, 0);
-  glVertex3f(0, 0, 0);
-  glVertex3f(0, 1, 0);
-  glColor3f(0, 0, 1);
-  glVertex3f(0, 0, 0);
-  glVertex3f(0, 0, 1);
-  glEnd();
+    // Draw a coordinate system
+    glBegin(GL_LINES);
+    glColor3f(1, 0, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(1, 0, 0);
+    glColor3f(0, 1, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 1, 0);
+    glColor3f(0, 0, 1);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 0, 1);
+    glEnd();
 }
 
 //----------------------------------------------------------------------------
