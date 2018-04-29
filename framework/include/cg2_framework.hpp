@@ -26,7 +26,7 @@ class Node {
 
 public:
   std::shared_ptr<Node> parent = nullptr; // parent node
-  PointPointerList plist; // list of pointers to points
+  PointPointerList plist;                 // list of pointers to points
   // contained in this node
   NodeList nlist; // list of children
   Borders borders;
@@ -52,7 +52,8 @@ public:
 class KDTree {
 
 public:
-  KDTree(std::unique_ptr<PointList> plist, std::unique_ptr<DistFunc> dfunc, Borders outerBox);
+  KDTree(std::unique_ptr<PointList> plist, std::unique_ptr<DistFunc> dfunc,
+         Borders outerBox);
   PointPointerList collectKNearest(const Point &p, int knearest);
   PointPointerList collectInRadius(const Point &p, float radius);
   void draw();
@@ -64,7 +65,6 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const KDTree &sds);
 
 private:
-
   /**
    * Builds a KDTree from plist and saves the root to rootnode.
    */
@@ -78,10 +78,11 @@ private:
   /**
    * Splits the given list at given index into two lists.
    */
-  std::vector<PointPointerList> splitList(PointPointerList &list, unsigned int index);
+  std::vector<PointPointerList> splitList(PointPointerList &list,
+                                          unsigned int index);
 
   int partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
-                    int leftIndex,int rightIndex, int pivot, int axis);
+                    int leftIndex, int rightIndex, int pivot, int axis);
 
   /**
    * This is the final step of the Median of Medians algorithm
@@ -98,7 +99,8 @@ private:
    * Quickselect
    */
   int selectMedian(const std::vector<std::shared_ptr<Point>> &pointList,
-                   int leftIndex, int rightIndex, int n, int axis);
+                   int leftIndex, int rightIndex, int positionOfMedian,
+                   int axis);
 
   /**
    * This is a helper function for the selectMedian functiion.
@@ -118,8 +120,8 @@ private:
    * is Quickselect, which will use the Median of Medians algorithm
    * to select a suitable median
    */
-  void sortPoints(const std::vector<std::shared_ptr<Point>> &pointList,
-                  int axis);
+  int sortPoints(const std::vector<std::shared_ptr<Point>> &pointList,
+                 int axis);
 
   // Swaps two elements in a list based on two indices
   // No bounds-checking is done to see if the if indices are valid

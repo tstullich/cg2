@@ -16,8 +16,7 @@ float EuclDist::dist(const Point &a, const Node &n) {
 
 // TODO build true spatial datastructure etc...
 KDTree::KDTree(std::unique_ptr<PointList> plist,
-               std::unique_ptr<DistFunc> dfunc,
-               Borders outerBox)
+               std::unique_ptr<DistFunc> dfunc, Borders outerBox)
     : plist(std::move(plist)), dfunc(std::move(dfunc)) {
   buildTree(outerBox);
 }
@@ -67,60 +66,63 @@ std::ostream &operator<<(std::ostream &os, const PointPointerList &l) {
 }
 
 bool KDTree::buildTree(Borders &outerBox) {
-
   rootnode = std::make_shared<Node>();
   rootnode->borders = outerBox;
 
-  for(unsigned int i=0; i < plist->size(); i++) {
+  for (unsigned int i = 0; i < plist->size(); i++) {
     rootnode->plist.push_back(std::make_shared<Point>(plist->at(i)));
   }
 
-  std::cout << "Start to build KDTree from " << rootnode->plist.size() << " data points." << std::endl;
-  std::cout << "Outer box characteristics : x = ["<< outerBox.xMin << ", " << outerBox.xMax << "]" <<
-                                          " y = ["<< outerBox.yMin << ", " << outerBox.yMax << "]" <<
-                                          " z = ["<< outerBox.zMin << ", " << outerBox.zMax << "]" <<
-                                          std::endl;
+  std::cout << "Start to build KDTree from " << rootnode->plist.size()
+            << " data points." << std::endl;
+  std::cout << "Outer box characteristics : x = [" << outerBox.xMin << ", "
+            << outerBox.xMax << "]"
+            << " y = [" << outerBox.yMin << ", " << outerBox.yMax << "]"
+            << " z = [" << outerBox.zMin << ", " << outerBox.zMax << "]"
+            << std::endl;
   recursiveTreeExtend(0, rootnode);
   std::cout << "KDTree built successful!" << std::endl;
 
   return true;
 }
 
-void KDTree::recursiveTreeExtend(unsigned int depth, std::shared_ptr<Node> node) {
-
+void KDTree::recursiveTreeExtend(unsigned int depth,
+                                 std::shared_ptr<Node> node) {
   if (node->plist.size() <= maxPoints || depth >= maxDepth) {
     // Need to return here since we have reached our break condition
-    //std::cout << "LeafNode: data points = " << node->plist.size() << " depth = " << depth << std::endl;
+    // std::cout << "LeafNode: data points = " << node->plist.size() << " depth
+    // = " << depth << std::endl;
     return;
   }
 
   node->split.axis = depth % kDimension;
-  // TODO integrate sorting
-  //sortPoints(node->plist, axis);
-  unsigned int medianIndex = node->plist.size()/2;
-  node->split.value = node->split.axis<2 ? (node->split.axis<1 ? node->plist[medianIndex]->x :
-    node->plist[medianIndex]->y) : node->plist[medianIndex]->z;
+  sortPoints(node->plist, node->split.axis);
+  unsigned int medianIndex = node->plist.size() / 2;
+  node->split.value = node->split.axis < 2
+                          ? (node->split.axis < 1 ? node->plist[medianIndex]->x
+                                                  : node->plist[medianIndex]->y)
+                          : node->plist[medianIndex]->z;
   std::vector<PointPointerList> parts = splitList(node->plist, medianIndex);
 
-  for(unsigned int i = 0; i < parts.size(); i++) {
+  for (unsigned int i = 0; i < parts.size(); i++) {
     Node child;
     child.parent = node;
     child.plist = parts[i];
-    if(node->split.axis != 0) {
+    if (node->split.axis != 0) {
       child.borders.xMin = node->borders.xMin;
       child.borders.xMax = node->borders.xMax;
     } else {
       child.borders.xMin = i % 2 == 0 ? node->borders.xMin : node->split.value;
       child.borders.xMax = i % 2 == 0 ? node->split.value : node->borders.xMax;
     }
-    if(node->split.axis != 1) {
+    if (node->split.axis != 1) {
       child.borders.yMin = node->borders.yMin;
       child.borders.yMax = node->borders.yMax;
     } else {
       child.borders.yMin = i % 2 == 0 ? node->borders.yMin : node->split.value;
       child.borders.yMax = i % 2 == 0 ? node->split.value : node->borders.yMax;
     }
-    if(node->split.axis != 2) {
+    if (node->split.axis != 2) {
       child.borders.zMin = node->borders.zMin;
       child.borders.zMax = node->borders.zMax;
     } else {
@@ -134,15 +136,14 @@ void KDTree::recursiveTreeExtend(unsigned int depth, std::shared_ptr<Node> node)
   }
 }
 
-std::vector<PointPointerList> KDTree::splitList(PointPointerList &list, unsigned int index) {
-
+std::vector<PointPointerList> KDTree::splitList(PointPointerList &list,
+                                                unsigned int index) {
   // TODO make faster
   PointPointerList firstList;
-  for(unsigned int i = 0; i < index; i++)
-    firstList.push_back(list[i]);
+  for (unsigned int i = 0; i < index; i++) firstList.push_back(list[i]);
 
   PointPointerList secondList;
-  for(unsigned int i = index; i < list.size(); i++)
+  for (unsigned int i = index; i < list.size(); i++)
     secondList.push_back(list[i]);
 
   std::vector<PointPointerList> lists;
@@ -174,25 +175,23 @@ int KDTree::partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
 int KDTree::partitionListOfFive(
     const std::vector<std::shared_ptr<Point>> &pointList, int startIndex,
     int endIndex, int axis) {
-  for (int i = startIndex; i < endIndex; i++) {
+  int i = startIndex;
+  while (i < endIndex) {
     int j = i;
-    auto currentValue = pointList[j]->fetchPointValue(axis);
-    auto nextValue = pointList[j - 1]->fetchPointValue(axis);
-    while (j > 0 && nextValue > currentValue) {
+    while (j > 0 && pointList[j - 1]->fetchPointValue(axis) >
+                        pointList[j]->fetchPointValue(axis)) {
       swapPoints(pointList, j, j - 1);
       j--;
     }
+    i++;
   }
 
-  // Our median should now be in the middle of our array
-  // TODO Verify this though
-  return std::floor((endIndex + startIndex) / 2);
+  return (endIndex + startIndex) / 2;
 }
 
 int KDTree::selectMedian(const std::vector<std::shared_ptr<Point>> &pointList,
-                         int leftIndex, int rightIndex, int n, int axis) {
-  // According to wikipedia you are supposed to loop this.
-  // Need to find a better way to get this to work
+                         int leftIndex, int rightIndex, int positionOfMedian,
+                         int axis) {
   while (true) {
     if (leftIndex == rightIndex) {
       return leftIndex;
@@ -202,9 +201,9 @@ int KDTree::selectMedian(const std::vector<std::shared_ptr<Point>> &pointList,
         selectMedianOfMedians(pointList, leftIndex, rightIndex, axis);
     pivotIndex =
         partitionList(pointList, leftIndex, rightIndex, pivotIndex, axis);
-    if (n == pivotIndex) {
-      return n;
-    } else if (n < pivotIndex) {
+    if (positionOfMedian == pivotIndex) {
+      return positionOfMedian;
+    } else if (positionOfMedian < pivotIndex) {
       rightIndex = pivotIndex - 1;
     } else {
       leftIndex = pivotIndex + 1;
@@ -222,12 +221,14 @@ int KDTree::selectMedianOfMedians(
     return (leftIndex + rightIndex) / 2;
   }
 
+  // std::cout << "Performing splits: " << std::endl;
   for (int i = leftIndex; i < rightIndex; i += partitionSize) {
     int subRight = i + partitionSize - 1;
     if (subRight > rightIndex) {
       subRight = rightIndex;
     }
 
+    // std::cout << "Splitting list: " << i << ", " << subRight << std::endl;
     auto median = partitionListOfFive(pointList, i, subRight, axis);
     swapPoints(pointList, median,
                leftIndex + std::floor((i - leftIndex) / partitionSize));
@@ -240,18 +241,17 @@ int KDTree::selectMedianOfMedians(
       leftIndex + (rightIndex - leftIndex) / (partitionSize * 2), axis);
 }
 
-void sortPoints(const std::vector<std::shared_ptr<Point>> &pointList,
-                int axis) {
+int KDTree::sortPoints(const std::vector<std::shared_ptr<Point>> &pointList,
+                       int axis) {
   if (axis < 0 || axis > 2) {
     // Invalid index given. Won't sort
-    return;
+    std::cout << "Invalid axis parameter was given. Will not sort the list."
+              << std::endl;
+    return -1;
   }
 
-  // Select the pivot through Median of Medians algorithm
-  // TODO Don't pass in the plist but rather a copy of pointers
-  // int pivotIndex = selectMedian(&plist, 0, plist->size(), axis);
-  int pivotIndex = 1;
-  std::cout << "Found pivot index: " << pivotIndex << std::endl;
+  return selectMedian(pointList, 0, pointList.size() - 1, pointList.size() / 2,
+                      axis);
 }
 
 void KDTree::swapPoints(const std::vector<std::shared_ptr<Point>> &pointList,
