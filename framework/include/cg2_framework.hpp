@@ -47,7 +47,6 @@ class EuclDist : public DistFunc {
 public:
   float dist(const Point &a, const Point &b);
   float dist(const Point &a, const Node &n);
-  bool inBorders(const Point &a, const Borders &n);
 };
 
 class KDTree {

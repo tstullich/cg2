@@ -9,24 +9,14 @@ float EuclDist::dist(const Point &a, const Point &b) {
 }
 
 float EuclDist::dist(const Point &a, const Node &n) {
-  // return 0.0 if point is within node n
-  if(inBorders(a, n.borders))
-    return 0.0f;
-  // and the euclidian distance otherwise
-  else {
-    float dist_x = std::min(std::abs(n.borders.xMin - a.x), std::abs(n.borders.xMax - a.x));
-    float dist_y = std::min(std::abs(n.borders.yMin - a.y), std::abs(n.borders.yMax - a.y));
-    float dist_z = std::min(std::abs(n.borders.zMin - a.z), std::abs(n.borders.zMax - a.z));
-    return std::min(dist_x, std::min(dist_y, dist_z));
-  }
-}
-
-bool EuclDist::inBorders(const Point &a, const Borders &b) {
-  if( a.x >= b.xMin && a.x < b.xMax &&
-      a.y >= b.yMin && a.y < b.yMax &&
-      a.z >= b.zMin && a.z < b.zMax )
-    return true;
-  return false;
+  float d = 0;
+  if(!(a.x >= n.borders.xMin && a.x < n.borders.xMax))
+    d = std::max(d, std::min(std::abs(n.borders.xMin - a.x), std::abs(n.borders.xMax - a.x)));
+  if(!(a.y >= n.borders.yMin && a.y < n.borders.yMax))
+    d = std::max(d, std::min(std::abs(n.borders.yMin - a.y), std::abs(n.borders.yMax - a.y)));
+  if(!(a.z >= n.borders.zMin && a.z < n.borders.zMax))
+    d = std::max(d, std::min(std::abs(n.borders.zMin - a.z), std::abs(n.borders.zMax - a.z)));
+  return d;
 }
 
 KDTree::KDTree(std::unique_ptr<PointList> plist,
