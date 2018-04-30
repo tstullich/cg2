@@ -88,15 +88,10 @@ bool QGLViewerWidget::loadPointSet(const char* filename) {
   std::shared_ptr<KDTree> newTree(new KDTree(p.getPoints(), std::make_unique<EuclDist>(), p.outerBox));
   kdtree = newTree;
   pointList = kdtree->getPoints();
+  // TODO make configurable by gui
+  selectedPointList = kdtree->collectInRadius((*pointList)[0], 0.1);
 
   updateGL();
-
-  /*
-  for (auto p : *tree.getPoints()) {
-    std::cout << "Point: (" << p.x << ", " << p.y << ", " << p.z << ")"
-              << std::endl;
-  }
-  */
 
   return true;
 }
@@ -113,6 +108,24 @@ bool QGLViewerWidget::drawPointSet() {
     for(unsigned int i = 0; i < pointList->size(); i++) {
       Point p = (*pointList)[i];
       glVertex3f(p.x, p.y, p.z);
+    }
+    glEnd();
+    return true;
+  }
+  return false;
+}
+
+bool QGLViewerWidget::drawSelectedPointSet() {
+  if(selectedPointList.size() > 0) {
+    glDisable(GL_LIGHTING);
+
+    glEnable(GL_POINT_SMOOTH);
+    glPointSize(10.0f);
+    glBegin(GL_POINTS);
+    glColor3f(0, 255, 0);
+    for(unsigned int i = 0; i < selectedPointList.size(); i++) {
+      std::shared_ptr<Point> p = selectedPointList[i];
+      glVertex3f(p->x, p->y, p->z);
     }
     glEnd();
     return true;
@@ -209,7 +222,6 @@ void QGLViewerWidget::paintGL() {
   glLoadMatrixd(modelviewMatrix);
 
   drawScene();
-  drawPointSet();
 }
 
 //----------------------------------------------------------------------------
@@ -255,49 +267,50 @@ void recursiveDrawKDTree(std::shared_ptr<Node> node, unsigned remainingLevels) {
     if (remainingLevels <= 0)
         return;
 
-    double x_0 = node->borders.xMin;
-    double x_1 = node->borders.xMax;
-    double y_0 = node->borders.yMin;
-    double y_1 = node->borders.yMax;
-    double z_0 = node->borders.zMin;
-    double z_1 = node->borders.zMax;
-    unsigned axis = node->split.axis;
-    double splitVal = node->split.value;
-
-    if (axis == 0) {        // split along x
-        double x_new = splitVal;
-        glColor3f(1.0f,0,0);
-        glVertex3f(x_new, y_0, z_0);
-        glVertex3f(x_new, y_0, z_1);
-        glColor3f(0.25f,0,0);
-        glVertex3f(x_new, y_1, z_1);
-        glVertex3f(x_new, y_1, z_0);
-    } else if (axis == 1) { // split along y
-        double y_new = splitVal;
-        glColor3f(0,1.0f,0);
-        glVertex3f(x_0, y_new, z_0);
-        glVertex3f(x_0, y_new, z_1);
-        glColor3f(0,0.25f,0);
-        glVertex3f(x_1, y_new, z_1);
-        glVertex3f(x_1, y_new, z_0);
-    } else if (axis == 2) { // split along z
-        double z_new = splitVal;
-        glColor3f(0,0,1.0f);
-        glVertex3f(x_0, y_0, z_new);
-        glVertex3f(x_0, y_1, z_new);
-        glColor3f(0,0,0.25f);
-        glVertex3f(x_1, y_1, z_new);
-        glVertex3f(x_1, y_0, z_new);
-    } else {
-        std::cout << "recursiveDrawKDTree() error" << std::endl;
-    }
-
     // recursively traverse the tree
     if (node->nlist.size() > 0) {
-        if (node->nlist[0]->nlist.size() > 0)   // avoid leaf nodes
-            recursiveDrawKDTree(node->nlist[0], remainingLevels-1);
-        if (node->nlist[1]->nlist.size() > 0)   // avoid leaf nodes
-            recursiveDrawKDTree(node->nlist[1], remainingLevels-1);
+
+      double x_0 = node->borders.xMin;
+      double x_1 = node->borders.xMax;
+      double y_0 = node->borders.yMin;
+      double y_1 = node->borders.yMax;
+      double z_0 = node->borders.zMin;
+      double z_1 = node->borders.zMax;
+      unsigned axis = node->split.axis;
+      double splitVal = node->split.value;
+
+      if (axis == 0) {        // split along x
+          double x_new = splitVal;
+          glColor3f(1.0f,0,0);
+          glVertex3f(x_new, y_0, z_0);
+          glVertex3f(x_new, y_0, z_1);
+          glColor3f(0.25f,0,0);
+          glVertex3f(x_new, y_1, z_1);
+          glVertex3f(x_new, y_1, z_0);
+      } else if (axis == 1) { // split along y
+          double y_new = splitVal;
+          glColor3f(0,1.0f,0);
+          glVertex3f(x_0, y_new, z_0);
+          glVertex3f(x_0, y_new, z_1);
+          glColor3f(0,0.25f,0);
+          glVertex3f(x_1, y_new, z_1);
+          glVertex3f(x_1, y_new, z_0);
+      } else if (axis == 2) { // split along z
+          double z_new = splitVal;
+          glColor3f(0,0,1.0f);
+          glVertex3f(x_0, y_0, z_new);
+          glVertex3f(x_0, y_1, z_new);
+          glColor3f(0,0,0.25f);
+          glVertex3f(x_1, y_1, z_new);
+          glVertex3f(x_1, y_0, z_new);
+      } else {
+          std::cout << "recursiveDrawKDTree() error" << std::endl;
+      }
+
+      if (node->nlist[0]->nlist.size() > 0)   // avoid leaf nodes
+          recursiveDrawKDTree(node->nlist[0], remainingLevels-1);
+      if (node->nlist[1]->nlist.size() > 0)   // avoid leaf nodes
+          recursiveDrawKDTree(node->nlist[1], remainingLevels-1);
     }
 }
 
@@ -315,9 +328,12 @@ void QGLViewerWidget::drawKDTree() {
 void QGLViewerWidget::drawScene() {
     glDisable(GL_LIGHTING);
 
-    if (flag_drawTree) {
+    if (flag_drawPoints)
+        drawPointSet();
+    if (flag_drawSelectedPoints)
+        drawSelectedPointSet();
+    if (flag_drawTree)
         drawKDTree();
-    }
 
     // Draw a coordinate system
     glBegin(GL_LINES);

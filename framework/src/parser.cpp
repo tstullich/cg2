@@ -46,6 +46,18 @@ std::unique_ptr<std::vector<Point>> Parser::getPoints() {
     points->at(i).z = z;
   }
 
+  // make outer box slightly bigger
+  float scalar = 0.01;
+  float xShift = scalar * std::abs(outerBox.xMax - outerBox.xMin);
+  outerBox.xMin -= xShift;
+  outerBox.xMax += xShift;
+  float yShift = scalar * std::abs(outerBox.yMax - outerBox.yMin);
+  outerBox.yMin -= yShift;
+  outerBox.yMax += yShift;
+  float zShift = scalar * std::abs(outerBox.zMax - outerBox.zMin);
+  outerBox.zMin -= zShift;
+  outerBox.zMax += zShift;
+
   return points;
 }
 

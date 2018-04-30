@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include <cmath>
 
 #include "face.hpp"
 #include "point.hpp"

@@ -10,11 +10,25 @@ float EuclDist::dist(const Point &a, const Point &b) {
 
 float EuclDist::dist(const Point &a, const Node &n) {
   // return 0.0 if point is within node n
+  if(inBorders(a, n.borders))
+    return 0.0f;
   // and the euclidian distance otherwise
-  return 0.0f;
+  else {
+    float dist_x = std::min(std::abs(n.borders.xMin - a.x), std::abs(n.borders.xMax - a.x));
+    float dist_y = std::min(std::abs(n.borders.yMin - a.y), std::abs(n.borders.yMax - a.y));
+    float dist_z = std::min(std::abs(n.borders.zMin - a.z), std::abs(n.borders.zMax - a.z));
+    return std::min(dist_x, std::min(dist_y, dist_z));
+  }
 }
 
-// TODO build true spatial datastructure etc...
+bool EuclDist::inBorders(const Point &a, const Borders &b) {
+  if( a.x >= b.xMin && a.x < b.xMax &&
+      a.y >= b.yMin && a.y < b.yMax &&
+      a.z >= b.zMin && a.z < b.zMax )
+    return true;
+  return false;
+}
+
 KDTree::KDTree(std::unique_ptr<PointList> plist,
                std::unique_ptr<DistFunc> dfunc, Borders outerBox)
     : plist(std::move(plist)), dfunc(std::move(dfunc)) {
@@ -22,24 +36,38 @@ KDTree::KDTree(std::unique_ptr<PointList> plist,
 }
 
 // TODO use spatial data structure for sub-linear search etc...
-PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
-  PointPointerList pl;
-  return pl;
-}
-
-// TODO use spatial data structure for sub-linear search etc...
 PointPointerList KDTree::collectInRadius(const Point &p, float radius) {
   PointPointerList plist;
+  if(dfunc->dist(p, *rootnode) > 0)
+    std::cout << "The given point is not contained in the rootnode of the KDTree." << std::endl;
+  else
+    recursiveLeafSearch(p, radius, *rootnode, plist);
   return plist;
 }
 
+void KDTree::recursiveLeafSearch(const Point &p, float radius, const Node &n, PointPointerList &plist) {
+  if(n.nlist.size() > 0) {
+    for (unsigned int i = 0; i < n.nlist.size(); i++) {
+      if(dfunc->dist(p, n) <= radius)
+        recursiveLeafSearch(p, radius, *n.nlist[i], plist);
+    }
+  } else {
+    for (unsigned int i = 0; i < n.plist.size(); i++) {
+      if(dfunc->dist(p, *n.plist[i]) <= radius)
+        plist.push_back(n.plist[i]);
+    }
+  }
+}
+
+// TODO use spatial data structure for sub-linear search etc...
+PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
+  PointPointerList pl;
+
+  return pl;
+}
+
+// TODO really return number of points? i would have thought of the number of nodes
 int KDTree::size() { return static_cast<int>(plist->size()); }
-
-// TODO use OpenGL to draw the point data
-void KDTree::draw() {}
-
-// TODO use OpenGL to draw the point data
-void KDTree::draw(const PointPointerList &plist) {}
 
 std::shared_ptr<PointList> KDTree::getPoints() { return plist; }
 

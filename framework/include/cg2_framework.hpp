@@ -47,6 +47,7 @@ class EuclDist : public DistFunc {
 public:
   float dist(const Point &a, const Point &b);
   float dist(const Point &a, const Node &n);
+  bool inBorders(const Point &a, const Borders &n);
 };
 
 class KDTree {
@@ -54,10 +55,9 @@ class KDTree {
 public:
   KDTree(std::unique_ptr<PointList> plist, std::unique_ptr<DistFunc> dfunc,
          Borders outerBox);
-  PointPointerList collectKNearest(const Point &p, int knearest);
   PointPointerList collectInRadius(const Point &p, float radius);
-  void draw();
-  void draw(const PointPointerList &plist);
+  void recursiveLeafSearch(const Point &p, float radius, const Node &n, PointPointerList &plist);
+  PointPointerList collectKNearest(const Point &p, int knearest);
   int size();
   std::shared_ptr<PointList> getPoints();
   std::shared_ptr<Node> getRootnode();

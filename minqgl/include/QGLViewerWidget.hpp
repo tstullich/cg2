@@ -53,6 +53,8 @@ class QGLViewerWidget : public QGLWidget {
 
  private:
   std::shared_ptr<KDTree> kdtree;
+  bool flag_drawPoints = true; // TODO use in key event handler
+  bool flag_drawSelectedPoints = true; // TODO turn on or off
   bool flag_drawTree = false; // used in key event handler
   unsigned drawLevelsOfTree = 8;
 
@@ -71,8 +73,14 @@ class QGLViewerWidget : public QGLWidget {
   // draws the given point list
   bool drawPointSet();
 
+  // draws the selected point list
+  bool drawSelectedPointSet();
+
   // list of data points
   std::shared_ptr<PointList> pointList;
+
+  // list of selected data points
+  PointPointerList selectedPointList;
 
  protected:
   void setDefaultMaterial(void);
