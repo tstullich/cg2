@@ -88,10 +88,9 @@ bool QGLViewerWidget::loadPointSet(const char* filename) {
   std::shared_ptr<KDTree> newTree(new KDTree(p.getPoints(), std::make_unique<EuclDist>(), p.outerBox));
   kdtree = newTree;
   pointList = kdtree->getPoints();
-  // TODO make configurable by gui
-  selectedPointList = kdtree->collectInRadius((*pointList)[0], 0.1);
-  // TODO just test
-  kdtree->collectKNearest((*pointList)[0], 10);
+  // TODO make both configurable by gui
+  //selectedPointList = kdtree->collectInRadius((*pointList)[0], 0.1);
+  selectedPointList = kdtree->collectKNearest((*pointList)[0], 100);
 
   updateGL();
 

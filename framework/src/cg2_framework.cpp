@@ -62,7 +62,8 @@ PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
     NodeList nl;
     recursiveKNearestSearch(p, knearest + 1, rootnode, nl, pq);
     // TODO optimize
-    for(unsigned int i = 0; i < pq.size(); i++) {
+    unsigned int pq_size = pq.size();
+    for(unsigned int i = 0; i < pq_size; i++) {
       pl.push_back(pq.top());
       pq.pop();
     }
@@ -74,24 +75,85 @@ PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
 void KDTree::recursiveKNearestSearch(const Point &p, int k, std::shared_ptr<Node> &n,
     NodeList &nl, PriorityQueue &pq) {
 
-  std::cout << "a " << nl.size() << std::endl;
   if(pq.empty()) {
-    nl.push_back(n);
-    if(n->nlist.empty()) {
+    if(n->nlist.empty() || n->nlist[1]->plist.size() < k) {
+      nl.push_back(n);
       add(k, p, pq, n->plist);
-      //TODO
+      recursiveKNearestSearch(p, k, n, nl, pq);
     } else {
-      for (unsigned int i = 0; i < n->nlist.size(); i++)
-        if(dfunc->dist(p, *n->nlist[i]) == 0) {
-          recursiveKNearestSearch(p, k, n->nlist[i], nl, pq);
-          break;
-        }
+
+      if( (n->split.axis == 0 && p.x < n->split.value) ||
+          (n->split.axis == 1 && p.y < n->split.value) ||
+          (n->split.axis == 2 && p.z < n->split.value))
+        recursiveKNearestSearch(p, k, n->nlist[0], nl, pq);
+      else
+        recursiveKNearestSearch(p, k, n->nlist[1], nl, pq);
     }
   } else {
-    if(std::find(nl.begin(), nl.end(), rootnode) != nl.end())
-      std::cout << "bbb " << nl.size() << std::endl;
+    if(std::find(nl.begin(), nl.end(), n) != nl.end()) {
+      if(n->parent != nullptr)
+        recursiveKNearestSearch(p, k, n->parent, nl, pq);
+      else
+        return;
+    } else {
+      if(dfunc->dist(p, *n) < pq.top()->dist) {
+        if(n->nlist.empty()) {
+          add(k, p, pq, n->plist);
+          nl.push_back(n);
+          recursiveKNearestSearch(p, k, n, nl, pq);
+        } else {
+          bool child1_exists = std::find(nl.begin(), nl.end(), n->nlist[0]) != nl.end();
+          bool child2_exists = std::find(nl.begin(), nl.end(), n->nlist[1]) != nl.end();
+          if(child1_exists && child2_exists) {
+            nl.push_back(n);
+            recursiveKNearestSearch(p, k, n, nl, pq);
+          } else if(!child1_exists)
+            recursiveKNearestSearch(p, k, n->nlist[0], nl, pq);
+          else if(!child2_exists)
+            recursiveKNearestSearch(p, k, n->nlist[1], nl, pq);
+        }
+      } else {
+        nl.push_back(n);
+        recursiveKNearestSearch(p, k, n, nl, pq);
+      }
+    }
   }
 }
+
+/*
+std::cout << "biggest element " << pq.top()->dist << std::endl;
+    if(std::find(nl.begin(), nl.end(), n) != nl.end()) {
+      if(n->parent != nullptr)
+        recursiveKNearestSearch(p, k, n->parent, nl, pq);
+      else
+        return;
+    } else {
+
+      if(!n->nlist.empty()) {
+        int blocked_children = 0;
+        for (unsigned int i = 0; i < n->nlist.size(); i++) {
+          if(std::find(nl.begin(), nl.end(), n->nlist[i]) != nl.end()) {
+            if(dfunc->dist(p, *n->nlist[i]) < pq.top()->dist)
+              recursiveKNearestSearch(p, k, n->nlist[i], nl, pq);
+            else {
+              nl.push_back(n->nlist[i]);
+              blocked_children++;
+            }
+          } else {
+            blocked_children++;
+          }
+        }
+        if(blocked_children == n->nlist.size()) {
+          nl.push_back(n);
+          recursiveKNearestSearch(p, k, n, nl, pq);
+        }
+      } else {
+        add(k, p, pq, n->plist);
+        nl.push_back(n);
+        recursiveKNearestSearch(p, k, n, nl, pq);
+      }
+    }
+*/
 
 void KDTree::add(int k, const Point &p, PriorityQueue &pq, PointPointerList &pl) {
   for(unsigned int i = 0; i < pl.size(); i++) {
