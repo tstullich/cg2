@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <queue>
 
 #include "parser.hpp"
 #include "point.hpp"
@@ -14,6 +15,14 @@ class Node;
 typedef std::vector<Point> PointList;
 typedef std::vector<std::shared_ptr<Point>> PointPointerList;
 typedef std::vector<std::shared_ptr<Node>> NodeList;
+
+// sort operator of priority queue
+struct LessThanByDistance {
+  bool operator()(const std::shared_ptr<Point> lhs, const std::shared_ptr<Point> rhs) {
+    return lhs->dist < rhs->dist;
+  }
+};
+typedef std::priority_queue<std::shared_ptr<Point>, PointPointerList, LessThanByDistance> PriorityQueue;
 
 // characteristics of the split plane
 struct Split {
@@ -56,7 +65,12 @@ public:
          Borders outerBox);
   PointPointerList collectInRadius(const Point &p, float radius);
   void recursiveLeafSearch(const Point &p, float radius, const Node &n, PointPointerList &plist);
+
   PointPointerList collectKNearest(const Point &p, int knearest);
+  void recursiveKNearestSearch(const Point &p, int k, std::shared_ptr<Node> &n,
+      NodeList &nl, PriorityQueue &pq);
+  void add(int k, const Point &p, PriorityQueue &pq, PointPointerList &pl);
+
   int size();
   std::shared_ptr<PointList> getPoints();
   std::shared_ptr<Node> getRootnode();

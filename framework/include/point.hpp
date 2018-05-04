@@ -12,6 +12,7 @@ public:
   float x;
   float y;
   float z;
+  float dist;
 
   float fetchPointValue(int axis) {
     if (axis == 0) {

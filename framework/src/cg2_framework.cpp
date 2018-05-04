@@ -25,26 +25,25 @@ KDTree::KDTree(std::unique_ptr<PointList> plist,
   buildTree(outerBox);
 }
 
-// TODO use spatial data structure for sub-linear search etc...
 PointPointerList KDTree::collectInRadius(const Point &p, float radius) {
-  PointPointerList plist;
+  PointPointerList pl;
   if(dfunc->dist(p, *rootnode) > 0)
-    std::cout << "The given point is not contained in the rootnode of the KDTree." << std::endl;
+    std::cout << "The given point is not contained in the rootnode of the KDTree box." << std::endl;
   else
-    recursiveLeafSearch(p, radius, *rootnode, plist);
-  return plist;
+    recursiveLeafSearch(p, radius, *rootnode, pl);
+  return pl;
 }
 
-void KDTree::recursiveLeafSearch(const Point &p, float radius, const Node &n, PointPointerList &plist) {
+void KDTree::recursiveLeafSearch(const Point &p, float radius, const Node &n, PointPointerList &pl) {
   if(n.nlist.size() > 0) {
     for (unsigned int i = 0; i < n.nlist.size(); i++) {
       if(dfunc->dist(p, n) <= radius)
-        recursiveLeafSearch(p, radius, *n.nlist[i], plist);
+        recursiveLeafSearch(p, radius, *n.nlist[i], pl);
     }
   } else {
     for (unsigned int i = 0; i < n.plist.size(); i++) {
       if(dfunc->dist(p, *n.plist[i]) <= radius)
-        plist.push_back(n.plist[i]);
+        pl.push_back(n.plist[i]);
     }
   }
 }
@@ -52,8 +51,55 @@ void KDTree::recursiveLeafSearch(const Point &p, float radius, const Node &n, Po
 // TODO use spatial data structure for sub-linear search etc...
 PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
   PointPointerList pl;
-
+  if(dfunc->dist(p, *rootnode) > 0)
+    std::cout << "The given point is not contained in the rootnode of the KDTree box." << std::endl;
+  else
+  if(rootnode->plist.size() <= knearest + 1) {
+    PointPointerList ppl(rootnode->plist);
+    pl = ppl;
+  } else {
+    PriorityQueue pq;
+    NodeList nl;
+    recursiveKNearestSearch(p, knearest + 1, rootnode, nl, pq);
+    // TODO optimize
+    for(unsigned int i = 0; i < pq.size(); i++) {
+      pl.push_back(pq.top());
+      pq.pop();
+    }
+  }
+  // TODO delete p from pl
   return pl;
+}
+
+void KDTree::recursiveKNearestSearch(const Point &p, int k, std::shared_ptr<Node> &n,
+    NodeList &nl, PriorityQueue &pq) {
+
+  std::cout << "a " << nl.size() << std::endl;
+  if(pq.empty()) {
+    nl.push_back(n);
+    if(n->nlist.empty()) {
+      add(k, p, pq, n->plist);
+      //TODO
+    } else {
+      for (unsigned int i = 0; i < n->nlist.size(); i++)
+        if(dfunc->dist(p, *n->nlist[i]) == 0) {
+          recursiveKNearestSearch(p, k, n->nlist[i], nl, pq);
+          break;
+        }
+    }
+  } else {
+    if(std::find(nl.begin(), nl.end(), rootnode) != nl.end())
+      std::cout << "bbb " << nl.size() << std::endl;
+  }
+}
+
+void KDTree::add(int k, const Point &p, PriorityQueue &pq, PointPointerList &pl) {
+  for(unsigned int i = 0; i < pl.size(); i++) {
+    pl[i]->dist = dfunc->dist(p, *pl[i]);
+    pq.push(pl[i]);
+    if(pq.size() > k)
+      pq.pop();
+  }
 }
 
 // TODO really return number of points? i would have thought of the number of nodes
@@ -156,9 +202,10 @@ void KDTree::recursiveTreeExtend(unsigned int depth,
 
 std::vector<PointPointerList> KDTree::splitList(PointPointerList &list,
                                                 unsigned int index) {
-  // TODO make faster
+  // TODO optimize
   PointPointerList firstList;
-  for (unsigned int i = 0; i < index; i++) firstList.push_back(list[i]);
+  for (unsigned int i = 0; i < index; i++)
+    firstList.push_back(list[i]);
 
   PointPointerList secondList;
   for (unsigned int i = index; i < list.size(); i++)

@@ -90,6 +90,8 @@ bool QGLViewerWidget::loadPointSet(const char* filename) {
   pointList = kdtree->getPoints();
   // TODO make configurable by gui
   selectedPointList = kdtree->collectInRadius((*pointList)[0], 0.1);
+  // TODO just test
+  kdtree->collectKNearest((*pointList)[0], 10);
 
   updateGL();
 
