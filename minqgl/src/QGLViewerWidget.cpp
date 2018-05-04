@@ -53,13 +53,13 @@ using namespace glm;
 
 //----------------------------------------------------------------------------
 
-QGLViewerWidget::QGLViewerWidget(QWidget* _parent) : QGLWidget(_parent) {
+QGLViewerWidget::QGLViewerWidget(QWidget *_parent) : QGLWidget(_parent) {
   init();
 }
 
 //----------------------------------------------------------------------------
 
-QGLViewerWidget::QGLViewerWidget(QGLFormat& _fmt, QWidget* _parent)
+QGLViewerWidget::QGLViewerWidget(QGLFormat &_fmt, QWidget *_parent)
     : QGLWidget(_fmt, _parent) {
   init();
 }
@@ -78,18 +78,19 @@ void QGLViewerWidget::init() {
 
 QGLViewerWidget::~QGLViewerWidget() {}
 
-bool QGLViewerWidget::loadPointSet(const char* filename) {
+bool QGLViewerWidget::loadPointSet(const char *filename) {
   Parser p;
   if (!p.open(filename)) {
     std::cout << "Unable to open file " << std::endl;
     return false;
   }
 
-  std::shared_ptr<KDTree> newTree(new KDTree(p.getPoints(), std::make_unique<EuclDist>(), p.outerBox));
+  std::shared_ptr<KDTree> newTree(
+      new KDTree(p.getPoints(), std::make_unique<EuclDist>(), p.outerBox));
   kdtree = newTree;
   pointList = kdtree->getPoints();
   // TODO make both configurable by gui
-  //selectedPointList = kdtree->collectInRadius((*pointList)[0], 0.1);
+  // selectedPointList = kdtree->collectInRadius((*pointList)[0], 0.1);
   selectedPointList = kdtree->collectKNearest((*pointList)[0], 100);
 
   updateGL();
@@ -98,15 +99,14 @@ bool QGLViewerWidget::loadPointSet(const char* filename) {
 }
 
 bool QGLViewerWidget::drawPointSet() {
-
-  if(pointList != nullptr && pointList->size() > 0) {
+  if (pointList != nullptr && pointList->size() > 0) {
     glDisable(GL_LIGHTING);
 
     glEnable(GL_POINT_SMOOTH);
     glPointSize(3.0f);
     glBegin(GL_POINTS);
     glColor3f(0, 0, 0);
-    for(unsigned int i = 0; i < pointList->size(); i++) {
+    for (unsigned int i = 0; i < pointList->size(); i++) {
       Point p = (*pointList)[i];
       glVertex3f(p.x, p.y, p.z);
     }
@@ -117,14 +117,14 @@ bool QGLViewerWidget::drawPointSet() {
 }
 
 bool QGLViewerWidget::drawSelectedPointSet() {
-  if(selectedPointList.size() > 0) {
+  if (selectedPointList.size() > 0) {
     glDisable(GL_LIGHTING);
 
     glEnable(GL_POINT_SMOOTH);
     glPointSize(10.0f);
     glBegin(GL_POINTS);
     glColor3f(0, 255, 0);
-    for(unsigned int i = 0; i < selectedPointList.size(); i++) {
+    for (unsigned int i = 0; i < selectedPointList.size(); i++) {
       std::shared_ptr<Point> p = selectedPointList[i];
       glVertex3f(p->x, p->y, p->z);
     }
@@ -228,130 +228,124 @@ void QGLViewerWidget::paintGL() {
 //----------------------------------------------------------------------------
 
 void drawBox(struct Borders borders) {
-    double x_0 = borders.xMin;
-    double x_1 = borders.xMax;
-    double y_0 = borders.yMin;
-    double y_1 = borders.yMax;
-    double z_0 = borders.zMin;
-    double z_1 = borders.zMax;
+  double x_0 = borders.xMin;
+  double x_1 = borders.xMax;
+  double y_0 = borders.yMin;
+  double y_1 = borders.yMax;
+  double z_0 = borders.zMin;
+  double z_1 = borders.zMax;
 
-    glBegin(GL_LINE_LOOP);
-        glVertex3f(x_0, y_0, z_0);
-        glVertex3f(x_0, y_0, z_1);
-        glVertex3f(x_0, y_1, z_1);
-        glVertex3f(x_0, y_1, z_0);
-    glEnd();
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(x_0, y_0, z_0);
+  glVertex3f(x_0, y_0, z_1);
+  glVertex3f(x_0, y_1, z_1);
+  glVertex3f(x_0, y_1, z_0);
+  glEnd();
 
-    glBegin(GL_LINE_LOOP);
-        glVertex3f(x_1, y_0, z_0);
-        glVertex3f(x_1, y_0, z_1);
-        glVertex3f(x_1, y_1, z_1);
-        glVertex3f(x_1, y_1, z_0);
-    glEnd();
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(x_1, y_0, z_0);
+  glVertex3f(x_1, y_0, z_1);
+  glVertex3f(x_1, y_1, z_1);
+  glVertex3f(x_1, y_1, z_0);
+  glEnd();
 
-    glBegin(GL_LINES);
-        glVertex3f(x_0, y_0, z_0);
-        glVertex3f(x_1, y_0, z_0);
+  glBegin(GL_LINES);
+  glVertex3f(x_0, y_0, z_0);
+  glVertex3f(x_1, y_0, z_0);
 
-        glVertex3f(x_0, y_0, z_1);
-        glVertex3f(x_1, y_0, z_1);
+  glVertex3f(x_0, y_0, z_1);
+  glVertex3f(x_1, y_0, z_1);
 
-        glVertex3f(x_0, y_1, z_1);
-        glVertex3f(x_1, y_1, z_1);
+  glVertex3f(x_0, y_1, z_1);
+  glVertex3f(x_1, y_1, z_1);
 
-        glVertex3f(x_0, y_1, z_0);
-        glVertex3f(x_1, y_1, z_0);
-    glEnd();
+  glVertex3f(x_0, y_1, z_0);
+  glVertex3f(x_1, y_1, z_0);
+  glEnd();
 }
 
 void recursiveDrawKDTree(std::shared_ptr<Node> node, unsigned remainingLevels) {
-    if (remainingLevels <= 0)
-        return;
+  if (remainingLevels <= 0) return;
 
-    // recursively traverse the tree
-    if (node->nlist.size() > 0) {
+  // recursively traverse the tree
+  if (node->nlist.size() > 0) {
+    double x_0 = node->borders.xMin;
+    double x_1 = node->borders.xMax;
+    double y_0 = node->borders.yMin;
+    double y_1 = node->borders.yMax;
+    double z_0 = node->borders.zMin;
+    double z_1 = node->borders.zMax;
+    unsigned axis = node->split.axis;
+    double splitVal = node->split.value;
 
-      double x_0 = node->borders.xMin;
-      double x_1 = node->borders.xMax;
-      double y_0 = node->borders.yMin;
-      double y_1 = node->borders.yMax;
-      double z_0 = node->borders.zMin;
-      double z_1 = node->borders.zMax;
-      unsigned axis = node->split.axis;
-      double splitVal = node->split.value;
-
-      if (axis == 0) {        // split along x
-          double x_new = splitVal;
-          glColor3f(1.0f,0,0);
-          glVertex3f(x_new, y_0, z_0);
-          glVertex3f(x_new, y_0, z_1);
-          glColor3f(0.25f,0,0);
-          glVertex3f(x_new, y_1, z_1);
-          glVertex3f(x_new, y_1, z_0);
-      } else if (axis == 1) { // split along y
-          double y_new = splitVal;
-          glColor3f(0,1.0f,0);
-          glVertex3f(x_0, y_new, z_0);
-          glVertex3f(x_0, y_new, z_1);
-          glColor3f(0,0.25f,0);
-          glVertex3f(x_1, y_new, z_1);
-          glVertex3f(x_1, y_new, z_0);
-      } else if (axis == 2) { // split along z
-          double z_new = splitVal;
-          glColor3f(0,0,1.0f);
-          glVertex3f(x_0, y_0, z_new);
-          glVertex3f(x_0, y_1, z_new);
-          glColor3f(0,0,0.25f);
-          glVertex3f(x_1, y_1, z_new);
-          glVertex3f(x_1, y_0, z_new);
-      } else {
-          std::cout << "recursiveDrawKDTree() error" << std::endl;
-      }
-
-      if (node->nlist[0]->nlist.size() > 0)   // avoid leaf nodes
-          recursiveDrawKDTree(node->nlist[0], remainingLevels-1);
-      if (node->nlist[1]->nlist.size() > 0)   // avoid leaf nodes
-          recursiveDrawKDTree(node->nlist[1], remainingLevels-1);
+    if (axis == 0) {  // split along x
+      double x_new = splitVal;
+      glColor3f(1.0f, 0, 0);
+      glVertex3f(x_new, y_0, z_0);
+      glVertex3f(x_new, y_0, z_1);
+      glColor3f(0.25f, 0, 0);
+      glVertex3f(x_new, y_1, z_1);
+      glVertex3f(x_new, y_1, z_0);
+    } else if (axis == 1) {  // split along y
+      double y_new = splitVal;
+      glColor3f(0, 1.0f, 0);
+      glVertex3f(x_0, y_new, z_0);
+      glVertex3f(x_0, y_new, z_1);
+      glColor3f(0, 0.25f, 0);
+      glVertex3f(x_1, y_new, z_1);
+      glVertex3f(x_1, y_new, z_0);
+    } else if (axis == 2) {  // split along z
+      double z_new = splitVal;
+      glColor3f(0, 0, 1.0f);
+      glVertex3f(x_0, y_0, z_new);
+      glVertex3f(x_0, y_1, z_new);
+      glColor3f(0, 0, 0.25f);
+      glVertex3f(x_1, y_1, z_new);
+      glVertex3f(x_1, y_0, z_new);
+    } else {
+      std::cout << "recursiveDrawKDTree() error" << std::endl;
     }
+
+    if (node->nlist[0]->nlist.size() > 0)  // avoid leaf nodes
+      recursiveDrawKDTree(node->nlist[0], remainingLevels - 1);
+    if (node->nlist[1]->nlist.size() > 0)  // avoid leaf nodes
+      recursiveDrawKDTree(node->nlist[1], remainingLevels - 1);
+  }
 }
 
 void QGLViewerWidget::drawKDTree() {
-    if (kdtree == nullptr)
-        return;
+  if (kdtree == nullptr) return;
 
-    drawBox(kdtree->getRootnode()->borders);
+  drawBox(kdtree->getRootnode()->borders);
 
-    glBegin(GL_QUADS);
-    recursiveDrawKDTree(kdtree->getRootnode(), drawLevelsOfTree);
-    glEnd();
+  glBegin(GL_QUADS);
+  recursiveDrawKDTree(kdtree->getRootnode(), drawLevelsOfTree);
+  glEnd();
 }
 
 void QGLViewerWidget::drawScene() {
-    glDisable(GL_LIGHTING);
+  glDisable(GL_LIGHTING);
 
-    if (flag_drawPoints)
-        drawPointSet();
-    if (flag_drawSelectedPoints)
-        drawSelectedPointSet();
-    if (flag_drawTree)
-        drawKDTree();
+  if (flag_drawPoints) drawPointSet();
+  if (flag_drawSelectedPoints) drawSelectedPointSet();
+  if (flag_drawTree) drawKDTree();
 
-    // Draw a coordinate system
-    glBegin(GL_LINES);
-    glColor3f(1, 0, 0);
-    glVertex3f(0, 0, 0);
-    glVertex3f(1, 0, 0);
-    glColor3f(0, 1, 0);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 1, 0);
-    glColor3f(0, 0, 1);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 0, 1);
-    glEnd();
+  // Draw a coordinate system
+  glBegin(GL_LINES);
+  glColor3f(1, 0, 0);
+  glVertex3f(0, 0, 0);
+  glVertex3f(1, 0, 0);
+  glColor3f(0, 1, 0);
+  glVertex3f(0, 0, 0);
+  glVertex3f(0, 1, 0);
+  glColor3f(0, 0, 1);
+  glVertex3f(0, 0, 0);
+  glVertex3f(0, 0, 1);
+  glEnd();
 }
 
 //----------------------------------------------------------------------------
-void QGLViewerWidget::mousePressEvent(QMouseEvent* event) {
+void QGLViewerWidget::mousePressEvent(QMouseEvent *event) {
   // popup menu
   if (event->button() == RightButton && event->buttons() == RightButton) {
   } else {
@@ -360,7 +354,7 @@ void QGLViewerWidget::mousePressEvent(QMouseEvent* event) {
 }
 
 //----------------------------------------------------------------------------
-void QGLViewerWidget::mouseMoveEvent(QMouseEvent* event) {
+void QGLViewerWidget::mouseMoveEvent(QMouseEvent *event) {
   QPoint newPoint2D = event->pos();
 
   // Left button: rotate around center
@@ -438,13 +432,13 @@ void QGLViewerWidget::mouseMoveEvent(QMouseEvent* event) {
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::mouseReleaseEvent(QMouseEvent* /* _event */) {
+void QGLViewerWidget::mouseReleaseEvent(QMouseEvent * /* _event */) {
   lastPointOk = false;
 }
 
 //-----------------------------------------------------------------------------
 
-void QGLViewerWidget::wheelEvent(QWheelEvent* _event) {
+void QGLViewerWidget::wheelEvent(QWheelEvent *_event) {
   // Use the mouse wheel to zoom in/out
 
   float d = -(float)_event->delta() / 120.0 * 0.2 * radius;
@@ -455,7 +449,7 @@ void QGLViewerWidget::wheelEvent(QWheelEvent* _event) {
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::keyPressEvent(QKeyEvent* _event) {
+void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
   switch (_event->key()) {
     case Key_Print:
       slotSnapshot();
@@ -466,13 +460,11 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent* _event) {
       break;
 
     case Key_J:
-      if (drawLevelsOfTree > 0)
-          drawLevelsOfTree--;
+      if (drawLevelsOfTree > 0) drawLevelsOfTree--;
       break;
 
     case Key_K:
-      if (drawLevelsOfTree < 8)
-          drawLevelsOfTree++;
+      if (drawLevelsOfTree < 8) drawLevelsOfTree++;
       break;
 
     case Key_H:
@@ -494,7 +486,7 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent* _event) {
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::translate(const vec3& _trans) {
+void QGLViewerWidget::translate(const vec3 &_trans) {
   // Translate the object by _trans
   // Update modelviewMatrix
   makeCurrent();
@@ -506,7 +498,7 @@ void QGLViewerWidget::translate(const vec3& _trans) {
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::rotate(const vec3& _axis, float _angle) {
+void QGLViewerWidget::rotate(const vec3 &_axis, float _angle) {
   // Rotate around center center, axis _axis, by angle _angle
   // Update modelviewMatrix
 
@@ -528,7 +520,7 @@ void QGLViewerWidget::rotate(const vec3& _axis, float _angle) {
 
 //----------------------------------------------------------------------------
 
-bool QGLViewerWidget::mapToSphere(const QPoint& _v2D, vec3& _v3D) {
+bool QGLViewerWidget::mapToSphere(const QPoint &_v2D, vec3 &_v3D) {
   // This is actually doing the Sphere/Hyperbolic sheet hybrid thing,
   // based on Ken Shoemake's ArcBall in Graphics Gems IV, 1993.
   double x = (2.0 * _v2D.x() - width()) / width();
@@ -575,7 +567,7 @@ void QGLViewerWidget::viewAll() {
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::setScenePos(const vec3& _cog, float _radius) {
+void QGLViewerWidget::setScenePos(const vec3 &_cog, float _radius) {
   center = _cog;
   radius = _radius;
 
@@ -585,12 +577,12 @@ void QGLViewerWidget::setScenePos(const vec3& _cog, float _radius) {
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::addAction(QAction* act, const char* name) {
+void QGLViewerWidget::addAction(QAction *act, const char *name) {
   namesToActions[name] = act;
   Super::addAction(act);
 }
 
-void QGLViewerWidget::removeAction(QAction* act) {
+void QGLViewerWidget::removeAction(QAction *act) {
   ActionMap::iterator it = namesToActions.begin(), e = namesToActions.end();
   ActionMap::iterator found = e;
   for (; it != e; ++it) {
@@ -607,7 +599,7 @@ void QGLViewerWidget::removeAction(QAction* act) {
   Super::removeAction(act);
 }
 
-void QGLViewerWidget::removeAction(const char* name) {
+void QGLViewerWidget::removeAction(const char *name) {
   QString namestr = QString(name);
   ActionMap::iterator e = namesToActions.end();
 
@@ -617,7 +609,7 @@ void QGLViewerWidget::removeAction(const char* name) {
   }
 }
 
-QAction* QGLViewerWidget::findAction(const char* name) {
+QAction *QGLViewerWidget::findAction(const char *name) {
   QString namestr = QString(name);
   ActionMap::iterator e = namesToActions.end();
 

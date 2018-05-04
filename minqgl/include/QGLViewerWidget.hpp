@@ -11,15 +11,15 @@
 //== INCLUDES =================================================================
 
 #include <iostream>
-#include <memory>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include <QtOpenGL/qgl.h>
 #include <QElapsedTimer>
 #include <QFileDialog>
 #include <QMainWindow>
+#include <QtOpenGL/qgl.h>
 
 #include <glm/glm.hpp>
 
@@ -39,31 +39,31 @@ class QAction;
 class QGLViewerWidget : public QGLWidget {
   Q_OBJECT
 
- public:
+public:
   typedef QGLWidget Super;
 
   // Default constructor.
-  QGLViewerWidget(QWidget* _parent = 0);
+  QGLViewerWidget(QWidget *_parent = 0);
 
   //
-  QGLViewerWidget(QGLFormat& _fmt, QWidget* _parent = 0);
+  QGLViewerWidget(QGLFormat &_fmt, QWidget *_parent = 0);
 
   // Destructor.
   virtual ~QGLViewerWidget();
 
- private:
+private:
   std::shared_ptr<KDTree> kdtree;
-  bool flag_drawPoints = true; // TODO use in key event handler
+  bool flag_drawPoints = true;         // TODO use in key event handler
   bool flag_drawSelectedPoints = true; // TODO turn on or off
-  bool flag_drawTree = false; // used in key event handler
+  bool flag_drawTree = false;          // used in key event handler
   unsigned drawLevelsOfTree = 8;
 
   void init(void);
 
   // Specific to algorithms
- protected:
+protected:
   // loads data points from OFF file using the parser
-  bool loadPointSet(const char* filename);
+  bool loadPointSet(const char *filename);
 
   void drawKDTree();
 
@@ -82,11 +82,11 @@ class QGLViewerWidget : public QGLWidget {
   // list of selected data points
   PointPointerList selectedPointList;
 
- protected:
+protected:
   void setDefaultMaterial(void);
   void setDefaultLight(void);
 
- private slots:
+private slots:
   // popup menu clicked
   void slotSnapshot(void);
 
@@ -105,30 +105,30 @@ class QGLViewerWidget : public QGLWidget {
   //   STANDARD OPENGL QT STUFS
   /********************************************************************/
 
- public:
+public:
   /* Sets the center and size of the whole scene.
   The _center is used as fixpoint for rotations and for adjusting
   the camera/viewer (see view_all()). */
-  void setScenePos(const glm::vec3& center, float radius);
+  void setScenePos(const glm::vec3 &center, float radius);
 
   /* view the whole scene: the eye point is moved far enough from the
   center so that the whole scene is visible. */
   void viewAll();
 
   float getRadius() const { return radius; }
-  const glm::vec3& getCenter() const { return center; }
+  const glm::vec3 &getCenter() const { return center; }
 
-  const GLdouble* getModelviewMatrix() const { return modelviewMatrix; }
-  const GLdouble* getProjectionMatrix() const { return projectionMatrix; }
+  const GLdouble *getModelviewMatrix() const { return modelviewMatrix; }
+  const GLdouble *getProjectionMatrix() const { return projectionMatrix; }
 
   float fovy() const { return 45.0f; }
 
-  QAction* findAction(const char* name);
-  void addAction(QAction* action, const char* name);
-  void removeAction(const char* name);
-  void removeAction(QAction* action);
+  QAction *findAction(const char *name);
+  void addAction(QAction *action, const char *name);
+  void removeAction(const char *name);
+  void removeAction(QAction *action);
 
- private:  // inherited
+private: // inherited
   // initialize OpenGL states (triggered by Qt)
   void initializeGL();
 
@@ -138,23 +138,23 @@ class QGLViewerWidget : public QGLWidget {
   // handle resize events (triggered by Qt)
   void resizeGL(int w, int h);
 
- protected:
+protected:
   // Qt mouse events
-  virtual void mousePressEvent(QMouseEvent*);
-  virtual void mouseReleaseEvent(QMouseEvent*);
-  virtual void mouseMoveEvent(QMouseEvent*);
-  virtual void wheelEvent(QWheelEvent*);
-  virtual void keyPressEvent(QKeyEvent*);
+  virtual void mousePressEvent(QMouseEvent *);
+  virtual void mouseReleaseEvent(QMouseEvent *);
+  virtual void mouseMoveEvent(QMouseEvent *);
+  virtual void wheelEvent(QWheelEvent *);
+  virtual void keyPressEvent(QKeyEvent *);
 
- private:
+private:
   // updates projection matrix
   void updateProjectionMatrix();
 
   // translate the scene and update modelview matrix
-  void translate(const glm::vec3& trans);
+  void translate(const glm::vec3 &trans);
 
   // rotate the scene (around its center) and update modelview matrix
-  void rotate(const glm::vec3& axis, float angle);
+  void rotate(const glm::vec3 &axis, float angle);
 
   glm::vec3 center;
   float radius;
@@ -162,13 +162,13 @@ class QGLViewerWidget : public QGLWidget {
   GLdouble projectionMatrix[16], modelviewMatrix[16];
 
   // popup menu for draw mode selection
-  QMenu* popupMenu;
-  QActionGroup* drawModesGroup;
-  typedef std::map<QString, QAction*> ActionMap;
+  QMenu *popupMenu;
+  QActionGroup *drawModesGroup;
+  typedef std::map<QString, QAction *> ActionMap;
   ActionMap namesToActions;
 
   // virtual trackball: map 2D screen point to unit sphere
-  bool mapToSphere(const QPoint& point, glm::vec3& result);
+  bool mapToSphere(const QPoint &point, glm::vec3 &result);
 
   QPoint lastPoint2D;
   glm::vec3 lastPoint3D;
@@ -176,5 +176,5 @@ class QGLViewerWidget : public QGLWidget {
 };
 
 //=============================================================================
-#endif  // OPENMESHAPPS_QGLVIEWERWIDGET_HH
+#endif // OPENMESHAPPS_QGLVIEWERWIDGET_HH
 //=============================================================================
