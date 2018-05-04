@@ -11,11 +11,14 @@
 
 #include <qdockwidget.h>
 #include <QApplication>
+#include <QComboBox>
 #include <QDesktopWidget>
 #include <QFileDialog>
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QSlider>
+#include <QStringList>
 #include <fstream>
 #include <iostream>
 
@@ -28,8 +31,10 @@
 #include <QGLContext>
 
 #include "QGLViewerWidget.hpp"
+#include "SidebarWidget.hpp"
 
 void createMenu(QMainWindow *w);
+void createSidebar(QMainWindow *w);
 
 int main(int argc, char **argv) {
   // OpenGL check
@@ -52,6 +57,7 @@ int main(int argc, char **argv) {
 #endif
 
   createMenu(mainWin);
+  createSidebar(mainWin);
 
   QDesktopWidget widget;
   QRect mainScreenSize = widget.availableGeometry(widget.primaryScreen());
@@ -78,4 +84,8 @@ void createMenu(QMainWindow *w) {
   QObject::connect(openAct, SIGNAL(triggered()), w->centralWidget(),
                    SLOT(queryOpenPointSetFile()));
   fileMenu->addAction(openAct);
+}
+
+void createSidebar(QMainWindow *w) {
+  w->addDockWidget(Qt::RightDockWidgetArea, new SidebarWidget(w));
 }
