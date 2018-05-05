@@ -3,8 +3,8 @@
 
 #include <QComboBox>
 #include <QDockWidget>
-#include <QString>
 #include <QSlider>
+#include <QString>
 #include <QVBoxLayout>
 
 class SidebarWidget : public QDockWidget {

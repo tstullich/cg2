@@ -23,6 +23,7 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
 
   layout->addWidget(dropdownMenu);
   layout->addWidget(slider);
+  layout->setSizeConstraint(QLayout::SetFixedSize);
 
   container->setLayout(layout);
   setWidget(container);
