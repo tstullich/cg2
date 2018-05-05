@@ -39,6 +39,7 @@
 // --------------------
 
 #include "QGLViewerWidget.hpp"
+#include "glm/gtx/intersect.hpp"
 
 #if !defined(M_PI)
 #define M_PI 3.1415926535897932
@@ -91,6 +92,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   pointList = kdtree->getPoints();
   // TODO make both configurable by gui
   // selectedPointList = kdtree->collectInRadius((*pointList)[0], 0.1);
+
   selectedPointList = kdtree->collectKNearest((*pointList)[0], 100);
 
   updateGL();
@@ -346,94 +348,211 @@ void QGLViewerWidget::drawScene() {
 
 //----------------------------------------------------------------------------
 void QGLViewerWidget::mousePressEvent(QMouseEvent *event) {
-  // popup menu
-  if (event->button() == RightButton && event->buttons() == RightButton) {
-  } else {
-    lastPointOk = mapToSphere(lastPoint2D = event->pos(), lastPoint3D);
-  }
+    // popup menu
+    if (event->button() == RightButton && event->buttons() == RightButton) {
+        selectOnRelease = false;
+    } else {
+        lastPointOk = mapToSphere(lastPoint2D = event->pos(), lastPoint3D);
+        selectOnRelease = true;
+    }
 }
 
 //----------------------------------------------------------------------------
 void QGLViewerWidget::mouseMoveEvent(QMouseEvent *event) {
-  QPoint newPoint2D = event->pos();
+    selectOnRelease = false;
+    QPoint newPoint2D = event->pos();
 
-  // Left button: rotate around center
-  // Middle button: translate object
-  // Left & middle button: zoom in/out
+    // Left button: rotate around center
+    // Middle button: translate object
+    // Left & middle button: zoom in/out
 
-  vec3 newPoint3D;
-  bool newPoint_hitSphere = mapToSphere(newPoint2D, newPoint3D);
+    vec3 newPoint3D;
+    bool newPoint_hitSphere = mapToSphere(newPoint2D, newPoint3D);
 
-  float dx = newPoint2D.x() - lastPoint2D.x();
-  float dy = newPoint2D.y() - lastPoint2D.y();
+    float dx = newPoint2D.x() - lastPoint2D.x();
+    float dy = newPoint2D.y() - lastPoint2D.y();
 
-  float w = width();
-  float h = height();
+    float w = width();
+    float h = height();
 
-  // enable GL context
-  makeCurrent();
+    // enable GL context
+    makeCurrent();
 
-  // move in z direction
-  if ((event->buttons() == (LeftButton + MidButton)) ||
-      (event->buttons() == LeftButton &&
-       event->modifiers() == ControlModifier)) {
-    float value_y = radius * dy * 3.0 / h;
-    translate(vec3(0.0, 0.0, value_y));
-  } else if ((event->buttons() == MidButton) ||
-             (event->buttons() == LeftButton &&
-              event->modifiers() == AltModifier)) {
-    // move in x,y direction
-    float z =
-        -(modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
-          modelviewMatrix[10] * center[2] + modelviewMatrix[14]) /
-        (modelviewMatrix[3] * center[0] + modelviewMatrix[7] * center[1] +
-         modelviewMatrix[11] * center[2] + modelviewMatrix[15]);
+    // move in z direction
+    if ((event->buttons() == (LeftButton + MidButton)) ||
+            (event->buttons() == LeftButton &&
+             event->modifiers() == ControlModifier)) {
+        float value_y = radius * dy * 3.0 / h;
+        translate(vec3(0.0, 0.0, value_y));
+    } else if ((event->buttons() == MidButton) ||
+            (event->buttons() == LeftButton &&
+             event->modifiers() == AltModifier)) {
+        // move in x,y direction
+        float z =
+            -(modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
+                    modelviewMatrix[10] * center[2] + modelviewMatrix[14]) /
+            (modelviewMatrix[3] * center[0] + modelviewMatrix[7] * center[1] +
+             modelviewMatrix[11] * center[2] + modelviewMatrix[15]);
 
-    float aspect = w / h;
-    float near_plane = 0.01 * radius;
-    float top = tan(fovy() / 2.0f * M_PI / 180.0f) * near_plane;
-    float right = aspect * top;
+        float aspect = w / h;
+        float near_plane = 0.01 * radius;
+        float top = tan(fovy() / 2.0f * M_PI / 180.0f) * near_plane;
+        float right = aspect * top;
 
-    translate(vec3(2.0 * dx / w * right / near_plane * z,
-                   -2.0 * dy / h * top / near_plane * z, 0.0f));
-  } else if (event->buttons() == LeftButton) {
-    // rotate
-    if (lastPointOk) {
-      if ((newPoint_hitSphere = mapToSphere(newPoint2D, newPoint3D))) {
-        vec3 axis = cross(lastPoint3D, newPoint3D);
+        translate(vec3(2.0 * dx / w * right / near_plane * z,
+                    -2.0 * dy / h * top / near_plane * z, 0.0f));
+    } else if (event->buttons() == LeftButton) {
+        // rotate
+        if (lastPointOk) {
+            if ((newPoint_hitSphere = mapToSphere(newPoint2D, newPoint3D))) {
+                vec3 axis = cross(lastPoint3D, newPoint3D);
 
-        if (dot(axis, axis) < 1e-7) {
-          axis = vec3(1, 0, 0);
-        } else {
-          axis = normalize(axis);
+                if (dot(axis, axis) < 1e-7) {
+                    axis = vec3(1, 0, 0);
+                } else {
+                    axis = normalize(axis);
+                }
+                // find the amount of rotation
+                vec3 d = lastPoint3D - newPoint3D;
+                float t = 0.5 * glm::length(d) / TRACKBALL_RADIUS;
+                if (t < -1.0)
+                    t = -1.0;
+                else if (t > 1.0)
+                    t = 1.0;
+                float phi = 2.0 * asin(t);
+                float angle = phi * 180.0 / M_PI;
+                rotate(axis, angle);
+            }
         }
-        // find the amount of rotation
-        vec3 d = lastPoint3D - newPoint3D;
-        float t = 0.5 * glm::length(d) / TRACKBALL_RADIUS;
-        if (t < -1.0)
-          t = -1.0;
-        else if (t > 1.0)
-          t = 1.0;
-        float phi = 2.0 * asin(t);
-        float angle = phi * 180.0 / M_PI;
-        rotate(axis, angle);
-      }
     }
-  }
 
-  // remember this point
-  lastPoint2D = newPoint2D;
-  lastPoint3D = newPoint3D;
-  lastPointOk = newPoint_hitSphere;
+    // remember this point
+    lastPoint2D = newPoint2D;
+    lastPoint3D = newPoint3D;
+    lastPointOk = newPoint_hitSphere;
 
-  // trigger redraw
-  updateGL();
+    // trigger redraw
+    updateGL();
 }
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::mouseReleaseEvent(QMouseEvent * /* _event */) {
-  lastPointOk = false;
+bool intersectRayPoint(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 pointPos, float *dist) {
+    glm::vec3 vecRS = pointPos - rayPos;
+    float lenRS = glm::length(vecRS);
+
+    float radius = 0.005 * lenRS; // relativ to distance between camera and point
+
+    float t_ca = glm::dot(vecRS, rayDir);
+
+    float t_ca_Sqrt = std::pow(t_ca, 2.0f);
+    float lenRS_Sqrt = std::pow(lenRS, 2.0f);
+    float radius_Sqrt = std::pow(radius, 2.0f);
+
+    float t_hc_Sqrt = radius_Sqrt - lenRS_Sqrt + t_ca_Sqrt;
+    if (t_hc_Sqrt < 0.0f) { // no intersection
+        return false;
+    }
+
+    float t1 = t_ca + std::sqrt(t_hc_Sqrt);
+    float t2 = t_ca - std::sqrt(t_hc_Sqrt);
+
+    *dist = (t1 < t2) ? t1 : t2;
+
+    return true;
+}
+
+int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points, GLdouble mouseX, GLdouble mouseY) {
+    if (points == nullptr) {
+        return -1;
+    }
+
+    glm::mat4 modelView_inv;
+    modelView_inv[0][0] = modelviewMatrix[0];
+    modelView_inv[0][1] = modelviewMatrix[1];
+    modelView_inv[0][2] = modelviewMatrix[2];
+    modelView_inv[0][3] = modelviewMatrix[3];
+    modelView_inv[1][0] = modelviewMatrix[4];
+    modelView_inv[1][1] = modelviewMatrix[5];
+    modelView_inv[1][2] = modelviewMatrix[6];
+    modelView_inv[1][3] = modelviewMatrix[7];
+    modelView_inv[2][0] = modelviewMatrix[8];
+    modelView_inv[2][1] = modelviewMatrix[9];
+    modelView_inv[2][2] = modelviewMatrix[10];
+    modelView_inv[2][3] = modelviewMatrix[11];
+    modelView_inv[3][0] = modelviewMatrix[12];
+    modelView_inv[3][1] = modelviewMatrix[13];
+    modelView_inv[3][2] = modelviewMatrix[14];
+    modelView_inv[3][3] = modelviewMatrix[15];
+    modelView_inv = glm::inverse(modelView_inv);
+
+    // collect information
+    glm::vec3 camPos; // camera position
+    camPos = modelView_inv * vec4(0, 0, 0, 1);
+    glm::vec3 camUp;  // camera up direction
+    camUp[0] = modelviewMatrix[1];
+    camUp[1] = modelviewMatrix[5];
+    camUp[2] = modelviewMatrix[9];
+    float zNear = zNearFactor * radius;
+
+    // viewing direction
+    glm::vec3 camView;
+    camView[0] = -modelviewMatrix[2];
+    camView[1] = -modelviewMatrix[6];
+    camView[2] = -modelviewMatrix[10];
+    camView = glm::normalize(camView);
+
+    // calc vector span for view plane
+    glm::vec3 h = glm::cross(camView, camUp);
+    h = glm::normalize(h);
+    glm::vec3 v = glm::cross(h, camView);
+    v = glm::normalize(v);
+    double rad = fovy() * M_PI / 180.0f;
+    float vLength = std::tan(rad/2.0f) * zNear;
+    float hLength = vLength * ((double)width()/height());
+    v = v * vLength;
+    h = h * hLength;
+
+    // ray position and direction
+    mouseX -= width()/2.0f;
+    mouseY = -1.0f * (mouseY - height()/2.0f);
+    float viewX = mouseX / (width()/2.0f);
+    float viewY = mouseY / (height()/2.0f);
+    glm::vec3 rayPos = camPos + (camView*zNear) + (h*viewX) + (v*viewY);
+    glm::vec3 rayDir = glm::normalize(rayPos - camPos);
+
+    // ray picking starts hear
+    int selected_index = -1;
+    float dist_to_selected = zFarFactor * radius;  // initiate at zFar
+    for (int i=0; i < pointList->size(); ++i) {
+      Point p = (*points)[i];
+
+      // cast ray and check for intersection w/ p
+      glm::vec3 pointPos = vec3(p.x, p.y, p.z);
+      float curr_dist = 0.0f;
+      if (intersectRayPoint(rayPos, rayDir, pointPos, &curr_dist)) {
+          if (curr_dist < dist_to_selected) {
+              dist_to_selected = curr_dist;
+              selected_index = i;
+          }
+      }
+    }
+
+    return selected_index;
+}
+
+void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
+    if (selectOnRelease == true) {
+        int selected = selectByMouse(pointList, event->pos().x(), event->pos().y());
+        if (selected >= 0) {
+            selectedPointList = kdtree->collectKNearest((*pointList)[selected], 100);
+        }
+        updateGL();
+    }
+
+    // finish up
+    lastPointOk = false;
+    selectOnRelease = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -547,8 +666,8 @@ void QGLViewerWidget::updateProjectionMatrix() {
   makeCurrent();
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45.0, (GLfloat)width() / (GLfloat)height(), 0.01 * radius,
-                 100.0 * radius);
+  gluPerspective(fovy(), (GLfloat)width() / (GLfloat)height(), zNearFactor * radius,
+                 zFarFactor * radius);
   glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
   glMatrixMode(GL_MODELVIEW);
 }

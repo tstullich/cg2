@@ -141,6 +141,7 @@ private: // inherited
 protected:
   // Qt mouse events
   virtual void mousePressEvent(QMouseEvent *);
+  int selectByMouse(std::shared_ptr<PointList> points, GLdouble mouseX, GLdouble mouseY);
   virtual void mouseReleaseEvent(QMouseEvent *);
   virtual void mouseMoveEvent(QMouseEvent *);
   virtual void wheelEvent(QWheelEvent *);
@@ -173,6 +174,9 @@ private:
   QPoint lastPoint2D;
   glm::vec3 lastPoint3D;
   bool lastPointOk;
+  bool selectOnRelease = false;
+  GLdouble zNearFactor = 0.01;
+  GLdouble zFarFactor = 500.0;
 };
 
 //=============================================================================
