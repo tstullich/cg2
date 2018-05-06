@@ -13,6 +13,8 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
   dropdownMenu = new QComboBox(parent);
   dropdownMenu->addItems(dropdownOptions);
 
+  // Connecting signals to slots here so our values update correctly when a new
+  // value is selected from the dropdown
   connect(dropdownMenu, SIGNAL(currentIndexChanged(int)), this,
           SLOT(updateSliderValues(int)));
   connect(dropdownMenu, SIGNAL(currentIndexChanged(int)), parent,
@@ -25,9 +27,9 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
   // Setting the min and max for the hyper plane drawing mode
   slider->setRange(HYPER_PLANE_DEFAULT_MIN, HYPER_PLANE_DEFAULT_MAX);
 
-  // Wrap slider so we can use labels
   startLabel = new QLabel(QString::number(HYPER_PLANE_DEFAULT_MIN), this);
   endLabel = new QLabel(QString::number(HYPER_PLANE_DEFAULT_MAX), this);
+  // Wrap slider in a grid layout so we can add labels easily
   auto sliderLayout = new QGridLayout();
   sliderLayout->addWidget(slider, 0, 0, 1, 4);
   sliderLayout->addWidget(startLabel, 1, 0, 1, 1);

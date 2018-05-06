@@ -26,6 +26,8 @@ class SidebarWidget : public QDockWidget {
   // Sets the callback from our QGLViewerWidget
   // So when a value changes in the slider we
   // can adjust K-d tree drawing accordingly
+  // We might not need this in the future
+  // but I am keeping it for now
   void setSliderCallback(QWidget *w);
 
   private slots:
