@@ -27,7 +27,7 @@ LINK_DIRECTORIES(${CG2_SOURCE_DIR}/framework/src)
 SET(app_SOURCES main.cpp QGLViewerWidget.cpp SidebarWidget.cpp)
 SET(app_HEADERS ${CG2_SOURCE_DIR}/minqgl/include/QGLViewerWidget.hpp ${CG2_SOURCE_DIR}/minqgl/include/SidebarWidget.hpp)
 SET(app_QT_HEADERS ${CG2_SOURCE_DIR}/minqgl/include/QGLViewerWidget.hpp ${CG2_SOURCE_DIR}/minqgl/include/SidebarWidget.hpp)
-QT5_WRAP_CPP( app_HEADERS_MOC ${app_QT_HEADERS})
+QT5_WRAP_CPP(app_HEADERS_MOC ${app_QT_HEADERS})
 
 ADD_EXECUTABLE(cg2 ${app_SOURCES} ${app_HEADERS_MOC} ${app_HEADERS})
 QT5_USE_MODULES(cg2 Widgets OpenGL)

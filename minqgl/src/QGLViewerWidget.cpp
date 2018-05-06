@@ -624,6 +624,14 @@ QAction *QGLViewerWidget::findAction(const char *name) {
 
 //----------------------------------------------------------------------------
 
+void QGLViewerWidget::setDrawMode(int value) { drawMode = value; }
+
+void QGLViewerWidget::sliderValueChanged(int value) {
+  std::cout << "New slider value: " << value << " with draw mode: " << drawMode
+            << std::endl;
+  // TODO Need to redraw logic here
+}
+
 void QGLViewerWidget::slotSnapshot(void) {
   // empty....
 }

@@ -101,6 +101,9 @@ private slots:
     }
   }
 
+  void setDrawMode(int value);
+  void sliderValueChanged(int value);
+
   /********************************************************************/
   //   STANDARD OPENGL QT STUFS
   /********************************************************************/
@@ -173,6 +176,8 @@ private:
   QPoint lastPoint2D;
   glm::vec3 lastPoint3D;
   bool lastPointOk;
+  // Holds the current drawing mode set by our dropdown
+  int drawMode;
 };
 
 //=============================================================================
