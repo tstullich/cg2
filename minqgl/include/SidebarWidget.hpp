@@ -10,7 +10,7 @@
 
 class SidebarWidget : public QDockWidget {
   Q_OBJECT
-  public:
+public:
   SidebarWidget(QWidget *parent = 0);
 
   /*
@@ -30,7 +30,7 @@ class SidebarWidget : public QDockWidget {
   // but I am keeping it for now
   void setSliderCallback(QWidget *w);
 
-  private slots:
+private slots:
   /*
    * A slot that will help update our slider ranges
    * The option value should map to the following:
@@ -40,7 +40,7 @@ class SidebarWidget : public QDockWidget {
    */
   void updateSliderValues(int option);
 
-  private:
+private:
   void setSliderRange(int minVal, int maxVal);
 
   const int HYPER_PLANE_DEFAULT_MIN = 0;
