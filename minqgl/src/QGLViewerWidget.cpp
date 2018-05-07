@@ -39,6 +39,7 @@
 // --------------------
 
 #include "QGLViewerWidget.hpp"
+#include "glm/gtx/intersect.hpp"
 
 #if !defined(M_PI)
 #define M_PI 3.1415926535897932
@@ -91,6 +92,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   pointList = kdtree->getPoints();
   // TODO make both configurable by gui
   // selectedPointList = kdtree->collectInRadius((*pointList)[0], 0.1);
+
   selectedPointList = kdtree->collectKNearest((*pointList)[0], 100);
 
   updateGL();
@@ -348,13 +350,16 @@ void QGLViewerWidget::drawScene() {
 void QGLViewerWidget::mousePressEvent(QMouseEvent *event) {
   // popup menu
   if (event->button() == RightButton && event->buttons() == RightButton) {
+    selectOnRelease = false;
   } else {
     lastPointOk = mapToSphere(lastPoint2D = event->pos(), lastPoint3D);
+    selectOnRelease = true;
   }
 }
 
 //----------------------------------------------------------------------------
 void QGLViewerWidget::mouseMoveEvent(QMouseEvent *event) {
+  selectOnRelease = false;
   QPoint newPoint2D = event->pos();
 
   // Left button: rotate around center
@@ -432,8 +437,124 @@ void QGLViewerWidget::mouseMoveEvent(QMouseEvent *event) {
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::mouseReleaseEvent(QMouseEvent * /* _event */) {
+bool intersectRayPoint(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 pointPos,
+                       float *dist) {
+  glm::vec3 vecRS = pointPos - rayPos;
+  float lenRS = glm::length(vecRS);
+
+  float radius = 0.005 * lenRS;  // relativ to distance between camera and point
+
+  float t_ca = glm::dot(vecRS, rayDir);
+
+  float t_ca_Sqrt = std::pow(t_ca, 2.0f);
+  float lenRS_Sqrt = std::pow(lenRS, 2.0f);
+  float radius_Sqrt = std::pow(radius, 2.0f);
+
+  float t_hc_Sqrt = radius_Sqrt - lenRS_Sqrt + t_ca_Sqrt;
+  if (t_hc_Sqrt < 0.0f) {  // no intersection
+    return false;
+  }
+
+  float t1 = t_ca + std::sqrt(t_hc_Sqrt);
+  float t2 = t_ca - std::sqrt(t_hc_Sqrt);
+
+  *dist = (t1 < t2) ? t1 : t2;
+
+  return true;
+}
+
+int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points,
+                                   GLdouble mouseX, GLdouble mouseY) {
+  if (points == nullptr) {
+    return -1;
+  }
+
+  glm::mat4 modelView_inv;
+  modelView_inv[0][0] = modelviewMatrix[0];
+  modelView_inv[0][1] = modelviewMatrix[1];
+  modelView_inv[0][2] = modelviewMatrix[2];
+  modelView_inv[0][3] = modelviewMatrix[3];
+  modelView_inv[1][0] = modelviewMatrix[4];
+  modelView_inv[1][1] = modelviewMatrix[5];
+  modelView_inv[1][2] = modelviewMatrix[6];
+  modelView_inv[1][3] = modelviewMatrix[7];
+  modelView_inv[2][0] = modelviewMatrix[8];
+  modelView_inv[2][1] = modelviewMatrix[9];
+  modelView_inv[2][2] = modelviewMatrix[10];
+  modelView_inv[2][3] = modelviewMatrix[11];
+  modelView_inv[3][0] = modelviewMatrix[12];
+  modelView_inv[3][1] = modelviewMatrix[13];
+  modelView_inv[3][2] = modelviewMatrix[14];
+  modelView_inv[3][3] = modelviewMatrix[15];
+  modelView_inv = glm::inverse(modelView_inv);
+
+  // collect information
+  glm::vec3 camPos;  // camera position
+  camPos = modelView_inv * vec4(0, 0, 0, 1);
+  glm::vec3 camUp;  // camera up direction
+  camUp[0] = modelviewMatrix[1];
+  camUp[1] = modelviewMatrix[5];
+  camUp[2] = modelviewMatrix[9];
+  float zNear = zNearFactor * radius;
+
+  // viewing direction
+  glm::vec3 camView;
+  camView[0] = -modelviewMatrix[2];
+  camView[1] = -modelviewMatrix[6];
+  camView[2] = -modelviewMatrix[10];
+  camView = glm::normalize(camView);
+
+  // calc vector span for view plane
+  glm::vec3 h = glm::cross(camView, camUp);
+  h = glm::normalize(h);
+  glm::vec3 v = glm::cross(h, camView);
+  v = glm::normalize(v);
+  double rad = fovy() * M_PI / 180.0f;
+  float vLength = std::tan(rad / 2.0f) * zNear;
+  float hLength = vLength * ((double)width() / height());
+  v = v * vLength;
+  h = h * hLength;
+
+  // ray position and direction
+  mouseX -= width() / 2.0f;
+  mouseY = -1.0f * (mouseY - height() / 2.0f);
+  float viewX = mouseX / (width() / 2.0f);
+  float viewY = mouseY / (height() / 2.0f);
+  glm::vec3 rayPos = camPos + (camView * zNear) + (h * viewX) + (v * viewY);
+  glm::vec3 rayDir = glm::normalize(rayPos - camPos);
+
+  // ray picking starts hear
+  int selected_index = -1;
+  float dist_to_selected = zFarFactor * radius;  // initiate at zFar
+  for (unsigned int i = 0; i < pointList->size(); ++i) {
+    Point p = (*points)[i];
+
+    // cast ray and check for intersection w/ p
+    glm::vec3 pointPos = vec3(p.x, p.y, p.z);
+    float curr_dist = 0.0f;
+    if (intersectRayPoint(rayPos, rayDir, pointPos, &curr_dist)) {
+      if (curr_dist < dist_to_selected) {
+        dist_to_selected = curr_dist;
+        selected_index = i;
+      }
+    }
+  }
+
+  return selected_index;
+}
+
+void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
+  if (selectOnRelease == true) {
+    int selected = selectByMouse(pointList, event->pos().x(), event->pos().y());
+    if (selected >= 0) {
+      selectedPointList = kdtree->collectKNearest((*pointList)[selected], 100);
+    }
+    updateGL();
+  }
+
+  // finish up
   lastPointOk = false;
+  selectOnRelease = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -547,8 +668,8 @@ void QGLViewerWidget::updateProjectionMatrix() {
   makeCurrent();
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45.0, (GLfloat)width() / (GLfloat)height(), 0.01 * radius,
-                 100.0 * radius);
+  gluPerspective(fovy(), (GLfloat)width() / (GLfloat)height(),
+                 zNearFactor * radius, zFarFactor * radius);
   glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
   glMatrixMode(GL_MODELVIEW);
 }
