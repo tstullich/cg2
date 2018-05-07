@@ -753,6 +753,12 @@ void QGLViewerWidget::sliderValueChanged(int value) {
   // TODO Need to redraw logic here
 }
 
+void QGLViewerWidget::setPerformLinearSearch(bool value) {
+  std::cout << "Changing state from " << performLinearSearch << " to " << value
+            << std::endl;
+  performLinearSearch = value;
+}
+
 void QGLViewerWidget::slotSnapshot(void) {
   // empty....
 }

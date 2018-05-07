@@ -38,8 +38,14 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
   auto sliderContainer = new QWidget();
   sliderContainer->setLayout(sliderLayout);
 
+  linearSearchBox = new QCheckBox("Perform Linear Search", this);
+  connect(linearSearchBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setPerformLinearSearch(bool)));
+
+  // Add all the widgets to the final layout
   layout->addWidget(dropdownMenu);
   layout->addWidget(sliderContainer);
+  layout->addWidget(linearSearchBox);
   layout->setSizeConstraint(QLayout::SetFixedSize);
 
   container->setLayout(layout);

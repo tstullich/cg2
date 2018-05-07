@@ -103,6 +103,7 @@ private slots:
 
   void setDrawMode(int value);
   void sliderValueChanged(int value);
+  void setPerformLinearSearch(bool value);
 
   /********************************************************************/
   //   STANDARD OPENGL QT STUFS
@@ -180,6 +181,7 @@ private:
   bool lastPointOk;
   // Holds the current drawing mode set by our dropdown
   int drawMode;
+  bool performLinearSearch = false;
   bool selectOnRelease = false;
   GLdouble zNearFactor = 0.01;
   GLdouble zFarFactor = 500.0;

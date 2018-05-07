@@ -1,6 +1,7 @@
 #ifndef SIDEBARWIDGET_HPP
 #define SIDEBARWIDGET_HPP
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDockWidget>
 #include <QLabel>
@@ -52,6 +53,7 @@ private:
   const int K_NEAREST_MIN = 1;
   const int K_NEAREST_MAX = 20;
 
+  QCheckBox *linearSearchBox;
   QComboBox *dropdownMenu;
   QLabel *startLabel;
   QLabel *endLabel;
