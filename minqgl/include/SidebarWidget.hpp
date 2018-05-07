@@ -24,6 +24,11 @@ public:
    */
   int getCurrentMode() const;
 
+  /*
+   * Method to retriew the value of the slider
+   */
+  int getSliderValue() const;
+
   // Sets the callback from our QGLViewerWidget
   // So when a value changes in the slider we
   // can adjust K-d tree drawing accordingly
@@ -41,17 +46,25 @@ private slots:
    */
   void updateSliderValues(int option);
 
+  /*
+   * Special case where we want to set the
+   * value of K-Nearest Max to the size of the
+   * point list
+   */
+  void setKNearestMax(int value);
+
 private:
   void setSliderRange(int minVal, int maxVal);
 
   const int HYPER_PLANE_DEFAULT_MIN = 0;
   const int HYPER_PLANE_DEFAULT_MAX = 8;
 
-  const int COLLECT_IN_RADIUS_MIN = 1;
+  const int COLLECT_IN_RADIUS_MIN = 0;
   const int COLLECT_IN_RADIUS_MAX = 10;
 
-  const int K_NEAREST_MIN = 1;
-  const int K_NEAREST_MAX = 20;
+  const int K_NEAREST_MIN = 0;
+  int kNearestMax;
+  int sliderOption;
 
   QCheckBox *linearSearchBox;
   QComboBox *dropdownMenu;

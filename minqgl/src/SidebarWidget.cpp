@@ -21,7 +21,7 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
           SLOT(setDrawMode(int)));
 
   slider = new QSlider(Qt::Horizontal);
-  slider->setTickPosition(QSlider::TicksBothSides);
+  slider->setTickPosition(QSlider::NoTicks);
   slider->setTickInterval(1);
   slider->setSingleStep(1);
   // Setting the min and max for the hyper plane drawing mode
@@ -35,9 +35,14 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
   sliderLayout->addWidget(startLabel, 1, 0, 1, 1);
   sliderLayout->addWidget(endLabel, 1, 3, 1, 1);
 
+  // This should be called
+  connect(parent, SIGNAL(kNearestChanged(int)), this,
+          SLOT(setKNearestMax(int)));
+
   auto sliderContainer = new QWidget();
   sliderContainer->setLayout(sliderLayout);
 
+  // Configure our checkbox for performing a linear search
   linearSearchBox = new QCheckBox("Perform Linear Search", this);
   connect(linearSearchBox, SIGNAL(toggled(bool)), parent,
           SLOT(setPerformLinearSearch(bool)));
@@ -56,6 +61,8 @@ int SidebarWidget::getCurrentMode() const {
   return dropdownMenu->currentIndex();
 }
 
+int SidebarWidget::getSliderValue() const { return slider->value(); }
+
 void SidebarWidget::setSliderCallback(QWidget *widget) {
   connect(slider, SIGNAL(valueChanged(int)), widget,
           SLOT(sliderValueChanged(int)));
@@ -68,14 +75,21 @@ void SidebarWidget::setSliderRange(int minVal, int maxVal) {
 }
 
 void SidebarWidget::updateSliderValues(int option) {
-  if (option == 0) {
+  sliderOption = option;
+  if (sliderOption == 0) {
     // This is our hyper plane drawing mode
     setSliderRange(HYPER_PLANE_DEFAULT_MIN, HYPER_PLANE_DEFAULT_MAX);
-  } else if (option == 1) {
+  } else if (sliderOption == 1) {
     // This is our collect in radius drawing mode
     setSliderRange(COLLECT_IN_RADIUS_MIN, COLLECT_IN_RADIUS_MAX);
   } else {
     // This is our collect nearest neighbor drawing mode
-    setSliderRange(K_NEAREST_MIN, K_NEAREST_MAX);
+    setSliderRange(K_NEAREST_MIN, kNearestMax);
   }
+}
+
+void SidebarWidget::setKNearestMax(int value) {
+  kNearestMax = value;
+  // Need to internally update this
+  updateSliderValues(sliderOption);
 }

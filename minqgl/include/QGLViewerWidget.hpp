@@ -130,6 +130,8 @@ private slots:
   void setPerformLinearSearch(bool value);
 
 private:
+  void init();
+
   // initialize OpenGL states (triggered by Qt)
   void initializeGL();
 
@@ -177,8 +179,7 @@ private:
   bool flag_drawSelectedPoints = true; // TODO turn on or off
   bool flag_drawTree = true;           // used in key event handler
   unsigned drawLevelsOfTree = 0;
-
-  void init();
+  int selectedPointIndex = 0;
 };
 
 //=============================================================================

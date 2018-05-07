@@ -90,10 +90,11 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
       new KDTree(p.getPoints(), std::make_unique<EuclDist>(), p.outerBox));
   kdtree = newTree;
   pointList = kdtree->getPoints();
-  // TODO make both configurable by gui
-  // selectedPointList = kdtree->collectInRadius((*pointList)[0], 0.1);
 
-  selectedPointList = kdtree->collectKNearest((*pointList)[0], 100);
+  // Notify Sidebar of the size of K-Nearest max
+  kNearestChanged(pointList->size());
+  // clear selected point index for drawing
+  selectedPointIndex = 0;
 
   updateGL();
 
@@ -267,7 +268,9 @@ void drawBox(struct Borders borders) {
 }
 
 void recursiveDrawKDTree(std::shared_ptr<Node> node, unsigned remainingLevels) {
-  if (remainingLevels <= 0) return;
+  if (remainingLevels <= 0) {
+    return;
+  }
 
   // recursively traverse the tree
   if (node->nlist.size() > 0) {
@@ -545,9 +548,14 @@ int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points,
 
 void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
   if (selectOnRelease == true) {
-    int selected = selectByMouse(pointList, event->pos().x(), event->pos().y());
-    if (selected >= 0) {
-      selectedPointList = kdtree->collectKNearest((*pointList)[selected], 100);
+    selectedPointIndex =
+        selectByMouse(pointList, event->pos().x(), event->pos().y());
+    if (selectedPointIndex >= 0 && drawMode == 2) {
+      selectedPointList =
+          kdtree->collectKNearest((*pointList)[selectedPointIndex], 100);
+    } else if (selectedPointIndex >= 0 && drawMode == 1) {
+      selectedPointList =
+          kdtree->collectInRadius((*pointList)[selectedPointIndex], 0.01);
     }
     updateGL();
   }
@@ -748,14 +756,29 @@ QAction *QGLViewerWidget::findAction(const char *name) {
 void QGLViewerWidget::setDrawMode(int value) { drawMode = value; }
 
 void QGLViewerWidget::sliderValueChanged(int value) {
-  std::cout << "New slider value: " << value << " with draw mode: " << drawMode
-            << std::endl;
-  // TODO Need to redraw logic here
+  if (pointList == nullptr || pointList->size() == 0) {
+    std::cout << "No OFF file loaded. Won't draw. Please load a file before "
+                 "changing values"
+              << std::endl;
+    return;
+  }
+
+  if (drawMode == 0) {
+    drawLevelsOfTree = value;
+  } else if (drawMode == 1) {
+    selectedPointList =
+        kdtree->collectInRadius((*pointList)[selectedPointIndex], value * 10);
+  } else {
+    selectedPointList =
+        kdtree->collectKNearest((*pointList)[selectedPointIndex], value);
+    drawSelectedPointSet();
+  }
+
+  // Need to redraw after changing settings
+  updateGL();
 }
 
 void QGLViewerWidget::setPerformLinearSearch(bool value) {
-  std::cout << "Changing state from " << performLinearSearch << " to " << value
-            << std::endl;
   performLinearSearch = value;
 }
 
