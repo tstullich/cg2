@@ -40,6 +40,28 @@ class QGLViewerWidget : public QGLWidget {
   Q_OBJECT
 
 public:
+  /* Sets the center and size of the whole scene.
+  The _center is used as fixpoint for rotations and for adjusting
+  the camera/viewer (see view_all()). */
+  void setScenePos(const glm::vec3 &center, float radius);
+
+  /* view the whole scene: the eye point is moved far enough from the
+  center so that the whole scene is visible. */
+  void viewAll();
+
+  float getRadius() const { return radius; }
+  const glm::vec3 &getCenter() const { return center; }
+
+  const GLdouble *getModelviewMatrix() const { return modelviewMatrix; }
+  const GLdouble *getProjectionMatrix() const { return projectionMatrix; }
+
+  float fovy() const { return 45.0f; }
+
+  QAction *findAction(const char *name);
+  void addAction(QAction *action, const char *name);
+  void removeAction(const char *name);
+  void removeAction(QAction *action);
+
   typedef QGLWidget Super;
 
   // Default constructor.
@@ -50,15 +72,6 @@ public:
 
   // Destructor.
   virtual ~QGLViewerWidget();
-
-private:
-  std::shared_ptr<KDTree> kdtree;
-  bool flag_drawPoints = true;         // TODO use in key event handler
-  bool flag_drawSelectedPoints = true; // TODO turn on or off
-  bool flag_drawTree = false;          // used in key event handler
-  unsigned drawLevelsOfTree = 8;
-
-  void init(void);
 
   // Specific to algorithms
 protected:
@@ -82,9 +95,20 @@ protected:
   // list of selected data points
   PointPointerList selectedPointList;
 
-protected:
   void setDefaultMaterial(void);
   void setDefaultLight(void);
+
+  // Qt mouse events
+  virtual void mousePressEvent(QMouseEvent *);
+  int selectByMouse(std::shared_ptr<PointList> points, GLdouble mouseX,
+                    GLdouble mouseY);
+  virtual void mouseReleaseEvent(QMouseEvent *);
+  virtual void mouseMoveEvent(QMouseEvent *);
+  virtual void wheelEvent(QWheelEvent *);
+  virtual void keyPressEvent(QKeyEvent *);
+
+signals:
+  void kNearestChanged(int value);
 
 private slots:
   // popup menu clicked
@@ -105,34 +129,7 @@ private slots:
   void sliderValueChanged(int value);
   void setPerformLinearSearch(bool value);
 
-  /********************************************************************/
-  //   STANDARD OPENGL QT STUFS
-  /********************************************************************/
-
-public:
-  /* Sets the center and size of the whole scene.
-  The _center is used as fixpoint for rotations and for adjusting
-  the camera/viewer (see view_all()). */
-  void setScenePos(const glm::vec3 &center, float radius);
-
-  /* view the whole scene: the eye point is moved far enough from the
-  center so that the whole scene is visible. */
-  void viewAll();
-
-  float getRadius() const { return radius; }
-  const glm::vec3 &getCenter() const { return center; }
-
-  const GLdouble *getModelviewMatrix() const { return modelviewMatrix; }
-  const GLdouble *getProjectionMatrix() const { return projectionMatrix; }
-
-  float fovy() const { return 45.0f; }
-
-  QAction *findAction(const char *name);
-  void addAction(QAction *action, const char *name);
-  void removeAction(const char *name);
-  void removeAction(QAction *action);
-
-private: // inherited
+private:
   // initialize OpenGL states (triggered by Qt)
   void initializeGL();
 
@@ -142,17 +139,6 @@ private: // inherited
   // handle resize events (triggered by Qt)
   void resizeGL(int w, int h);
 
-protected:
-  // Qt mouse events
-  virtual void mousePressEvent(QMouseEvent *);
-  int selectByMouse(std::shared_ptr<PointList> points, GLdouble mouseX,
-                    GLdouble mouseY);
-  virtual void mouseReleaseEvent(QMouseEvent *);
-  virtual void mouseMoveEvent(QMouseEvent *);
-  virtual void wheelEvent(QWheelEvent *);
-  virtual void keyPressEvent(QKeyEvent *);
-
-private:
   // updates projection matrix
   void updateProjectionMatrix();
 
@@ -185,6 +171,14 @@ private:
   bool selectOnRelease = false;
   GLdouble zNearFactor = 0.01;
   GLdouble zFarFactor = 500.0;
+
+  std::shared_ptr<KDTree> kdtree;
+  bool flag_drawPoints = true;         // TODO use in key event handler
+  bool flag_drawSelectedPoints = true; // TODO turn on or off
+  bool flag_drawTree = true;           // used in key event handler
+  unsigned drawLevelsOfTree = 0;
+
+  void init();
 };
 
 //=============================================================================
