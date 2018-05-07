@@ -175,9 +175,11 @@ private:
   GLdouble zFarFactor = 500.0;
 
   std::shared_ptr<KDTree> kdtree;
-  bool flag_drawPoints = true;         // TODO use in key event handler
-  bool flag_drawSelectedPoints = true; // TODO turn on or off
-  bool flag_drawTree = true;           // used in key event handler
+  bool flag_drawPoints = true;
+  bool flag_drawSelectedPoints = true;
+
+  // used in key event handler
+  bool flag_drawTree = true;
   unsigned drawLevelsOfTree = 0;
   int selectedPointIndex = 0;
 };

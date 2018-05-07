@@ -1,6 +1,8 @@
 #ifndef SIDEBARWIDGET_HPP
 #define SIDEBARWIDGET_HPP
 
+#include <iostream>
+
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDockWidget>
@@ -46,6 +48,8 @@ private slots:
    */
   void updateSliderValues(int option);
 
+  void setCurrentValueLabel(int value);
+
   /*
    * Special case where we want to set the
    * value of K-Nearest Max to the size of the
@@ -54,6 +58,11 @@ private slots:
   void setKNearestMax(int value);
 
 private:
+  void initModeDropdown(QWidget* parent);
+  QWidget* initModeSlider();
+  void initCurrentValueLabel();
+  void initLinearSearchBox(QWidget* parent);
+
   void setSliderRange(int minVal, int maxVal);
 
   const int HYPER_PLANE_DEFAULT_MIN = 0;
@@ -63,13 +72,16 @@ private:
   const int COLLECT_IN_RADIUS_MAX = 10;
 
   const int K_NEAREST_MIN = 0;
-  int kNearestMax;
-  int sliderOption;
+  int kNearestMax = 0;
+  int sliderOption = 0;
+
+  static const QString CURRENT_VALUE_LABEL;
 
   QCheckBox *linearSearchBox;
   QComboBox *dropdownMenu;
   QLabel *startLabel;
   QLabel *endLabel;
+  QLabel *currentValue;
   QSlider *slider;
   QVBoxLayout *layout;
   QWidget *container;

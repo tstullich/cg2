@@ -53,7 +53,6 @@ void KDTree::recursiveLeafSearch(const Point &p, float radius, const Node &n,
   }
 }
 
-// TODO use spatial data structure for sub-linear search etc...
 PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
   PointPointerList pl;
   if (dfunc->dist(p, *rootnode) > 0)

@@ -1,6 +1,8 @@
 #include "SidebarWidget.hpp"
 
-SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
+const QString SidebarWidget::CURRENT_VALUE_LABEL = "Current Value: ";
+
+SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
   // Create our siede dock. Would be good to put this into own widget later
   // auto sideDock = new QDockWidget("K-d Tree Settings", parent);
   setWindowTitle("K-d Tree Settings");
@@ -9,6 +11,33 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
   container = new QWidget();
   layout = new QVBoxLayout();
 
+  initModeDropdown(parent);
+  auto sliderContainer = initModeSlider();
+  initCurrentValueLabel();
+  initLinearSearchBox(parent);
+
+  // Add all the widgets to the final layout
+  layout->addWidget(dropdownMenu);
+  layout->addWidget(sliderContainer);
+  layout->addWidget(currentValue);
+  layout->addWidget(linearSearchBox);
+  layout->setSizeConstraint(QLayout::SetFixedSize);
+
+  container->setLayout(layout);
+  setWidget(container);
+
+  // This should be called when a new file is loaded
+  connect(parent, SIGNAL(kNearestChanged(int)), this,
+          SLOT(setKNearestMax(int)));
+}
+
+int SidebarWidget::getCurrentMode() const {
+  return dropdownMenu->currentIndex();
+}
+
+int SidebarWidget::getSliderValue() const { return slider->value(); }
+
+void SidebarWidget::initModeDropdown(QWidget* parent) {
   QStringList dropdownOptions = {"Hyper Planes", "Radius", "K-Nearest"};
   dropdownMenu = new QComboBox(parent);
   dropdownMenu->addItems(dropdownOptions);
@@ -19,7 +48,9 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
           SLOT(updateSliderValues(int)));
   connect(dropdownMenu, SIGNAL(currentIndexChanged(int)), parent,
           SLOT(setDrawMode(int)));
+}
 
+QWidget* SidebarWidget::initModeSlider() {
   slider = new QSlider(Qt::Horizontal);
   slider->setTickPosition(QSlider::NoTicks);
   slider->setTickInterval(1);
@@ -35,35 +66,32 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
   sliderLayout->addWidget(startLabel, 1, 0, 1, 1);
   sliderLayout->addWidget(endLabel, 1, 3, 1, 1);
 
-  // This should be called
-  connect(parent, SIGNAL(kNearestChanged(int)), this,
-          SLOT(setKNearestMax(int)));
-
   auto sliderContainer = new QWidget();
   sliderContainer->setLayout(sliderLayout);
 
+  return sliderContainer;
+}
+
+void SidebarWidget::initCurrentValueLabel() {
+  currentValue = new QLabel();
+
+  auto currentValueText = QString(CURRENT_VALUE_LABEL);
+  currentValueText = currentValueText + QString::number(0);
+  currentValue->setText(currentValueText);
+
+  // Update label when slider changes
+  connect(slider, SIGNAL(valueChanged(int)), this,
+          SLOT(setCurrentValueLabel(int)));
+}
+
+void SidebarWidget::initLinearSearchBox(QWidget* parent) {
   // Configure our checkbox for performing a linear search
   linearSearchBox = new QCheckBox("Perform Linear Search", this);
   connect(linearSearchBox, SIGNAL(toggled(bool)), parent,
           SLOT(setPerformLinearSearch(bool)));
-
-  // Add all the widgets to the final layout
-  layout->addWidget(dropdownMenu);
-  layout->addWidget(sliderContainer);
-  layout->addWidget(linearSearchBox);
-  layout->setSizeConstraint(QLayout::SetFixedSize);
-
-  container->setLayout(layout);
-  setWidget(container);
 }
 
-int SidebarWidget::getCurrentMode() const {
-  return dropdownMenu->currentIndex();
-}
-
-int SidebarWidget::getSliderValue() const { return slider->value(); }
-
-void SidebarWidget::setSliderCallback(QWidget *widget) {
+void SidebarWidget::setSliderCallback(QWidget* widget) {
   connect(slider, SIGNAL(valueChanged(int)), widget,
           SLOT(sliderValueChanged(int)));
 }
@@ -86,6 +114,12 @@ void SidebarWidget::updateSliderValues(int option) {
     // This is our collect nearest neighbor drawing mode
     setSliderRange(K_NEAREST_MIN, kNearestMax);
   }
+}
+
+void SidebarWidget::setCurrentValueLabel(int value) {
+  auto currentValueText = QString(CURRENT_VALUE_LABEL);
+  currentValueText = currentValueText + QString::number(value);
+  currentValue->setText(currentValueText);
 }
 
 void SidebarWidget::setKNearestMax(int value) {
