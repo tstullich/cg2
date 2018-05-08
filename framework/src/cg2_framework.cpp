@@ -65,11 +65,15 @@ void KDTree::recursiveLeafSearch(const Point &p, float radius, const Node &n,
 
 PointPointerList KDTree::collectKNearestSimple(const Point &p, int knearest) {
   PointPointerList pl;
-  int i = 0, numelem = static_cast<int> (rootnode->plist.size());
-  while (i < knearest && i < numelem) {
-    pl.push_back(rootnode->plist[i]);
-    i++;
+  PriorityQueue pq;
+  add(knearest, p, pq, rootnode->plist);
+  // TODO optimize
+  unsigned int pq_size = pq.size();
+  for (unsigned int i = 0; i < pq_size; i++) {
+    pl.push_back(pq.top());
+    pq.pop();
   }
+  // TODO delete p from pl
   return pl;
 }
 

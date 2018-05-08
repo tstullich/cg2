@@ -791,13 +791,25 @@ void QGLViewerWidget::sliderValueChanged(int value) {
 
   if (drawMode == 0) {
     drawLevelsOfTree = value;
-  } else if (drawMode == 1) {
-    selectedPointList = kdtree->collectInRadius(
-        (*pointList)[selectedPointIndex], (float)value / 10);
   } else {
-    selectedPointList =
-        kdtree->collectKNearest((*pointList)[selectedPointIndex], value);
-    drawSelectedPointSet();
+    if (drawMode == 1) {
+      float v = (float)value / 10;
+      if(performLinearSearch) {
+        selectedPointList = kdtree->collectInRadiusSimple(
+          (*pointList)[selectedPointIndex], v);
+      } else {
+        selectedPointList = kdtree->collectInRadius(
+          (*pointList)[selectedPointIndex], v);
+      }
+    } else {
+      if(performLinearSearch) {
+        selectedPointList =
+          kdtree->collectKNearestSimple((*pointList)[selectedPointIndex], value);
+      } else {
+        selectedPointList =
+          kdtree->collectKNearest((*pointList)[selectedPointIndex], value);
+      }
+    }
   }
 
   // Need to redraw after changing settings
