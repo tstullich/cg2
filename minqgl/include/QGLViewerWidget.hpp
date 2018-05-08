@@ -89,6 +89,9 @@ protected:
   // draws the selected point list
   bool drawSelectedPointSet();
 
+  // draw a single point
+  bool drawSinglePoint(const Point &p);
+
   // list of data points
   std::shared_ptr<PointList> pointList;
 

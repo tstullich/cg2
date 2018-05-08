@@ -137,6 +137,20 @@ bool QGLViewerWidget::drawSelectedPointSet() {
   return false;
 }
 
+bool QGLViewerWidget::drawSinglePoint(const Point &p) {
+  // Just draw the single point that has been selected
+  glDisable(GL_LIGHTING);
+  glEnable(GL_POINT_SMOOTH);
+  glPointSize(10.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glBegin(GL_POINTS);
+  glColor3f(0, 255, 0);
+  glVertex3f(p.x, p.y, p.z);
+  glEnd();
+  return true;
+}
+
 //----------------------------------------------------------------------------
 
 void QGLViewerWidget::setDefaultMaterial(void) {
@@ -561,17 +575,7 @@ void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
     selectedPointIndex =
         selectByMouse(pointList, event->pos().x(), event->pos().y());
 
-    // Just draw the single point that has been selected
-    glDisable(GL_LIGHTING);
-    glEnable(GL_POINT_SMOOTH);
-    glPointSize(10.0f);
-    glColor3f(0, 255, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glBegin(GL_POINTS);
-    Point p = (*pointList)[selectedPointIndex];
-    glVertex3f(p.x, p.y, p.z);
-    glEnd();
+    drawSinglePoint((*pointList)[selectedPointIndex]);
 
     updateGL();
   }
