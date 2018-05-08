@@ -135,8 +135,6 @@ void KDTree::add(int k, const Point &p, PriorityQueue &pq,
   }
 }
 
-// TODO really return number of points? i would have thought of the number of
-// nodes
 int KDTree::size() { return static_cast<int>(plist->size()); }
 
 std::shared_ptr<PointList> KDTree::getPoints() { return plist; }
@@ -236,13 +234,9 @@ void KDTree::recursiveTreeExtend(unsigned int depth,
 
 std::vector<PointPointerList> KDTree::splitList(PointPointerList &list,
                                                 unsigned int index) {
-  // TODO optimize
-  PointPointerList firstList;
-  for (unsigned int i = 0; i < index; i++) firstList.push_back(list[i]);
 
-  PointPointerList secondList;
-  for (unsigned int i = index; i < list.size(); i++)
-    secondList.push_back(list[i]);
+  PointPointerList firstList(list.begin(), list.begin() + index);
+  PointPointerList secondList(list.begin() + index, list.end());
 
   std::vector<PointPointerList> lists;
   lists.push_back(firstList);
