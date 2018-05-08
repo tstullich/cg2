@@ -94,8 +94,6 @@ void SidebarWidget::initLinearSearchBox(QWidget* parent) {
           SLOT(setPerformLinearSearch(bool)));
 }
 
-void SidebarWidget::setSliderCallback(QWidget* widget) {}
-
 void SidebarWidget::setSliderRange(int minVal, int maxVal) {
   slider->setRange(minVal, maxVal);
   startLabel->setText(QString::number(minVal));
