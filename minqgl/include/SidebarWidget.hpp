@@ -69,7 +69,7 @@ private:
   const int HYPER_PLANE_DEFAULT_MAX = 8;
 
   const int COLLECT_IN_RADIUS_MIN = 0;
-  const int COLLECT_IN_RADIUS_MAX = 10;
+  const int COLLECT_IN_RADIUS_MAX = 100;
 
   const int K_NEAREST_MIN = 0;
   int kNearestMax = 0;

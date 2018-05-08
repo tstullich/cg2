@@ -345,9 +345,15 @@ void QGLViewerWidget::drawKDTree() {
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
-  if (flag_drawPoints) drawPointSet();
-  if (flag_drawSelectedPoints) drawSelectedPointSet();
-  if (flag_drawTree) drawKDTree();
+  if (flag_drawPoints) {
+    drawPointSet();
+  }
+  if (flag_drawSelectedPoints) {
+    drawSelectedPointSet();
+  }
+  if (flag_drawTree) {
+    drawKDTree();
+  }
 
   // Draw a coordinate system
   glBegin(GL_LINES);
@@ -786,8 +792,8 @@ void QGLViewerWidget::sliderValueChanged(int value) {
   if (drawMode == 0) {
     drawLevelsOfTree = value;
   } else if (drawMode == 1) {
-    selectedPointList =
-        kdtree->collectInRadius((*pointList)[selectedPointIndex], value / 10);
+    selectedPointList = kdtree->collectInRadius(
+        (*pointList)[selectedPointIndex], (float)value / 10);
   } else {
     selectedPointList =
         kdtree->collectKNearest((*pointList)[selectedPointIndex], value);
