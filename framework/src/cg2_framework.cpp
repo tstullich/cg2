@@ -28,6 +28,16 @@ KDTree::KDTree(std::unique_ptr<PointList> plist,
   buildTree(outerBox);
 }
 
+PointPointerList KDTree::collectInRadiusSimple(const Point &p, float radius) {
+  PointPointerList plist;
+  for (int i = 0; i < static_cast<int> (rootnode->plist.size()); i++) {
+    if (dfunc->dist(p, *rootnode->plist[i]) < radius) {
+      plist.push_back(rootnode->plist[i]);
+    }
+  }
+  return plist;
+}
+
 PointPointerList KDTree::collectInRadius(const Point &p, float radius) {
   PointPointerList pl;
   if (dfunc->dist(p, *rootnode) > 0)
@@ -51,6 +61,16 @@ void KDTree::recursiveLeafSearch(const Point &p, float radius, const Node &n,
       if (dfunc->dist(p, *n.plist[i]) <= radius) pl.push_back(n.plist[i]);
     }
   }
+}
+
+PointPointerList KDTree::collectKNearestSimple(const Point &p, int knearest) {
+  PointPointerList pl;
+  int i = 0, numelem = static_cast<int> (rootnode->plist.size());
+  while (i < knearest && i < numelem) {
+    pl.push_back(rootnode->plist[i]);
+    i++;
+  }
+  return pl;
 }
 
 PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
