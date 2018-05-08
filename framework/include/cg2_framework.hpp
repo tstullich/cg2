@@ -107,7 +107,7 @@ private:
    * sort the small array since the algorithm is easy to implement
    * and efficient on small data sets, such as our list
    */
-  int partitionListOfFive(const std::vector<std::shared_ptr<Point>> &pointList,
+  int sortListOfFive(const std::vector<std::shared_ptr<Point>> &pointList,
                           int startIndex, int endIndex, int axis);
   /**
    * This routine retrieves the Median in a given list by

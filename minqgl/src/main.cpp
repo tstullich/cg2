@@ -88,6 +88,5 @@ void createMenu(QMainWindow *w) {
 
 void createSidebar(QMainWindow *w) {
   auto sidebar = new SidebarWidget(w->centralWidget());
-  sidebar->setSliderCallback(w->centralWidget());
   w->addDockWidget(Qt::RightDockWidgetArea, sidebar);
 }

@@ -30,7 +30,7 @@ KDTree::KDTree(std::unique_ptr<PointList> plist,
 
 PointPointerList KDTree::collectInRadiusSimple(const Point &p, float radius) {
   PointPointerList plist;
-  for (int i = 0; i < static_cast<int> (rootnode->plist.size()); i++) {
+  for (int i = 0; i < static_cast<int>(rootnode->plist.size()); i++) {
     if (dfunc->dist(p, *rootnode->plist[i]) < radius) {
       plist.push_back(rootnode->plist[i]);
     }
@@ -258,7 +258,6 @@ void KDTree::recursiveTreeExtend(unsigned int depth,
 
 std::vector<PointPointerList> KDTree::splitList(PointPointerList &list,
                                                 unsigned int index) {
-
   PointPointerList firstList(list.begin(), list.begin() + index);
   PointPointerList secondList(list.begin() + index, list.end());
 
@@ -288,9 +287,8 @@ int KDTree::partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
   return storeIndex;
 }
 
-int KDTree::partitionListOfFive(
-    const std::vector<std::shared_ptr<Point>> &pointList, int startIndex,
-    int endIndex, int axis) {
+int KDTree::sortListOfFive(const std::vector<std::shared_ptr<Point>> &pointList,
+                           int startIndex, int endIndex, int axis) {
   int i = startIndex;
   while (i < endIndex) {
     int j = i;
@@ -333,7 +331,7 @@ int KDTree::selectMedianOfMedians(
   if (rightIndex - leftIndex < partitionSize) {
     // List size is smaller than our partition size so we just retrieve the
     // median
-    partitionListOfFive(pointList, leftIndex, rightIndex, axis);
+    sortListOfFive(pointList, leftIndex, rightIndex, axis);
     return (leftIndex + rightIndex) / 2;
   }
 
@@ -344,8 +342,7 @@ int KDTree::selectMedianOfMedians(
       subRight = rightIndex;
     }
 
-    // std::cout << "Splitting list: " << i << ", " << subRight << std::endl;
-    auto median = partitionListOfFive(pointList, i, subRight, axis);
+    auto median = sortListOfFive(pointList, i, subRight, axis);
     swapPoints(pointList, median,
                leftIndex + std::floor((i - leftIndex) / partitionSize));
   }

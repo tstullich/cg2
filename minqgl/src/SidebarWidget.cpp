@@ -29,6 +29,9 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
   // This should be called when a new file is loaded
   connect(parent, SIGNAL(kNearestChanged(int)), this,
           SLOT(setKNearestMax(int)));
+
+  connect(slider, SIGNAL(valueChanged(int)), parent,
+          SLOT(sliderValueChanged(int)));
 }
 
 int SidebarWidget::getCurrentMode() const {
@@ -91,16 +94,11 @@ void SidebarWidget::initLinearSearchBox(QWidget* parent) {
           SLOT(setPerformLinearSearch(bool)));
 }
 
-void SidebarWidget::setSliderCallback(QWidget* widget) {
-  connect(slider, SIGNAL(valueChanged(int)), widget,
-          SLOT(sliderValueChanged(int)));
-}
-
 void SidebarWidget::setSliderRange(int minVal, int maxVal) {
   slider->setRange(minVal, maxVal);
   startLabel->setText(QString::number(minVal));
   if (sliderOption == 1) {
-    // Once again a special case were we need floats for radius labels
+    // Once again a special case where we need floats for radius labels
     endLabel->setText(QString::number((float)maxVal / 10));
   } else {
     endLabel->setText(QString::number(maxVal));
