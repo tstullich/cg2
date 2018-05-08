@@ -492,8 +492,11 @@ int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points,
   modelView_inv = glm::inverse(modelView_inv);
 
   // collect information
+  glm::vec4 tmp = (modelView_inv * vec4(0, 0, 0, 1));
   glm::vec3 camPos;  // camera position
-  camPos = modelView_inv * vec4(0, 0, 0, 1);
+  camPos[0] = tmp[0] / tmp[3];
+  camPos[1] = tmp[1] / tmp[3];
+  camPos[2] = tmp[2] / tmp[3];
   glm::vec3 camUp;  // camera up direction
   camUp[0] = modelviewMatrix[1];
   camUp[1] = modelviewMatrix[5];
