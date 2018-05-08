@@ -551,15 +551,28 @@ int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points,
 
 void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
   if (selectOnRelease == true) {
+    if (pointList == nullptr || pointList->size() == 0) {
+      std::cout << "No OFF file loaded. Won't draw. Please load a file before "
+                   "changing values"
+                << std::endl;
+      return;
+    }
+
     selectedPointIndex =
         selectByMouse(pointList, event->pos().x(), event->pos().y());
-    if (selectedPointIndex >= 0 && drawMode == 2) {
-      selectedPointList =
-          kdtree->collectKNearest((*pointList)[selectedPointIndex], 100);
-    } else if (selectedPointIndex >= 0 && drawMode == 1) {
-      selectedPointList =
-          kdtree->collectInRadius((*pointList)[selectedPointIndex], 0.01);
-    }
+
+    // Just draw the single point that has been selected
+    glDisable(GL_LIGHTING);
+    glEnable(GL_POINT_SMOOTH);
+    glPointSize(10.0f);
+    glColor3f(0, 255, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glBegin(GL_POINTS);
+    Point p = (*pointList)[selectedPointIndex];
+    glVertex3f(p.x, p.y, p.z);
+    glEnd();
+
     updateGL();
   }
 
@@ -770,7 +783,7 @@ void QGLViewerWidget::sliderValueChanged(int value) {
     drawLevelsOfTree = value;
   } else if (drawMode == 1) {
     selectedPointList =
-        kdtree->collectInRadius((*pointList)[selectedPointIndex], value * 10);
+        kdtree->collectInRadius((*pointList)[selectedPointIndex], value / 10);
   } else {
     selectedPointList =
         kdtree->collectKNearest((*pointList)[selectedPointIndex], value);
