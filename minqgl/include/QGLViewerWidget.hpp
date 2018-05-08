@@ -15,6 +15,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <chrono>
 
 #include <QElapsedTimer>
 #include <QFileDialog>

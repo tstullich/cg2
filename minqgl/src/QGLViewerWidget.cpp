@@ -792,8 +792,11 @@ void QGLViewerWidget::sliderValueChanged(int value) {
   if (drawMode == 0) {
     drawLevelsOfTree = value;
   } else {
+    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
+    std::cout << (performLinearSearch ? "[Linear]":"[KDTree]");
     if (drawMode == 1) {
       float v = (float)value / 10;
+      std::cout << " Collect in radius=" << v << " ";
       if(performLinearSearch) {
         selectedPointList = kdtree->collectInRadiusSimple(
           (*pointList)[selectedPointIndex], v);
@@ -802,6 +805,7 @@ void QGLViewerWidget::sliderValueChanged(int value) {
           (*pointList)[selectedPointIndex], v);
       }
     } else {
+      std::cout << " KNearestNeighbors k=" << value << " ";
       if(performLinearSearch) {
         selectedPointList =
           kdtree->collectKNearestSimple((*pointList)[selectedPointIndex], value);
@@ -810,6 +814,9 @@ void QGLViewerWidget::sliderValueChanged(int value) {
           kdtree->collectKNearest((*pointList)[selectedPointIndex], value);
       }
     }
+    std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "-> execution duration: " << duration << " micro seconds" << std::endl;
   }
 
   // Need to redraw after changing settings
