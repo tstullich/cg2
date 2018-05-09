@@ -796,7 +796,7 @@ void QGLViewerWidget::sliderValueChanged(int value) {
     std::chrono::high_resolution_clock::time_point start;
     std::chrono::high_resolution_clock::time_point end;
     if (drawMode == 1) {
-      float v = (float)value / 10;
+      float v = static_cast<float>(value / 10);
       std::cout << " Collect in radius=" << v << " ";
       if (performLinearSearch) {
         start = std::chrono::high_resolution_clock::now();

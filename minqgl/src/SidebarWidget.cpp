@@ -99,7 +99,7 @@ void SidebarWidget::setSliderRange(int minVal, int maxVal) {
   startLabel->setText(QString::number(minVal));
   if (sliderOption == 1) {
     // Once again a special case where we need floats for radius labels
-    endLabel->setText(QString::number((float)maxVal / 10));
+    endLabel->setText(QString::number(static_cast<float>(maxVal / 10)));
   } else {
     endLabel->setText(QString::number(maxVal));
   }
