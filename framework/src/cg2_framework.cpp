@@ -335,7 +335,6 @@ int KDTree::selectMedianOfMedians(
     return (leftIndex + rightIndex) / 2;
   }
 
-  // std::cout << "Performing splits: " << std::endl;
   for (int i = leftIndex; i < rightIndex; i += partitionSize) {
     int subRight = i + partitionSize - 1;
     if (subRight > rightIndex) {
