@@ -94,7 +94,8 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   // Notify Sidebar of the size of K-Nearest max
   kNearestChanged(pointList->size());
   // clear selected point index for drawing
-  selectedPointIndex = 0;
+  selectedPointIndex = -1;
+  selectedPointList.clear();
 
   updateGL();
 
@@ -564,10 +565,13 @@ void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
       return;
     }
 
-    selectedPointIndex =
+     int64_t tmpIndex =
         selectByMouse(pointList, event->pos().x(), event->pos().y());
 
-    updateTreeState(currentSliderValue);
+    if (tmpIndex >= 0) {
+        selectedPointIndex = tmpIndex;
+        updateTreeState(currentSliderValue);
+    }
   }
 
   // finish up
@@ -781,6 +785,9 @@ void QGLViewerWidget::updateTreeState(int value) {
   if (drawMode == 0) {
     drawLevelsOfTree = value;
   } else {
+    if (selectedPointIndex < 0) {
+        return;
+    }
     std::cout << (performLinearSearch ? "[Linear]" : "[KDTree]");
     std::chrono::high_resolution_clock::time_point start;
     std::chrono::high_resolution_clock::time_point end;

@@ -47,10 +47,10 @@ void SidebarWidget::initModeDropdown(QWidget* parent) {
 
   // Connecting signals to slots here so our values update correctly when a new
   // value is selected from the dropdown
-  connect(dropdownMenu, SIGNAL(currentIndexChanged(int)), this,
-          SLOT(updateSliderValues(int)));
   connect(dropdownMenu, SIGNAL(currentIndexChanged(int)), parent,
           SLOT(setDrawMode(int)));
+  connect(dropdownMenu, SIGNAL(currentIndexChanged(int)), this,
+          SLOT(updateSliderValues(int)));
 }
 
 QWidget* SidebarWidget::initModeSlider() {
