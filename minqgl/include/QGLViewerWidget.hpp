@@ -127,8 +127,8 @@ private slots:
   }
 
   void setDrawMode(int value);
-  void sliderValueChanged(int value);
   void setPerformLinearSearch(bool value);
+  void updateTreeState(int value);
 
 private:
   void init();
@@ -159,30 +159,34 @@ private:
   // popup menu for draw mode selection
   QMenu *popupMenu;
   QActionGroup *drawModesGroup;
+  QPoint lastPoint2D;
+
   typedef std::map<QString, QAction *> ActionMap;
   ActionMap namesToActions;
 
   // virtual trackball: map 2D screen point to unit sphere
   bool mapToSphere(const QPoint &point, glm::vec3 &result);
 
-  QPoint lastPoint2D;
   glm::vec3 lastPoint3D;
-  bool lastPointOk;
+
   // Holds the current drawing mode set by our dropdown
   int drawMode;
+  int currentSliderValue = 0;
+
+  bool flag_drawPoints = true;
+  bool flag_drawSelectedPoints = true;
+  bool flag_drawTree = true;
+  bool lastPointOk;
   bool performLinearSearch = false;
   bool selectOnRelease = false;
+
   GLdouble zNearFactor = 0.01;
   GLdouble zFarFactor = 500.0;
 
-  std::shared_ptr<KDTree> kdtree;
-  bool flag_drawPoints = true;
-  bool flag_drawSelectedPoints = true;
-
-  // used in key event handler
-  bool flag_drawTree = true;
   unsigned drawLevelsOfTree = 0;
   uint64_t selectedPointIndex = 0;
+
+  std::shared_ptr<KDTree> kdtree;
 };
 
 //=============================================================================

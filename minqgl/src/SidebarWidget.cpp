@@ -31,7 +31,7 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
           SLOT(setKNearestMax(int)));
 
   connect(slider, SIGNAL(valueChanged(int)), parent,
-          SLOT(sliderValueChanged(int)));
+          SLOT(updateTreeState(int)));
 }
 
 int SidebarWidget::getCurrentMode() const {
@@ -123,7 +123,8 @@ void SidebarWidget::setCurrentValueLabel(int value) {
   auto currentValueText = QString(CURRENT_VALUE_LABEL);
   if (sliderOption == 1) {
     // If we are in radius mode we need to convert our number into a decimal
-    currentValueText = currentValueText + QString::number((float)value / 10);
+    currentValueText =
+        currentValueText + QString::number(static_cast<float>(value / 10));
   } else {
     currentValueText = currentValueText + QString::number(value);
   }

@@ -567,16 +567,7 @@ void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
     selectedPointIndex =
         selectByMouse(pointList, event->pos().x(), event->pos().y());
 
-    // A little bit of a workaround to be able to render to 1 point
-    if (drawMode == 1) {
-      selectedPointList =
-          kdtree->collectInRadius((*pointList)[selectedPointIndex], 0.0);
-    }
-    if (drawMode == 2) {
-      selectedPointList =
-          kdtree->collectKNearest((*pointList)[selectedPointIndex], 0);
-    }
-    updateGL();
+    updateTreeState(currentSliderValue);
   }
 
   // finish up
@@ -774,7 +765,11 @@ QAction *QGLViewerWidget::findAction(const char *name) {
 
 void QGLViewerWidget::setDrawMode(int value) { drawMode = value; }
 
-void QGLViewerWidget::sliderValueChanged(int value) {
+void QGLViewerWidget::setPerformLinearSearch(bool value) {
+  performLinearSearch = value;
+}
+
+void QGLViewerWidget::updateTreeState(int value) {
   if (pointList == nullptr || pointList->size() == 0) {
     std::cout << "No OFF file loaded. Won't draw. Please load a file before "
                  "changing values"
@@ -782,6 +777,7 @@ void QGLViewerWidget::sliderValueChanged(int value) {
     return;
   }
 
+  currentSliderValue = value;
   if (drawMode == 0) {
     drawLevelsOfTree = value;
   } else {
@@ -789,7 +785,7 @@ void QGLViewerWidget::sliderValueChanged(int value) {
     std::chrono::high_resolution_clock::time_point start;
     std::chrono::high_resolution_clock::time_point end;
     if (drawMode == 1) {
-      float v = static_cast<float>(value / 10);
+      float v = static_cast<float>(currentSliderValue / 10);
       std::cout << " Collect in radius=" << v << " ";
       if (performLinearSearch) {
         start = std::chrono::high_resolution_clock::now();
@@ -803,16 +799,16 @@ void QGLViewerWidget::sliderValueChanged(int value) {
         end = std::chrono::high_resolution_clock::now();
       }
     } else {
-      std::cout << " KNearestNeighbors k=" << value << " ";
+      std::cout << " KNearestNeighbors k=" << currentSliderValue << " ";
       if (performLinearSearch) {
         start = std::chrono::high_resolution_clock::now();
         selectedPointList = kdtree->collectKNearestSimple(
-            (*pointList)[selectedPointIndex], value);
+            (*pointList)[selectedPointIndex], currentSliderValue);
         end = std::chrono::high_resolution_clock::now();
       } else {
         start = std::chrono::high_resolution_clock::now();
-        selectedPointList =
-            kdtree->collectKNearest((*pointList)[selectedPointIndex], value);
+        selectedPointList = kdtree->collectKNearest(
+            (*pointList)[selectedPointIndex], currentSliderValue);
         end = std::chrono::high_resolution_clock::now();
       }
     }
@@ -825,10 +821,6 @@ void QGLViewerWidget::sliderValueChanged(int value) {
 
   // Need to redraw after changing settings
   updateGL();
-}
-
-void QGLViewerWidget::setPerformLinearSearch(bool value) {
-  performLinearSearch = value;
 }
 
 void QGLViewerWidget::slotSnapshot(void) {
