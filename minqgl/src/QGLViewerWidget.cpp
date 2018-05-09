@@ -94,7 +94,8 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   // Notify Sidebar of the size of K-Nearest max
   kNearestChanged(pointList->size());
   // clear selected point index for drawing
-  selectedPointIndex = 0;
+  selectedPointIndex = -1;
+  selectedPointList.clear();
 
   updateGL();
 
@@ -564,10 +565,13 @@ void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
       return;
     }
 
-    selectedPointIndex =
+    auto tempIndex =
         selectByMouse(pointList, event->pos().x(), event->pos().y());
 
-    updateTreeState(currentSliderValue);
+    if (tempIndex >= 0) {
+      selectedPointIndex = tempIndex;
+      updateTreeState(currentSliderValue);
+    }
   }
 
   // finish up
