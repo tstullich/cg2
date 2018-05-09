@@ -67,13 +67,11 @@ PointPointerList KDTree::collectKNearestSimple(const Point &p, int knearest) {
   PointPointerList pl;
   PriorityQueue pq;
   add(knearest, p, pq, rootnode->plist);
-  // TODO optimize
   unsigned int pq_size = pq.size();
   for (unsigned int i = 0; i < pq_size; i++) {
-    pl.push_back(pq.top());
+    pl.emplace_back(std::move(pq.top()));
     pq.pop();
   }
-  // TODO delete p from pl
   return pl;
 }
 
@@ -90,14 +88,12 @@ PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
     PriorityQueue pq;
     NodeList nl;
     recursiveKNearestSearch(p, knearest + 1, rootnode, nl, pq);
-    // TODO optimize
     unsigned int pq_size = pq.size();
     for (unsigned int i = 0; i < pq_size; i++) {
-      pl.push_back(pq.top());
+      pl.emplace_back(std::move(pq.top()));
       pq.pop();
     }
   }
-  // TODO delete p from pl
   return pl;
 }
 

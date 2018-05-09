@@ -96,6 +96,8 @@ void SidebarWidget::initLinearSearchBox(QWidget* parent) {
 
 void SidebarWidget::setSliderRange(int minVal, int maxVal) {
   slider->setRange(minVal, maxVal);
+  // Set position of slider back to 0 to make things easier
+  slider->setValue(0);
   startLabel->setText(QString::number(minVal));
   if (sliderOption == 1) {
     // Once again a special case where we need floats for radius labels
@@ -123,8 +125,7 @@ void SidebarWidget::setCurrentValueLabel(int value) {
   auto currentValueText = QString(CURRENT_VALUE_LABEL);
   if (sliderOption == 1) {
     // If we are in radius mode we need to convert our number into a decimal
-    currentValueText =
-        currentValueText + QString::number(static_cast<float>(value / 10));
+    currentValueText = currentValueText + QString::number((float)value / 10);
   } else {
     currentValueText = currentValueText + QString::number(value);
   }
