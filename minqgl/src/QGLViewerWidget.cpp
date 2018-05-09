@@ -792,31 +792,42 @@ void QGLViewerWidget::sliderValueChanged(int value) {
   if (drawMode == 0) {
     drawLevelsOfTree = value;
   } else {
-    std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-    std::cout << (performLinearSearch ? "[Linear]":"[KDTree]");
+    std::cout << (performLinearSearch ? "[Linear]" : "[KDTree]");
+    std::chrono::high_resolution_clock::time_point start;
+    std::chrono::high_resolution_clock::time_point end;
     if (drawMode == 1) {
       float v = (float)value / 10;
       std::cout << " Collect in radius=" << v << " ";
-      if(performLinearSearch) {
-        selectedPointList = kdtree->collectInRadiusSimple(
-          (*pointList)[selectedPointIndex], v);
+      if (performLinearSearch) {
+        start = std::chrono::high_resolution_clock::now();
+        selectedPointList =
+            kdtree->collectInRadiusSimple((*pointList)[selectedPointIndex], v);
+        end = std::chrono::high_resolution_clock::now();
       } else {
-        selectedPointList = kdtree->collectInRadius(
-          (*pointList)[selectedPointIndex], v);
+        start = std::chrono::high_resolution_clock::now();
+        selectedPointList =
+            kdtree->collectInRadius((*pointList)[selectedPointIndex], v);
+        end = std::chrono::high_resolution_clock::now();
       }
     } else {
       std::cout << " KNearestNeighbors k=" << value << " ";
-      if(performLinearSearch) {
-        selectedPointList =
-          kdtree->collectKNearestSimple((*pointList)[selectedPointIndex], value);
+      if (performLinearSearch) {
+        start = std::chrono::high_resolution_clock::now();
+        selectedPointList = kdtree->collectKNearestSimple(
+            (*pointList)[selectedPointIndex], value);
+        end = std::chrono::high_resolution_clock::now();
       } else {
+        start = std::chrono::high_resolution_clock::now();
         selectedPointList =
-          kdtree->collectKNearest((*pointList)[selectedPointIndex], value);
+            kdtree->collectKNearest((*pointList)[selectedPointIndex], value);
+        end = std::chrono::high_resolution_clock::now();
       }
     }
-    std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    std::cout << "-> execution duration: " << duration << " micro seconds" << std::endl;
+    auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count();
+    std::cout << "-> execution duration: " << duration << " micro seconds"
+              << std::endl;
   }
 
   // Need to redraw after changing settings
