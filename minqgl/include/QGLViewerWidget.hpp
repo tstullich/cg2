@@ -170,7 +170,7 @@ private:
   glm::vec3 lastPoint3D;
 
   // Holds the current drawing mode set by our dropdown
-  int drawMode;
+  int drawMode = 0;
   int currentSliderValue = 0;
 
   bool flag_drawPoints = true;
@@ -184,7 +184,7 @@ private:
   GLdouble zFarFactor = 500.0;
 
   unsigned drawLevelsOfTree = 0;
-  uint64_t selectedPointIndex = 0;
+  int64_t selectedPointIndex = 0;
 
   std::shared_ptr<KDTree> kdtree;
 };
