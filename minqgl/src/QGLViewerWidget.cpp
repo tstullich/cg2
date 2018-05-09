@@ -103,39 +103,56 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 }
 
 bool QGLViewerWidget::drawPointSet() {
-  if (pointList != nullptr && pointList->size() > 0) {
-    glDisable(GL_LIGHTING);
-
-    glEnable(GL_POINT_SMOOTH);
-    glPointSize(3.0f);
-    glBegin(GL_POINTS);
-    glColor3f(0, 0, 0);
-    for (unsigned int i = 0; i < pointList->size(); i++) {
-      Point p = (*pointList)[i];
-      glVertex3f(p.x, p.y, p.z);
-    }
-    glEnd();
-    return true;
+  if (pointList == nullptr || pointList->size() == 0) {
+    return false;
   }
-  return false;
+
+  glDisable(GL_LIGHTING);
+
+  glEnable(GL_POINT_SMOOTH);
+  glPointSize(3.0f);
+  glBegin(GL_POINTS);
+  glColor3f(0, 0, 0);
+  for (unsigned int i = 0; i < pointList->size(); i++) {
+    Point p = (*pointList)[i];
+    glVertex3f(p.x, p.y, p.z);
+  }
+  glEnd();
+
+  return true;
 }
 
 bool QGLViewerWidget::drawSelectedPointSet() {
-  if (selectedPointList.size() > 0) {
-    glDisable(GL_LIGHTING);
+  if (selectedPointList.size() == 0) {
+    return false;
+  }
 
-    glEnable(GL_POINT_SMOOTH);
-    glPointSize(10.0f);
-    glBegin(GL_POINTS);
-    glColor3f(0, 255, 0);
-    for (unsigned int i = 0; i < selectedPointList.size(); i++) {
-      std::shared_ptr<Point> p = selectedPointList[i];
+  glDisable(GL_LIGHTING);
+
+  glEnable(GL_POINT_SMOOTH);
+  glPointSize(10.0f);
+  glBegin(GL_POINTS);
+  glColor3f(0, 255, 0);
+  auto selectedPoint = (*pointList)[selectedPointIndex];
+  for (unsigned int i = 0; i < selectedPointList.size(); i++) {
+    std::shared_ptr<Point> p = selectedPointList[i];
+    if ((selectedPoint.x != p->x) || (selectedPoint.y != p->y) ||
+        (selectedPoint.z != p->z)) {
       glVertex3f(p->x, p->y, p->z);
     }
-    glEnd();
-    return true;
   }
-  return false;
+  glEnd();
+
+  glEnable(GL_POINT_SMOOTH);
+  glPointSize(12.0f);
+  glBegin(GL_POINTS);
+  glColor3f(255, 0, 255);
+  // The selected point should always be at the end of the list
+  auto p = (*pointList)[selectedPointIndex];
+  glVertex3f(p.x, p.y, p.z);
+  glEnd();
+
+  return true;
 }
 
 //----------------------------------------------------------------------------
