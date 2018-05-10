@@ -24,6 +24,25 @@ struct LessThanByDistance {
 };
 typedef std::priority_queue<std::shared_ptr<Point>, PointPointerList, LessThanByDistance> PriorityQueue;
 
+struct LessThanByX {
+  bool operator()(const std::shared_ptr<Point> lhs, const std::shared_ptr<Point> rhs) {
+    return lhs->x < rhs->x;
+  }
+};
+struct LessThanByY {
+  bool operator()(const std::shared_ptr<Point> lhs, const std::shared_ptr<Point> rhs) {
+    return lhs->y < rhs->y;
+  }
+};
+struct LessThanByZ {
+  bool operator()(const std::shared_ptr<Point> lhs, const std::shared_ptr<Point> rhs) {
+    return lhs->z < rhs->z;
+  }
+};
+typedef std::priority_queue<std::shared_ptr<Point>, PointPointerList, LessThanByX> PriorityQueueX;
+typedef std::priority_queue<std::shared_ptr<Point>, PointPointerList, LessThanByY> PriorityQueueY;
+typedef std::priority_queue<std::shared_ptr<Point>, PointPointerList, LessThanByZ> PriorityQueueZ;
+
 // characteristics of the split plane
 struct Split {
   unsigned int axis;
@@ -96,6 +115,8 @@ private:
    */
   std::vector<PointPointerList> splitList(PointPointerList &list,
                                           unsigned int index);
+
+  void sortPointsPriorityQueue(PointPointerList &pointList, int axis);
 
   int partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
                     int leftIndex, int rightIndex, int pivot, int axis);
