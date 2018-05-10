@@ -12,19 +12,15 @@ float EuclDist::dist(const Point &a, const Point &b) {
 float EuclDist::dist(const Point &a, const Node &n) {
   float d = 0;
   if (!(a.x > n.borders.xMin && a.x < n.borders.xMax))
-    d = std::max(d, std::min(floatDist(n.borders.xMin, a.x),
-                             floatDist(n.borders.xMax, a.x)));
+    d = std::max(d, std::min(std::abs(n.borders.xMin - a.x),
+                             std::abs(n.borders.xMax - a.x)));
   if (!(a.y > n.borders.yMin && a.y < n.borders.yMax))
-    d = std::max(d, std::min(floatDist(n.borders.yMin, a.y),
-                             floatDist(n.borders.yMax, a.y)));
+    d = std::max(d, std::min(std::abs(n.borders.yMin - a.y),
+                             std::abs(n.borders.yMax - a.y)));
   if (!(a.z > n.borders.zMin && a.z < n.borders.zMax))
-    d = std::max(d, std::min(floatDist(n.borders.zMin, a.z),
-                             floatDist(n.borders.zMax, a.z)));
+    d = std::max(d, std::min(std::abs(n.borders.zMin - a.z),
+                             std::abs(n.borders.zMax - a.z)));
   return d;
-}
-
-float EuclDist::floatDist(float v1, float v2) {
-  return (v1 >= 0 ? std::abs(v1 - v2) : std::abs(v2 - v1));
 }
 
 KDTree::KDTree(std::unique_ptr<PointList> plist,
@@ -266,6 +262,43 @@ std::vector<PointPointerList> KDTree::splitList(PointPointerList &list,
   lists.push_back(secondList);
 
   return lists;
+}
+
+void KDTree::sortPointsPriorityQueue(PointPointerList &pointList, int axis) {
+  PointPointerList pl;
+  if (axis == 0) {
+    PriorityQueueX pqx;
+    for (unsigned int i = 0; i < pointList.size(); i++) {
+      pqx.push(pointList[i]);
+    }
+    unsigned int pqx_size = pqx.size();
+    for (unsigned int i = 0; i < pqx_size; i++) {
+      pl.emplace_back(std::move(pqx.top()));
+      pqx.pop();
+    }
+  } else if (axis == 1) {
+    PriorityQueueY pqy;
+    for (unsigned int i = 0; i < pointList.size(); i++) {
+      pqy.push(pointList[i]);
+    }
+    unsigned int pqy_size = pqy.size();
+    for (unsigned int i = 0; i < pqy_size; i++) {
+      pl.emplace_back(std::move(pqy.top()));
+      pqy.pop();
+    }
+  } else {
+    PriorityQueueZ pqz;
+    for (unsigned int i = 0; i < pointList.size(); i++) {
+      pqz.push(pointList[i]);
+    }
+    unsigned int pqz_size = pqz.size();
+    for (unsigned int i = 0; i < pqz_size; i++) {
+      pl.emplace_back(std::move(pqz.top()));
+      pqz.pop();
+    }
+  }
+  std::reverse(pl.begin(), pl.end());
+  pointList = pl;
 }
 
 int KDTree::partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
