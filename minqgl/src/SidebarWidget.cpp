@@ -34,12 +34,6 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
           SLOT(updateTreeState(int)));
 }
 
-int SidebarWidget::getCurrentMode() const {
-  return dropdownMenu->currentIndex();
-}
-
-int SidebarWidget::getSliderValue() const { return slider->value(); }
-
 void SidebarWidget::initModeDropdown(QWidget* parent) {
   QStringList dropdownOptions = {"Hyper Planes", "Radius", "K-Nearest"};
   dropdownMenu = new QComboBox(parent);

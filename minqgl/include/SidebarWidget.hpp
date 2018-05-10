@@ -16,21 +16,6 @@ class SidebarWidget : public QDockWidget {
 public:
   SidebarWidget(QWidget *parent = 0);
 
-  /*
-   * Retrieves the current mode of displaying
-   * the K-d tree.
-   * The options are as follows:
-   * 0 - Hyper plane mode
-   * 1 - Collect in radius mode
-   * 2 - K-Nearest neighbor mode
-   */
-  int getCurrentMode() const;
-
-  /*
-   * Method to retriew the value of the slider
-   */
-  int getSliderValue() const;
-
 private slots:
   /*
    * A slot that will help update our slider ranges
