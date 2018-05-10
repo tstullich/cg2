@@ -806,7 +806,7 @@ void QGLViewerWidget::updateTreeState(int value) {
     std::chrono::high_resolution_clock::time_point start;
     std::chrono::high_resolution_clock::time_point end;
     if (drawMode == 1) {
-      float v = static_cast<float>(currentSliderValue / 10);
+      float v = static_cast<float>(currentSliderValue / 10.0f);
       std::cout << " Collect in radius=" << v << " ";
       if (performLinearSearch) {
         start = std::chrono::high_resolution_clock::now();

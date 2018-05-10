@@ -101,7 +101,7 @@ void SidebarWidget::setSliderRange(int minVal, int maxVal) {
   startLabel->setText(QString::number(minVal));
   if (sliderOption == 1) {
     // Once again a special case where we need floats for radius labels
-    endLabel->setText(QString::number(static_cast<float>(maxVal / 10)));
+    endLabel->setText(QString::number(static_cast<float>(maxVal / 10.0f)));
   } else {
     endLabel->setText(QString::number(maxVal));
   }
@@ -125,7 +125,8 @@ void SidebarWidget::setCurrentValueLabel(int value) {
   auto currentValueText = QString(CURRENT_VALUE_LABEL);
   if (sliderOption == 1) {
     // If we are in radius mode we need to convert our number into a decimal
-    currentValueText = currentValueText + QString::number((float)value / 10);
+    currentValueText =
+        currentValueText + QString::number(static_cast<float>(value / 10.0f));
   } else {
     currentValueText = currentValueText + QString::number(value);
   }
