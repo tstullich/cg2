@@ -1,4 +1,5 @@
 #include "cg2_framework.hpp"
+#include <algorithm>
 #include <cmath>
 
 float EuclDist::dist(const Point &a, const Point &b) {
@@ -216,37 +217,35 @@ void KDTree::recursiveTreeExtend(unsigned int depth,
   }
 
   node->split.axis = depth % kDimension;
-  sortPoints(node->plist, node->split.axis);
-  unsigned int medianIndex = node->plist.size() / 2;
+  uint64_t medianIndex = sortPoints(node->plist, node->split.axis);
   node->split.value = node->split.axis < 2
                           ? (node->split.axis < 1 ? node->plist[medianIndex]->x
                                                   : node->plist[medianIndex]->y)
                           : node->plist[medianIndex]->z;
-
   //////////////////////////////
   // TODO remove
   /////////////////////////////
   for (int i = 0; i < medianIndex; i++) {
     if (node->split.axis == 0 && node->split.value < node->plist[i]->x)
       std::cout << "sorting failure! split_plane.x=" << node->split.value
-                << " < p0.x=" << node->plist[0]->x << std::endl;
+                << " < p0.x=" << node->plist[i]->x << std::endl;
     if (node->split.axis == 1 && node->split.value < node->plist[i]->y)
       std::cout << "sorting failure! split_plane.y=" << node->split.value
-                << " < p0.y=" << node->plist[0]->y << std::endl;
+                << " < p0.y=" << node->plist[i]->y << std::endl;
     if (node->split.axis == 2 && node->split.value < node->plist[i]->z)
       std::cout << "sorting failure! split_plane.z=" << node->split.value
-                << " < p0.z=" << node->plist[0]->z << std::endl;
+                << " < p0.z=" << node->plist[i]->z << std::endl;
   }
   for (int i = medianIndex; i < node->plist.size(); i++) {
     if (node->split.axis == 0 && node->split.value > node->plist[i]->x)
       std::cout << "sorting failure! split_plane.x=" << node->split.value
-                << " > p1.x=" << node->plist[0]->x << std::endl;
+                << " > p1.x=" << node->plist[i]->x << std::endl;
     if (node->split.axis == 1 && node->split.value > node->plist[i]->y)
       std::cout << "sorting failure! split_plane.y=" << node->split.value
-                << " > p1.y=" << node->plist[0]->y << std::endl;
+                << " > p1.y=" << node->plist[i]->y << std::endl;
     if (node->split.axis == 2 && node->split.value > node->plist[i]->z)
       std::cout << "sorting failure! split_plane.z=" << node->split.value
-                << " > p1.z=" << node->plist[0]->z << std::endl;
+                << " > p1.z=" << node->plist[i]->z << std::endl;
   }
   //////////////////////////////
 
@@ -303,7 +302,7 @@ int KDTree::partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
   swapPoints(pointList, pivotIndex, rightIndex);
 
   auto storeIndex = leftIndex;
-  for (int i = leftIndex; i < rightIndex - 1; i++) {
+  for (int i = leftIndex; i < rightIndex; i++) {
     if (pointList[i]->fetchPointValue(axis) < pivotValue) {
       swapPoints(pointList, storeIndex, i);
       storeIndex++;
@@ -317,11 +316,11 @@ int KDTree::partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
 
 int KDTree::sortListOfFive(const std::vector<std::shared_ptr<Point>> &pointList,
                            int startIndex, int endIndex, int axis) {
-  int i = startIndex;
-  while (i < endIndex) {
+  int i = startIndex + 1;
+  while (i <= endIndex) {
     int j = i;
-    while (j > 0 && pointList[j - 1]->fetchPointValue(axis) >
-                        pointList[j]->fetchPointValue(axis)) {
+    while (j > startIndex && pointList[j - 1]->fetchPointValue(axis) >
+                                 pointList[j]->fetchPointValue(axis)) {
       swapPoints(pointList, j, j - 1);
       j--;
     }
@@ -374,7 +373,6 @@ int KDTree::selectMedianOfMedians(
                leftIndex + std::floor((i - leftIndex) / partitionSize));
   }
 
-  // Figure out the reasons for the parameter selection
   return selectMedian(
       pointList, leftIndex,
       leftIndex + std::floor((rightIndex - leftIndex) / partitionSize),
@@ -392,16 +390,6 @@ int KDTree::sortPoints(const std::vector<std::shared_ptr<Point>> &pointList,
 
   auto result = selectMedian(pointList, 0, pointList.size() - 1,
                              pointList.size() / 2, axis);
-  std::cout << "*************Sorted List**********" << std::endl;
-  std::cout << "Median Index: " << result << std::endl;
-  for (uint64_t i = 0; i < pointList.size(); i++) {
-    auto p = pointList[i];
-    std::cout << i << " (" << p->x << ", " << p->y << ", " << p->z << ")";
-    if (i == result) {
-      std::cout << "<-----";
-    }
-    std::cout << std::endl;
-  }
   return result;
 }
 
