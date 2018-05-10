@@ -94,7 +94,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   // Notify Sidebar of the size of K-Nearest max
   kNearestChanged(pointList->size());
   // clear selected point index for drawing
-  selectedPointIndex = -1;
+  selectedPointIndex = 0;
   selectedPointList.clear();
 
   updateGL();

@@ -11,19 +11,15 @@ float EuclDist::dist(const Point &a, const Point &b) {
 float EuclDist::dist(const Point &a, const Node &n) {
   float d = 0;
   if (!(a.x > n.borders.xMin && a.x < n.borders.xMax))
-    d = std::max(d, std::min(floatDist(n.borders.xMin, a.x),
-                             floatDist(n.borders.xMax, a.x)));
+    d = std::max(d, std::min(std::abs(n.borders.xMin - a.x),
+                             std::abs(n.borders.xMax - a.x)));
   if (!(a.y > n.borders.yMin && a.y < n.borders.yMax))
-    d = std::max(d, std::min(floatDist(n.borders.yMin, a.y),
-                             floatDist(n.borders.yMax, a.y)));
+    d = std::max(d, std::min(std::abs(n.borders.yMin - a.y),
+                             std::abs(n.borders.yMax - a.y)));
   if (!(a.z > n.borders.zMin && a.z < n.borders.zMax))
-    d = std::max(d, std::min(floatDist(n.borders.zMin, a.z),
-                             floatDist(n.borders.zMax, a.z)));
+    d = std::max(d, std::min(std::abs(n.borders.zMin - a.z),
+                             std::abs(n.borders.zMax - a.z)));
   return d;
-}
-
-float EuclDist::floatDist(float v1, float v2) {
-  return (v1 >= 0 ? std::abs(v1 - v2) : std::abs(v2 - v1));
 }
 
 KDTree::KDTree(std::unique_ptr<PointList> plist,
@@ -240,13 +236,13 @@ void KDTree::recursiveTreeExtend(unsigned int depth,
   for (int i = medianIndex; i < node->plist.size(); i++) {
     if (node->split.axis == 0 && node->split.value > node->plist[i]->x)
       std::cout << "sorting failure! split_plane.x=" << node->split.value
-                << " > p1.x=" << node->plist[0]->x << std::endl;
+                << " > p1.x=" << node->plist[1]->x << std::endl;
     if (node->split.axis == 1 && node->split.value > node->plist[i]->y)
       std::cout << "sorting failure! split_plane.y=" << node->split.value
-                << " > p1.y=" << node->plist[0]->y << std::endl;
+                << " > p1.y=" << node->plist[1]->y << std::endl;
     if (node->split.axis == 2 && node->split.value > node->plist[i]->z)
       std::cout << "sorting failure! split_plane.z=" << node->split.value
-                << " > p1.z=" << node->plist[0]->z << std::endl;
+                << " > p1.z=" << node->plist[1]->z << std::endl;
   }
   //////////////////////////////
 

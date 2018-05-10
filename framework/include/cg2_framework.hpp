@@ -56,8 +56,6 @@ class EuclDist : public DistFunc {
 public:
   float dist(const Point &a, const Point &b);
   float dist(const Point &a, const Node &n);
-private:
-  float floatDist(float v1, float v2);
 };
 
 class KDTree {
