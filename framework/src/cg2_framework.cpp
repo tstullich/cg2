@@ -222,33 +222,6 @@ void KDTree::recursiveTreeExtend(unsigned int depth,
                           ? (node->split.axis < 1 ? node->plist[medianIndex]->x
                                                   : node->plist[medianIndex]->y)
                           : node->plist[medianIndex]->z;
-  //////////////////////////////
-  // TODO remove
-  /////////////////////////////
-  for (int i = 0; i < medianIndex; i++) {
-    if (node->split.axis == 0 && node->split.value < node->plist[i]->x)
-      std::cout << "sorting failure! split_plane.x=" << node->split.value
-                << " < p0.x=" << node->plist[i]->x << std::endl;
-    if (node->split.axis == 1 && node->split.value < node->plist[i]->y)
-      std::cout << "sorting failure! split_plane.y=" << node->split.value
-                << " < p0.y=" << node->plist[i]->y << std::endl;
-    if (node->split.axis == 2 && node->split.value < node->plist[i]->z)
-      std::cout << "sorting failure! split_plane.z=" << node->split.value
-                << " < p0.z=" << node->plist[i]->z << std::endl;
-  }
-  for (int i = medianIndex; i < node->plist.size(); i++) {
-    if (node->split.axis == 0 && node->split.value > node->plist[i]->x)
-      std::cout << "sorting failure! split_plane.x=" << node->split.value
-                << " > p1.x=" << node->plist[i]->x << std::endl;
-    if (node->split.axis == 1 && node->split.value > node->plist[i]->y)
-      std::cout << "sorting failure! split_plane.y=" << node->split.value
-                << " > p1.y=" << node->plist[i]->y << std::endl;
-    if (node->split.axis == 2 && node->split.value > node->plist[i]->z)
-      std::cout << "sorting failure! split_plane.z=" << node->split.value
-                << " > p1.z=" << node->plist[i]->z << std::endl;
-  }
-  //////////////////////////////
-
   std::vector<PointPointerList> parts = splitList(node->plist, medianIndex);
 
   for (unsigned int i = 0; i < parts.size(); i++) {
