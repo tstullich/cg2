@@ -124,6 +124,17 @@ bool QGLViewerWidget::drawPointSet() {
 
 bool QGLViewerWidget::drawSelectedPointSet() {
   if (selectedPointList.size() == 0) {
+    if (selectedPointIndex >= 0 && drawMode != 0) {
+      // At least draw the selected point, otherwise
+      // the selected point won't show in linear search mode
+      glEnable(GL_POINT_SMOOTH);
+      glPointSize(12.0f);
+      glBegin(GL_POINTS);
+      glColor3f(255, 0, 255);
+      auto p = (*pointList)[selectedPointIndex];
+      glVertex3f(p.x, p.y, p.z);
+      glEnd();
+    }
     return false;
   }
 

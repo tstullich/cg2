@@ -184,7 +184,7 @@ private:
   GLdouble zFarFactor = 500.0;
 
   unsigned drawLevelsOfTree = 0;
-  int64_t selectedPointIndex = 0;
+  int64_t selectedPointIndex = -1;
 
   std::shared_ptr<KDTree> kdtree;
 };
