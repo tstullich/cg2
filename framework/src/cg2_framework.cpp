@@ -264,43 +264,6 @@ std::vector<PointPointerList> KDTree::splitList(PointPointerList &list,
   return lists;
 }
 
-void KDTree::sortPointsPriorityQueue(PointPointerList &pointList, int axis) {
-  PointPointerList pl;
-  if (axis == 0) {
-    PriorityQueueX pqx;
-    for (unsigned int i = 0; i < pointList.size(); i++) {
-      pqx.push(pointList[i]);
-    }
-    unsigned int pqx_size = pqx.size();
-    for (unsigned int i = 0; i < pqx_size; i++) {
-      pl.emplace_back(std::move(pqx.top()));
-      pqx.pop();
-    }
-  } else if (axis == 1) {
-    PriorityQueueY pqy;
-    for (unsigned int i = 0; i < pointList.size(); i++) {
-      pqy.push(pointList[i]);
-    }
-    unsigned int pqy_size = pqy.size();
-    for (unsigned int i = 0; i < pqy_size; i++) {
-      pl.emplace_back(std::move(pqy.top()));
-      pqy.pop();
-    }
-  } else {
-    PriorityQueueZ pqz;
-    for (unsigned int i = 0; i < pointList.size(); i++) {
-      pqz.push(pointList[i]);
-    }
-    unsigned int pqz_size = pqz.size();
-    for (unsigned int i = 0; i < pqz_size; i++) {
-      pl.emplace_back(std::move(pqz.top()));
-      pqz.pop();
-    }
-  }
-  std::reverse(pl.begin(), pl.end());
-  pointList = pl;
-}
-
 int KDTree::partitionList(const std::vector<std::shared_ptr<Point>> &pointList,
                           int leftIndex, int rightIndex, int pivotIndex,
                           int axis) {
