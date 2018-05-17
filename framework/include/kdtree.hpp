@@ -30,8 +30,7 @@ struct Split {
 };
 
 // Our node class that holds information for the K-d tree
-class Node {
-public:
+struct Node {
   std::shared_ptr<Node> parent = nullptr; // parent node
   PointPointerList plist;                 // list of pointers to points
   // contained in this node
@@ -45,19 +44,22 @@ class KDTree {
 public:
   KDTree(std::unique_ptr<PointList> plist, Borders outerBox);
 
+  void add(int k, const Point &p, PriorityQueue &pq, PointPointerList &pl);
+
   PointPointerList collectInRadiusSimple(const Point &p, float radius);
   PointPointerList collectInRadius(const Point &p, float radius);
-  void recursiveLeafSearch(const Point &p, float radius, const Node &n, PointPointerList &plist);
 
   PointPointerList collectKNearestSimple(const Point &p, int knearest);
   PointPointerList collectKNearest(const Point &p, int knearest);
-  void recursiveKNearestSearch(const Point &p, int k, std::shared_ptr<Node> &n,
-      NodeList &nl, PriorityQueue &pq);
-  void add(int k, const Point &p, PriorityQueue &pq, PointPointerList &pl);
 
-  int size();
   std::shared_ptr<PointList> getPoints();
   std::shared_ptr<Node> getRootnode();
+
+  void recursiveLeafSearch(const Point &p, float radius, const Node &n, PointPointerList &plist);
+  void recursiveKNearestSearch(const Point &p, int k, std::shared_ptr<Node> &n,
+      NodeList &nl, PriorityQueue &pq);
+
+  int size();
 
   friend std::ostream &operator<<(std::ostream &os, const KDTree &sds);
 
