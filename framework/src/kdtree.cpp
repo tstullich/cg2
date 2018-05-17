@@ -1,38 +1,14 @@
-#include "cg2_framework.hpp"
-#include <algorithm>
-#include <cmath>
+#include "kdtree.hpp"
 
-float EuclDist::dist(const Point &a, const Point &b) {
-  float xd = a.x - b.x;
-  float yd = a.y - b.y;
-  float zd = a.z - b.z;
-  return sqrt(xd * xd + yd * yd + zd * zd);
-}
-
-float EuclDist::dist(const Point &a, const Node &n) {
-  float d = 0;
-  if (!(a.x > n.borders.xMin && a.x < n.borders.xMax))
-    d = std::max(d, std::min(std::abs(n.borders.xMin - a.x),
-                             std::abs(n.borders.xMax - a.x)));
-  if (!(a.y > n.borders.yMin && a.y < n.borders.yMax))
-    d = std::max(d, std::min(std::abs(n.borders.yMin - a.y),
-                             std::abs(n.borders.yMax - a.y)));
-  if (!(a.z > n.borders.zMin && a.z < n.borders.zMax))
-    d = std::max(d, std::min(std::abs(n.borders.zMin - a.z),
-                             std::abs(n.borders.zMax - a.z)));
-  return d;
-}
-
-KDTree::KDTree(std::unique_ptr<PointList> plist,
-               std::unique_ptr<DistFunc> dfunc, Borders outerBox)
-    : plist(std::move(plist)), dfunc(std::move(dfunc)) {
+KDTree::KDTree(std::unique_ptr<PointList> plist, Borders outerBox)
+    : plist(std::move(plist)) {
   buildTree(outerBox);
 }
 
 PointPointerList KDTree::collectInRadiusSimple(const Point &p, float radius) {
   PointPointerList plist;
   for (int i = 0; i < static_cast<int>(rootnode->plist.size()); i++) {
-    if (dfunc->dist(p, *rootnode->plist[i]) < radius) {
+    if (p.distPoint(*rootnode->plist[i]) < radius) {
       plist.push_back(rootnode->plist[i]);
     }
   }
@@ -41,7 +17,7 @@ PointPointerList KDTree::collectInRadiusSimple(const Point &p, float radius) {
 
 PointPointerList KDTree::collectInRadius(const Point &p, float radius) {
   PointPointerList pl;
-  if (dfunc->dist(p, *rootnode) > 0)
+  if (p.distNode(*rootnode) > 0)
     std::cout
         << "The given point is not contained in the rootnode of the KDTree box."
         << std::endl;
@@ -54,12 +30,12 @@ void KDTree::recursiveLeafSearch(const Point &p, float radius, const Node &n,
                                  PointPointerList &pl) {
   if (n.nlist.size() > 0) {
     for (unsigned int i = 0; i < n.nlist.size(); i++) {
-      if (dfunc->dist(p, n) <= radius)
+      if (p.distNode(n) <= radius)
         recursiveLeafSearch(p, radius, *n.nlist[i], pl);
     }
   } else {
     for (unsigned int i = 0; i < n.plist.size(); i++) {
-      if (dfunc->dist(p, *n.plist[i]) <= radius) pl.push_back(n.plist[i]);
+      if (p.distPoint(*n.plist[i]) <= radius) pl.push_back(n.plist[i]);
     }
   }
 }
@@ -78,7 +54,7 @@ PointPointerList KDTree::collectKNearestSimple(const Point &p, int knearest) {
 
 PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
   PointPointerList pl;
-  if (dfunc->dist(p, *rootnode) > 0)
+  if (p.distNode(*rootnode) > 0)
     std::cout
         << "The given point is not contained in the rootnode of the KDTree box."
         << std::endl;
@@ -121,7 +97,7 @@ void KDTree::recursiveKNearestSearch(const Point &p, int k,
       else
         return;
     } else {
-      if (dfunc->dist(p, *n) < pq.top()->dist) {
+      if (p.distNode(*n) < pq.top()->dist) {
         if (n->nlist.empty()) {
           add(k, p, pq, n->plist);
           nl.push_back(n);
@@ -150,7 +126,7 @@ void KDTree::recursiveKNearestSearch(const Point &p, int k,
 void KDTree::add(int k, const Point &p, PriorityQueue &pq,
                  PointPointerList &pl) {
   for (unsigned int i = 0; i < pl.size(); i++) {
-    pl[i]->dist = dfunc->dist(p, *pl[i]);
+    pl[i]->dist = p.distPoint(*pl[i]);
     pq.push(pl[i]);
     if (pq.size() > k) pq.pop();
   }

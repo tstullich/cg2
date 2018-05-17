@@ -25,7 +25,7 @@
 #include <glm/glm.hpp>
 
 // --------------------
-#include "cg2_framework.hpp"
+#include "kdtree.hpp"
 #include "parser.hpp"
 // --------------------
 

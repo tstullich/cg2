@@ -9,11 +9,12 @@
 #include <queue>
 
 #include "parser.hpp"
-#include "point.hpp"
 
+class Point;
 class Node;
-typedef std::vector<Point> PointList;
+
 typedef std::vector<std::shared_ptr<Point>> PointPointerList;
+typedef std::vector<Point> PointList;
 typedef std::vector<std::shared_ptr<Node>> NodeList;
 
 // sort operator of priority queue
@@ -30,9 +31,8 @@ struct Split {
   float value;
 };
 
-// example of a node in spatial data structure
+// Our node class that holds information for the K-d tree
 class Node {
-
 public:
   std::shared_ptr<Node> parent = nullptr; // parent node
   PointPointerList plist;                 // list of pointers to points
@@ -42,27 +42,10 @@ public:
   Split split;
 };
 
-// abstract distance function interface
-class DistFunc {
-
-public:
-  virtual float dist(const Point &a, const Point &b) = 0;
-  virtual float dist(const Point &a, const Node &n) = 0;
-};
-
-// euclidian distance
-class EuclDist : public DistFunc {
-
-public:
-  float dist(const Point &a, const Point &b);
-  float dist(const Point &a, const Node &n);
-};
-
 class KDTree {
 
 public:
-  KDTree(std::unique_ptr<PointList> plist, std::unique_ptr<DistFunc> dfunc,
-         Borders outerBox);
+  KDTree(std::unique_ptr<PointList> plist, Borders outerBox);
 
   PointPointerList collectInRadiusSimple(const Point &p, float radius);
   PointPointerList collectInRadius(const Point &p, float radius);
@@ -149,9 +132,6 @@ private:
 
   // root (head) of spatial data structure
   std::shared_ptr<Node> rootnode;
-
-  // generic distance function
-  std::unique_ptr<DistFunc> dfunc;
 
   // How deep we want to make our recursion for the tree
   const unsigned int maxDepth = 8;

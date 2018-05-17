@@ -1,5 +1,7 @@
 #include "parser.hpp"
 
+struct Borders;
+
 bool Parser::open(const std::string &fileName) {
   inputStream.open(fileName, std::fstream::in);
   if (inputStream.is_open()) {

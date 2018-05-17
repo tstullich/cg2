@@ -12,6 +12,8 @@
 #include "face.hpp"
 #include "point.hpp"
 
+class Point;
+
 // limits of a particular cell are saved here
 struct Borders {
   float xMin = std::numeric_limits<float>::max();

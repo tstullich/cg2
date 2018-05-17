@@ -11,7 +11,6 @@
 #pragma warning(disable : 4267 4311 4305)
 #endif
 
-#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -86,8 +85,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
     return false;
   }
 
-  std::shared_ptr<KDTree> newTree(
-      new KDTree(p.getPoints(), std::make_unique<EuclDist>(), p.outerBox));
+  std::shared_ptr<KDTree> newTree(new KDTree(p.getPoints(), p.outerBox));
   kdtree = newTree;
   pointList = kdtree->getPoints();
 
