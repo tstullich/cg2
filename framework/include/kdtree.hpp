@@ -9,9 +9,7 @@
 #include <queue>
 
 #include "parser.hpp"
-
-class Point;
-class Node;
+#include "point.hpp"
 
 typedef std::vector<std::shared_ptr<Point>> PointPointerList;
 typedef std::vector<Point> PointList;
