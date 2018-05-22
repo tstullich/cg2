@@ -20,7 +20,11 @@ float Point::distPoint(const Point &b) const {
   float xd = this->x - b.x;
   float yd = this->y - b.y;
   float zd = this->z - b.z;
-  return sqrt(xd * xd + yd * yd + zd * zd);
+  if (K_DIMENSION == 2) {
+      return sqrt(xd * xd + yd * yd);
+  } else {
+      return sqrt(xd * xd + yd * yd + zd * zd);
+  }
 }
 
 float Point::distNode(const Node &n) const {
