@@ -911,7 +911,7 @@ void QGLViewerWidget::setGridYDim(int value) {
 
 void QGLViewerWidget::setRadius(double radius) {
   std::cout << "Changing radius to " << radius << std::endl;
-  radius = value;
+  radius = radius;
   paintGL();
   update();
 }
