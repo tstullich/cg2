@@ -27,6 +27,7 @@
 // --------------------
 #include "kdtree.hpp"
 #include "parser.hpp"
+#include "surfaces.hpp"
 // --------------------
 
 //== FORWARD DECLARATIONS =====================================================
@@ -203,6 +204,7 @@ private:
   int64_t selectedPointIndex = -1;
 
   std::shared_ptr<KDTree> kdtree;
+  std::shared_ptr<Surfaces> surfaces;
 };
 
 //=============================================================================

@@ -85,9 +85,12 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
     return false;
   }
 
-  std::shared_ptr<KDTree> newTree(new KDTree(p.getPoints(), p.outerBox));
-  kdtree = newTree;
+  kdtree = std::make_shared<KDTree>(p.getPoints(), p.outerBox);
   pointList = kdtree->getPoints();
+
+  // causes linker error - no idear why
+  /* surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN); */
+
 
   // Notify Sidebar of the size of K-Nearest max
   //kNearestChanged(pointList->size());
@@ -659,6 +662,14 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       slotSnapshot();
       break;
 
+    case Key_J:
+      if (drawLevelsOfTree > 0) drawLevelsOfTree--;
+      break;
+
+    case Key_K:
+      if (drawLevelsOfTree < 8) drawLevelsOfTree++;
+      break;
+
     case Key_T:
       flag_drawTree = flag_drawTree ? false : true;
       break;
@@ -911,7 +922,7 @@ void QGLViewerWidget::setGridYDim(int value) {
 
 void QGLViewerWidget::setRadius(double radius) {
   std::cout << "Changing radius to " << radius << std::endl;
-  radius = radius;
+  this->radius = radius;
   paintGL();
   update();
 }
