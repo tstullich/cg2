@@ -11,8 +11,6 @@
 #include "parser.hpp"
 #include "point.hpp"
 
-#define K_DIMENSION 3
-
 typedef std::vector<std::shared_ptr<Point>> PointPointerList;
 typedef std::vector<Point> PointList;
 typedef std::vector<std::shared_ptr<Node>> NodeList;
@@ -56,6 +54,7 @@ public:
 
   std::shared_ptr<PointList> getPoints();
   std::shared_ptr<Node> getRootnode();
+  static const int getK() { return kDimension; }
 
   void recursiveLeafSearch(const Point &p, float radius, const Node &n, PointPointerList &plist);
   void recursiveKNearestSearch(const Point &p, int k, std::shared_ptr<Node> &n,
@@ -142,7 +141,7 @@ private:
   const unsigned int maxPoints = 50;
 
   // The number of dimensions for the KD Tree.
-  const int kDimension = K_DIMENSION;
+  static const int kDimension = 2;
 
   // Sets the maximum size of a partition.
   // 5 was the suggested size on wikipedia but we may be able to change this

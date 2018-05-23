@@ -20,7 +20,7 @@ float Point::distPoint(const Point &b) const {
   float xd = this->x - b.x;
   float yd = this->y - b.y;
   float zd = this->z - b.z;
-  if (K_DIMENSION == 2) {
+  if (KDTree::getK() == 2) {
       return sqrt(xd * xd + yd * yd);
   } else {
       return sqrt(xd * xd + yd * yd + zd * zd);

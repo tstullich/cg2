@@ -86,12 +86,14 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
 
 void SidebarWidget::initDrawPointsBox(QWidget *parent) {
   drawPointsBox = new QCheckBox("Draw Points", this);
+  drawPointsBox->setCheckState(Qt::Checked);
 
   connect(drawPointsBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawPoints(bool)));
 }
 
 void SidebarWidget::initControlPointsBox(QWidget *parent) {
   drawRegularGridBox = new QCheckBox("Draw regular grid", this);
+  drawRegularGridBox->setCheckState(Qt::Checked);
   connect(drawRegularGridBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawRegularGrid(bool)));
 
   drawControlPointsMeshBox = new QCheckBox("Draw control points mesh", this);

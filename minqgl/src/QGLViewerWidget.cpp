@@ -257,6 +257,33 @@ void QGLViewerWidget::paintGL() {
 
 //----------------------------------------------------------------------------
 
+void QGLViewerWidget::drawRegularGrid() {
+    if (kdtree == nullptr) {
+        return;
+    }
+
+    Borders borders = kdtree->getRootnode()->borders;
+    float xMin = borders.xMin;
+    float xMax = borders.xMax;
+    float yMin = borders.yMin;
+    float yMax = borders.yMax;
+    float mDelta = double(yMax-yMin) / gridM;
+    float nDelta = double(xMax-xMin) / gridN;
+
+    // draw grid lines
+    glBegin(GL_LINES);
+    glColor3f(0, 1, 0);
+    for (int m = 0; m <= gridM; ++m) {
+        glVertex3f(xMin, yMin+(m*mDelta), 0);
+        glVertex3f(xMax, yMin+(m*mDelta), 0);
+    }
+    for (int n = 0; n <= gridN; ++n) {
+        glVertex3f(xMin+(n*nDelta), yMin, 0);
+        glVertex3f(xMin+(n*nDelta), yMax, 0);
+    }
+    glEnd();
+}
+
 void drawBox(struct Borders borders) {
   double x_0 = borders.xMin;
   double x_1 = borders.xMax;
@@ -358,8 +385,11 @@ void QGLViewerWidget::drawKDTree() {
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
-  if (flag_drawPoints) {
+  if (drawPoints) {
     drawPointSet();
+  }
+  if (drawGrid) {
+      drawRegularGrid();
   }
   if (flag_drawSelectedPoints) {
     drawSelectedPointSet();
@@ -369,17 +399,22 @@ void QGLViewerWidget::drawScene() {
   }
 
   // Draw a coordinate system
-  glBegin(GL_LINES);
-  glColor3f(1, 0, 0);
-  glVertex3f(0, 0, 0);
-  glVertex3f(1, 0, 0);
-  glColor3f(0, 1, 0);
-  glVertex3f(0, 0, 0);
-  glVertex3f(0, 1, 0);
-  glColor3f(0, 0, 1);
-  glVertex3f(0, 0, 0);
-  glVertex3f(0, 0, 1);
-  glEnd();
+  if (!drawGrid || kdtree == nullptr) {
+      glBegin(GL_LINES);
+      // x-axis
+      glColor3f(1, 0, 0);
+      glVertex3f(0, 0, 0);
+      glVertex3f(0.25, 0, 0);
+      // y-axis
+      glColor3f(0, 1, 0);
+      glVertex3f(0, 0, 0);
+      glVertex3f(0, 0.25, 0);
+      // z-axis
+      glColor3f(0, 0, 1);
+      glVertex3f(0, 0, 0);
+      glVertex3f(0, 0, 0.25);
+      glEnd();
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -628,20 +663,9 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       flag_drawTree = flag_drawTree ? false : true;
       break;
 
-    case Key_J:
-      if (drawLevelsOfTree > 0) drawLevelsOfTree--;
-      break;
-
-    case Key_K:
-      if (drawLevelsOfTree < 8) drawLevelsOfTree++;
-      break;
-
     case Key_H:
       std::cout << "Keys:\n";
       std::cout << "  Print\tMake snapshot\n";
-      std::cout << "  C\tenable/disable back face culling\n";
-      std::cout << "  F\tenable/disable fog\n";
-      std::cout << "  I\tDisplay information\n";
       break;
 
     case Key_Q:
@@ -854,11 +878,17 @@ void QGLViewerWidget::updateTreeState(int value) {
 }
 
 void QGLViewerWidget::setDrawPoints(bool value) {
-  std::cout << "Changing draw value! " << value << std::endl;
+  std::cout << "Changing drawPoints value to " << value << std::endl;
+  drawPoints = value;
+  paintGL();
+  updateGL();
 }
 
 void QGLViewerWidget::setDrawRegularGrid(bool value) {
-  std::cout << "Changing regular grid draw value! " << value << std::endl;
+  std::cout << "Changing drawGrid value to " << value << std::endl;
+  drawGrid = value;
+  paintGL();
+  updateGL();
 }
 
 void QGLViewerWidget::setDrawControlMeshPoints(bool value) {
@@ -866,15 +896,24 @@ void QGLViewerWidget::setDrawControlMeshPoints(bool value) {
 }
 
 void QGLViewerWidget::setGridXDim(int value) {
-  std::cout << "Changing grid X dimension value! " << value << std::endl;
+  std::cout << "Changing grid X dimension value to " << value << std::endl;
+  gridN = value;
+  paintGL();
+  update();
 }
 
 void QGLViewerWidget::setGridYDim(int value) {
-  std::cout << "Changing grid Y dimension value! " << value << std::endl;
+  std::cout << "Changing grid Y dimension value to " << value << std::endl;
+  gridM = value;
+  paintGL();
+  update();
 }
 
 void QGLViewerWidget::setRadius(double radius) {
-  std::cout << "Changing radius value! " << radius << std::endl;
+  std::cout << "Changing radius to " << radius << std::endl;
+  radius = value;
+  paintGL();
+  update();
 }
 
 void QGLViewerWidget::setDrawBezier(bool value) {

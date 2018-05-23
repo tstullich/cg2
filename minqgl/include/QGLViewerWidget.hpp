@@ -80,6 +80,7 @@ protected:
   bool loadPointSet(const char *filename);
 
   void drawKDTree();
+  void drawRegularGrid();
 
   // draw the scene: will be called by the paintGL() method.
   virtual void drawScene();
@@ -185,9 +186,12 @@ private:
   int drawMode = 0;
   int currentSliderValue = 0;
 
-  bool flag_drawPoints = true;
+  bool drawPoints = true;
+  bool drawGrid = true;
+  int gridM = 10;
+  int gridN = 10;
   bool flag_drawSelectedPoints = true;
-  bool flag_drawTree = true;
+  bool flag_drawTree = false;
   bool lastPointOk;
   bool performLinearSearch = false;
   bool selectOnRelease = false;

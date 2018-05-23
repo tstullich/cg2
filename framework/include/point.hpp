@@ -6,7 +6,7 @@
 #include <limits>
 
 // Forward declaration so we can use Node class
-class Node;
+struct Node;
 
 /**
  * Quick mockup of a Point according to the OFF file
