@@ -853,6 +853,46 @@ void QGLViewerWidget::updateTreeState(int value) {
   updateGL();
 }
 
+void QGLViewerWidget::setDrawPoints(bool value) {
+  std::cout << "Changing draw value! " << value << std::endl;
+}
+
+void QGLViewerWidget::setDrawRegularGrid(bool value) {
+  std::cout << "Changing regular grid draw value! " << value << std::endl;
+}
+
+void QGLViewerWidget::setDrawControlMeshPoints(bool value) {
+  std::cout << "Changing control mesh points value! " << value << std::endl;
+}
+
+void QGLViewerWidget::setGridXDim(int value) {
+  std::cout << "Changing grid X dimension value! " << value << std::endl;
+}
+
+void QGLViewerWidget::setGridYDim(int value) {
+  std::cout << "Changing grid Y dimension value! " << value << std::endl;
+}
+
+void QGLViewerWidget::setRadius(double radius) {
+  std::cout << "Changing radius value! " << radius << std::endl;
+}
+
+void QGLViewerWidget::setDrawBezier(bool value) {
+  std::cout << "Changing draw bezier surface value! " << value << std::endl;
+}
+
+void QGLViewerWidget::setBezierSubdivisions(int k) {
+  std::cout << "Changing draw bezier surface subdivision value! " << k << std::endl;
+}
+
+void QGLViewerWidget::setDrawMls(bool value) {
+  std::cout << "Changing draw mls surface value! " << value << std::endl;
+}
+
+void QGLViewerWidget::setMlsSubdivisions(int k) {
+  std::cout << "Changing draw mls surface subdivision value! " << k << std::endl;
+}
+
 void QGLViewerWidget::slotSnapshot(void) {
   // empty....
 }

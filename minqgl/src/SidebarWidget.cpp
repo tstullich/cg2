@@ -9,10 +9,10 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
   container = new QWidget();
   layout = new QVBoxLayout();
 
-  initDrawPointsBox();
-  initControlPointsBox();
-  initBezierSurfaceBox();
-  initMLSSurfaceBox();
+  initDrawPointsBox(parent);
+  initControlPointsBox(parent);
+  initBezierSurfaceBox(parent);
+  initMLSSurfaceBox(parent);
 
   auto pointsBox = new QGroupBox("Points");
   auto pointsLayout = new QVBoxLayout;
@@ -84,34 +84,49 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
   setWidget(container);
 }
 
-void SidebarWidget::initDrawPointsBox() {
+void SidebarWidget::initDrawPointsBox(QWidget *parent) {
   drawPointsBox = new QCheckBox("Draw Points", this);
+
+  connect(drawPointsBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawPoints(bool)));
 }
 
-void SidebarWidget::initControlPointsBox() {
+void SidebarWidget::initControlPointsBox(QWidget *parent) {
   drawRegularGridBox = new QCheckBox("Draw regular grid", this);
+  connect(drawRegularGridBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawRegularGrid(bool)));
+
   drawControlPointsMeshBox = new QCheckBox("Draw control points mesh", this);
+  connect(drawControlPointsMeshBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawControlMeshPoints(bool)));
 
   gridXBox = new QSpinBox(this);
   gridXBox->setRange(1, 100);
+  gridXBox->setValue(10);
+  connect(gridXBox, SIGNAL(valueChanged(int)), parent, SLOT(setGridXDim(int)));
 
   gridYBox = new QSpinBox(this);
   gridYBox->setRange(1, 100);
+  gridYBox->setValue(10);
+  connect(gridYBox, SIGNAL(valueChanged(int)), parent, SLOT(setGridYDim(int)));
 
   radiusBox = new QDoubleSpinBox(this);
   radiusBox->setRange(0.0, 10.0);
+  radiusBox->setValue(1.0);
+  connect(radiusBox, SIGNAL(valueChanged(double)), parent, SLOT(setRadius(double)));
 }
 
-void SidebarWidget::initBezierSurfaceBox() {
+void SidebarWidget::initBezierSurfaceBox(QWidget *parent) {
   drawBezierSurfaceBox = new QCheckBox("Draw bezier surface", this);
+  connect(drawBezierSurfaceBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawBezier(bool)));
 
   bezierSubDivisionsBox = new QSpinBox(this);
   bezierSubDivisionsBox->setRange(1, 20);
+  connect(bezierSubDivisionsBox, SIGNAL(valueChanged(int)), parent, SLOT(setBezierSubdivisions(int)));
 }
 
-void SidebarWidget::initMLSSurfaceBox() {
+void SidebarWidget::initMLSSurfaceBox(QWidget *parent) {
   drawMLSSurfaceBox = new QCheckBox("Draw MLS surface", this);
+  connect(drawMLSSurfaceBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawMls(bool)));
 
   mlsSubDivisionsBox = new QSpinBox(this);
   mlsSubDivisionsBox->setRange(1, 20);
+  connect(mlsSubDivisionsBox, SIGNAL(valueChanged(int)), parent, SLOT(setMlsSubdivisions(int)));
 }

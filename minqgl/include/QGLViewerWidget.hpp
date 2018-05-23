@@ -127,6 +127,21 @@ private slots:
   void setPerformLinearSearch(bool value);
   void updateTreeState(int value);
 
+  void setDrawPoints(bool value);
+  void setDrawRegularGrid(bool value);
+  void setDrawControlMeshPoints(bool value);
+
+  void setGridXDim(int value);
+  void setGridYDim(int value);
+
+  void setRadius(double radius);
+
+  void setDrawBezier(bool value);
+  void setBezierSubdivisions(int k);
+
+  void setDrawMls(bool value);
+  void setMlsSubdivisions(int k);
+
 private:
   void init();
 

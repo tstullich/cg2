@@ -20,10 +20,10 @@ public:
   SidebarWidget(QWidget *parent = 0);
 
 private:
-  void initDrawPointsBox();
-  void initControlPointsBox();
-  void initBezierSurfaceBox();
-  void initMLSSurfaceBox();
+  void initDrawPointsBox(QWidget *parent);
+  void initControlPointsBox(QWidget *parent);
+  void initBezierSurfaceBox(QWidget *parent);
+  void initMLSSurfaceBox(QWidget *parent);
 
   const int HYPER_PLANE_DEFAULT_MIN = 0;
   const int HYPER_PLANE_DEFAULT_MAX = 8;
