@@ -6,8 +6,11 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDockWidget>
+#include <QDoubleSpinBox>
+#include <QGroupBox>
 #include <QLabel>
 #include <QSlider>
+#include <QSpinBox>
 #include <QString>
 #include <QVBoxLayout>
 
@@ -16,32 +19,11 @@ class SidebarWidget : public QDockWidget {
 public:
   SidebarWidget(QWidget *parent = 0);
 
-private slots:
-  /*
-   * A slot that will help update our slider ranges
-   * The option value should map to the following:
-   * 0 - Hyper plane mode
-   * 1 - Collect in radius mode
-   * 2 - K-Nearest neighbor mode
-   */
-  void updateSliderValues(int option);
-
-  void setCurrentValueLabel(int value);
-
-  /*
-   * Special case where we want to set the
-   * value of K-Nearest Max to the size of the
-   * point list
-   */
-  void setKNearestMax(int value);
-
 private:
-  void initModeDropdown(QWidget* parent);
-  QWidget* initModeSlider();
-  void initCurrentValueLabel();
-  void initLinearSearchBox(QWidget* parent);
-
-  void setSliderRange(int minVal, int maxVal);
+  void initDrawPointsBox();
+  void initControlPointsBox();
+  void initBezierSurfaceBox();
+  void initMLSSurfaceBox();
 
   const int HYPER_PLANE_DEFAULT_MIN = 0;
   const int HYPER_PLANE_DEFAULT_MAX = 8;
@@ -55,12 +37,20 @@ private:
 
   static const QString CURRENT_VALUE_LABEL;
 
-  QCheckBox *linearSearchBox;
-  QComboBox *dropdownMenu;
-  QLabel *startLabel;
-  QLabel *endLabel;
-  QLabel *currentValue;
-  QSlider *slider;
+  QCheckBox *drawPointsBox;
+  QCheckBox *drawRegularGridBox;
+  QCheckBox *drawControlPointsMeshBox;
+
+  QSpinBox *gridXBox;
+  QSpinBox *gridYBox;
+  QDoubleSpinBox *radiusBox;
+
+  QCheckBox *drawBezierSurfaceBox;
+  QSpinBox *bezierSubDivisionsBox;
+
+  QCheckBox *drawMLSSurfaceBox;
+  QSpinBox *mlsSubDivisionsBox;
+
   QVBoxLayout *layout;
   QWidget *container;
 };

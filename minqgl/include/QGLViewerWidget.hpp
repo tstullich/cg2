@@ -108,9 +108,6 @@ protected:
   virtual void wheelEvent(QWheelEvent *);
   virtual void keyPressEvent(QKeyEvent *);
 
-signals:
-  void kNearestChanged(int value);
-
 private slots:
   // popup menu clicked
   void slotSnapshot(void);

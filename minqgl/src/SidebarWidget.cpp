@@ -3,132 +3,115 @@
 const QString SidebarWidget::CURRENT_VALUE_LABEL = "Current Value: ";
 
 SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
-  // Create our siede dock. Would be good to put this into own widget later
-  // auto sideDock = new QDockWidget("K-d Tree Settings", parent);
-  setWindowTitle("K-d Tree Settings");
+  setWindowTitle("Settings");
   setAllowedAreas(Qt::RightDockWidgetArea);
 
   container = new QWidget();
   layout = new QVBoxLayout();
 
-  initModeDropdown(parent);
-  auto sliderContainer = initModeSlider();
-  initCurrentValueLabel();
-  initLinearSearchBox(parent);
+  initDrawPointsBox();
+  initControlPointsBox();
+  initBezierSurfaceBox();
+  initMLSSurfaceBox();
+
+  auto pointsBox = new QGroupBox("Points");
+  auto pointsLayout = new QVBoxLayout;
+  pointsLayout->addWidget(drawPointsBox);
+  pointsBox->setLayout(pointsLayout);
+
+  // Control Points Section
+  auto controlPointsBox = new QGroupBox("Control Points");
+  auto controlPointsLayout = new QVBoxLayout;
+  controlPointsLayout->addWidget(drawRegularGridBox);
+  controlPointsLayout->addWidget(drawControlPointsMeshBox);
+
+  auto gridSizeLayout = new QHBoxLayout;
+  gridSizeLayout->addWidget(new QLabel("Grid size:"));
+  gridSizeLayout->addWidget(gridXBox);
+  gridSizeLayout->addWidget(new QLabel("x"));
+  gridSizeLayout->addWidget(gridYBox);
+
+  auto gridPointsWrapper = new QWidget;
+  gridPointsWrapper->setLayout(gridSizeLayout);
+
+  auto radiusBoxLayout = new QHBoxLayout;
+  radiusBoxLayout->addWidget(new QLabel("Radius:"));
+  radiusBoxLayout->addWidget(radiusBox);
+
+  auto radiusWrapper = new QWidget;
+  radiusWrapper->setLayout(radiusBoxLayout);
+
+  controlPointsLayout->addWidget(gridPointsWrapper);
+  controlPointsLayout->addWidget(radiusWrapper);
+  controlPointsBox->setLayout(controlPointsLayout);
+
+  // Bezier Surface Section
+  auto bezierSurfaceBox = new QGroupBox("Bezier Surface");
+  auto bezierSurfaceLayout = new QVBoxLayout;
+  bezierSurfaceLayout->addWidget(drawBezierSurfaceBox);
+
+  auto bezierSubdivisionsLayout = new QHBoxLayout;
+  bezierSubdivisionsLayout->addWidget(new QLabel("Subdivisions k"));
+  bezierSubdivisionsLayout->addWidget(bezierSubDivisionsBox);
+
+  auto bezierSubdivisionsWrapper = new QWidget;
+  bezierSubdivisionsWrapper->setLayout(bezierSubdivisionsLayout);
+  bezierSurfaceLayout->addWidget(bezierSubdivisionsWrapper);
+  bezierSurfaceBox->setLayout(bezierSurfaceLayout);
+
+  // MLS Surface
+  auto mlsSurfaceBox = new QGroupBox("MLS Surface");
+  auto mlsSurfaceLayout = new QVBoxLayout;
+  mlsSurfaceLayout->addWidget(drawMLSSurfaceBox);
+
+  auto mlsSubdivisionsLayout = new QHBoxLayout;
+  mlsSubdivisionsLayout->addWidget(new QLabel("Subdivisions k"));
+  mlsSubdivisionsLayout->addWidget(mlsSubDivisionsBox);
+
+  auto mlsSubDivisionsWrapper = new QWidget;
+  mlsSubDivisionsWrapper->setLayout(mlsSubdivisionsLayout);
+  mlsSurfaceLayout->addWidget(mlsSubDivisionsWrapper);
+  mlsSurfaceBox->setLayout(mlsSurfaceLayout);
 
   // Add all the widgets to the final layout
-  layout->addWidget(dropdownMenu);
-  layout->addWidget(sliderContainer);
-  layout->addWidget(currentValue);
-  layout->addWidget(linearSearchBox);
+  layout->addWidget(pointsBox);
+  layout->addWidget(controlPointsBox);
+  layout->addWidget(bezierSurfaceBox);
+  layout->addWidget(mlsSurfaceBox);
   layout->setSizeConstraint(QLayout::SetFixedSize);
 
   container->setLayout(layout);
   setWidget(container);
-
-  // This should be called when a new file is loaded
-  connect(parent, SIGNAL(kNearestChanged(int)), this,
-          SLOT(setKNearestMax(int)));
-
-  connect(slider, SIGNAL(valueChanged(int)), parent,
-          SLOT(updateTreeState(int)));
 }
 
-void SidebarWidget::initModeDropdown(QWidget* parent) {
-  QStringList dropdownOptions = {"Hyper Planes", "Radius", "K-Nearest"};
-  dropdownMenu = new QComboBox(parent);
-  dropdownMenu->addItems(dropdownOptions);
-
-  // Connecting signals to slots here so our values update correctly when a new
-  // value is selected from the dropdown
-  connect(dropdownMenu, SIGNAL(currentIndexChanged(int)), parent,
-          SLOT(setDrawMode(int)));
-  connect(dropdownMenu, SIGNAL(currentIndexChanged(int)), this,
-          SLOT(updateSliderValues(int)));
+void SidebarWidget::initDrawPointsBox() {
+  drawPointsBox = new QCheckBox("Draw Points", this);
 }
 
-QWidget* SidebarWidget::initModeSlider() {
-  slider = new QSlider(Qt::Horizontal);
-  slider->setTickPosition(QSlider::NoTicks);
-  slider->setTickInterval(1);
-  slider->setSingleStep(1);
-  // Setting the min and max for the hyper plane drawing mode
-  slider->setRange(HYPER_PLANE_DEFAULT_MIN, HYPER_PLANE_DEFAULT_MAX);
+void SidebarWidget::initControlPointsBox() {
+  drawRegularGridBox = new QCheckBox("Draw regular grid", this);
+  drawControlPointsMeshBox = new QCheckBox("Draw control points mesh", this);
 
-  startLabel = new QLabel(QString::number(HYPER_PLANE_DEFAULT_MIN), this);
-  endLabel = new QLabel(QString::number(HYPER_PLANE_DEFAULT_MAX), this);
-  // Wrap slider in a grid layout so we can add labels easily
-  auto sliderLayout = new QGridLayout();
-  sliderLayout->addWidget(slider, 0, 0, 1, 4);
-  sliderLayout->addWidget(startLabel, 1, 0, 1, 1);
-  sliderLayout->addWidget(endLabel, 1, 3, 1, 1);
+  gridXBox = new QSpinBox(this);
+  gridXBox->setRange(1, 100);
 
-  auto sliderContainer = new QWidget();
-  sliderContainer->setLayout(sliderLayout);
+  gridYBox = new QSpinBox(this);
+  gridYBox->setRange(1, 100);
 
-  return sliderContainer;
+  radiusBox = new QDoubleSpinBox(this);
+  radiusBox->setRange(0.0, 10.0);
 }
 
-void SidebarWidget::initCurrentValueLabel() {
-  currentValue = new QLabel();
+void SidebarWidget::initBezierSurfaceBox() {
+  drawBezierSurfaceBox = new QCheckBox("Draw bezier surface", this);
 
-  auto currentValueText = QString(CURRENT_VALUE_LABEL);
-  currentValueText = currentValueText + QString::number(0);
-  currentValue->setText(currentValueText);
-
-  // Update label when slider changes
-  connect(slider, SIGNAL(valueChanged(int)), this,
-          SLOT(setCurrentValueLabel(int)));
+  bezierSubDivisionsBox = new QSpinBox(this);
+  bezierSubDivisionsBox->setRange(1, 20);
 }
 
-void SidebarWidget::initLinearSearchBox(QWidget* parent) {
-  // Configure our checkbox for performing a linear search
-  linearSearchBox = new QCheckBox("Perform Linear Search", this);
-  connect(linearSearchBox, SIGNAL(toggled(bool)), parent,
-          SLOT(setPerformLinearSearch(bool)));
-}
+void SidebarWidget::initMLSSurfaceBox() {
+  drawMLSSurfaceBox = new QCheckBox("Draw MLS surface", this);
 
-void SidebarWidget::setSliderRange(int minVal, int maxVal) {
-  slider->setRange(minVal, maxVal);
-  // Set position of slider back to 0 to make things easier
-  slider->setValue(0);
-  startLabel->setText(QString::number(minVal));
-  if (sliderOption == 1) {
-    // Once again a special case where we need floats for radius labels
-    endLabel->setText(QString::number(static_cast<float>(maxVal / 10.0f)));
-  } else {
-    endLabel->setText(QString::number(maxVal));
-  }
-}
-
-void SidebarWidget::updateSliderValues(int option) {
-  sliderOption = option;
-  if (sliderOption == 0) {
-    // This is our hyper plane drawing mode
-    setSliderRange(HYPER_PLANE_DEFAULT_MIN, HYPER_PLANE_DEFAULT_MAX);
-  } else if (sliderOption == 1) {
-    // This is our collect in radius drawing mode
-    setSliderRange(COLLECT_IN_RADIUS_MIN, COLLECT_IN_RADIUS_MAX);
-  } else {
-    // This is our collect nearest neighbor drawing mode
-    setSliderRange(K_NEAREST_MIN, kNearestMax);
-  }
-}
-
-void SidebarWidget::setCurrentValueLabel(int value) {
-  auto currentValueText = QString(CURRENT_VALUE_LABEL);
-  if (sliderOption == 1) {
-    // If we are in radius mode we need to convert our number into a decimal
-    currentValueText =
-        currentValueText + QString::number(static_cast<float>(value / 10.0f));
-  } else {
-    currentValueText = currentValueText + QString::number(value);
-  }
-  currentValue->setText(currentValueText);
-}
-
-void SidebarWidget::setKNearestMax(int value) {
-  kNearestMax = value;
-  // Need to internally update this
-  updateSliderValues(sliderOption);
+  mlsSubDivisionsBox = new QSpinBox(this);
+  mlsSubDivisionsBox->setRange(1, 20);
 }
