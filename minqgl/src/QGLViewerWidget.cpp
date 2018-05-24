@@ -89,11 +89,10 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   pointList = kdtree->getPoints();
 
   // causes linker error - no idear why
-  /* surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN); */
-
+  surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN);
 
   // Notify Sidebar of the size of K-Nearest max
-  //kNearestChanged(pointList->size());
+  // kNearestChanged(pointList->size());
   // clear selected point index for drawing
   selectedPointIndex = 0;
   selectedPointList.clear();
@@ -261,30 +260,30 @@ void QGLViewerWidget::paintGL() {
 //----------------------------------------------------------------------------
 
 void QGLViewerWidget::drawRegularGrid() {
-    if (kdtree == nullptr) {
-        return;
-    }
+  if (kdtree == nullptr) {
+    return;
+  }
 
-    Borders borders = kdtree->getRootnode()->borders;
-    float xMin = borders.xMin;
-    float xMax = borders.xMax;
-    float yMin = borders.yMin;
-    float yMax = borders.yMax;
-    float mDelta = double(yMax-yMin) / gridM;
-    float nDelta = double(xMax-xMin) / gridN;
+  Borders borders = kdtree->getRootnode()->borders;
+  float xMin = borders.xMin;
+  float xMax = borders.xMax;
+  float yMin = borders.yMin;
+  float yMax = borders.yMax;
+  float mDelta = double(yMax - yMin) / gridM;
+  float nDelta = double(xMax - xMin) / gridN;
 
-    // draw grid lines
-    glBegin(GL_LINES);
-    glColor3f(0, 1, 0);
-    for (int m = 0; m <= gridM; ++m) {
-        glVertex3f(xMin, yMin+(m*mDelta), 0);
-        glVertex3f(xMax, yMin+(m*mDelta), 0);
-    }
-    for (int n = 0; n <= gridN; ++n) {
-        glVertex3f(xMin+(n*nDelta), yMin, 0);
-        glVertex3f(xMin+(n*nDelta), yMax, 0);
-    }
-    glEnd();
+  // draw grid lines
+  glBegin(GL_LINES);
+  glColor3f(0, 1, 0);
+  for (int m = 0; m <= gridM; ++m) {
+    glVertex3f(xMin, yMin + (m * mDelta), 0);
+    glVertex3f(xMax, yMin + (m * mDelta), 0);
+  }
+  for (int n = 0; n <= gridN; ++n) {
+    glVertex3f(xMin + (n * nDelta), yMin, 0);
+    glVertex3f(xMin + (n * nDelta), yMax, 0);
+  }
+  glEnd();
 }
 
 void drawBox(struct Borders borders) {
@@ -392,7 +391,7 @@ void QGLViewerWidget::drawScene() {
     drawPointSet();
   }
   if (drawGrid) {
-      drawRegularGrid();
+    drawRegularGrid();
   }
   if (flag_drawSelectedPoints) {
     drawSelectedPointSet();
@@ -403,20 +402,20 @@ void QGLViewerWidget::drawScene() {
 
   // Draw a coordinate system
   if (!drawGrid || kdtree == nullptr) {
-      glBegin(GL_LINES);
-      // x-axis
-      glColor3f(1, 0, 0);
-      glVertex3f(0, 0, 0);
-      glVertex3f(0.25, 0, 0);
-      // y-axis
-      glColor3f(0, 1, 0);
-      glVertex3f(0, 0, 0);
-      glVertex3f(0, 0.25, 0);
-      // z-axis
-      glColor3f(0, 0, 1);
-      glVertex3f(0, 0, 0);
-      glVertex3f(0, 0, 0.25);
-      glEnd();
+    glBegin(GL_LINES);
+    // x-axis
+    glColor3f(1, 0, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0.25, 0, 0);
+    // y-axis
+    glColor3f(0, 1, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 0.25, 0);
+    // z-axis
+    glColor3f(0, 0, 1);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 0, 0.25);
+    glEnd();
   }
 }
 
@@ -932,7 +931,8 @@ void QGLViewerWidget::setDrawBezier(bool value) {
 }
 
 void QGLViewerWidget::setBezierSubdivisions(int k) {
-  std::cout << "Changing draw bezier surface subdivision value! " << k << std::endl;
+  std::cout << "Changing draw bezier surface subdivision value! " << k
+            << std::endl;
 }
 
 void QGLViewerWidget::setDrawMls(bool value) {
@@ -940,7 +940,8 @@ void QGLViewerWidget::setDrawMls(bool value) {
 }
 
 void QGLViewerWidget::setMlsSubdivisions(int k) {
-  std::cout << "Changing draw mls surface subdivision value! " << k << std::endl;
+  std::cout << "Changing draw mls surface subdivision value! " << k
+            << std::endl;
 }
 
 void QGLViewerWidget::slotSnapshot(void) {

@@ -32,11 +32,11 @@ class Surfaces {
         void updateSurfacesBTPS();
 
     private:
-        int m;
-        int n;
         std::shared_ptr<PointPointerList> surfaceMLS = nullptr;
         std::shared_ptr<PointPointerList> surfaceBTPS = nullptr;
         std::shared_ptr<KDTree> kdtree;
+        int m;
+        int n;
 };
 
 #endif // SURFACES_HPP
