@@ -90,6 +90,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 
   // causes linker error - no idear why
   surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, radius);
+  surfaces->updateSurfacesMLS();
 
   // Notify Sidebar of the size of K-Nearest max
   // kNearestChanged(pointList->size());
@@ -393,6 +394,7 @@ void QGLViewerWidget::drawSurfaceBTPS() {
 }
 
 void QGLViewerWidget::drawSurfaceMLS() {
+
   if (surfaces == nullptr) {
     return;
   }
@@ -712,11 +714,13 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       flag_drawTree = flag_drawTree ? false : true;
       break;
 
+    /*
     case Key_U:
       if (surfaces != nullptr) {
         surfaces->updateSurfacesMLS();
       }
       break;
+    */
 
     case Key_H:
       std::cout << "Keys:\n";

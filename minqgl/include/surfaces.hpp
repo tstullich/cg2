@@ -7,7 +7,13 @@
 #include <vector>
 #include <cmath>
 
+#include <Eigen/Core>
+#include <Eigen/Eigenvalues>
+#include <Eigen/QR>
+
 #include "kdtree.hpp"
+
+using namespace Eigen;
 
 class Surfaces {
     public:
@@ -30,6 +36,11 @@ class Surfaces {
          * Compute surface based on MLS method
          */
         void updateSurfacesMLS();
+
+        /*
+         * Computes z value at the given point by using the MLS method.
+         */
+        float computeMLS(float x, float y);
 
         /**
          * Compute surface based on Bézier Tensor Product Surface method

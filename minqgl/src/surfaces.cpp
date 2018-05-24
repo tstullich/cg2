@@ -19,10 +19,12 @@ PointPointerList Surfaces::getSurfaceBTPS() {
 void Surfaces::setGrid(int m, int n) {
   this->M = m;
   this->N = n;
+  updateSurfacesMLS();
 }
 
 void Surfaces::setRadius(float r) {
   this->radius = r;
+  updateSurfacesMLS();
 }
 
 void Surfaces::updateSurfacesMLS() {
@@ -44,10 +46,16 @@ void Surfaces::updateSurfacesMLS() {
     for (int n = 0; n <= N; ++n) {
       float x = xMin + (n * nDelta);
       float y = yMin + (m * mDelta);
-      float z = 0.5f;
+      float z = computeMLS(x, y);
       surfaceMLS.push_back(std::make_shared<Point>(x, y, z));
     }
   }
+}
+
+// TODO implement
+float Surfaces::computeMLS(float x, float y) {
+  PointPointerList points = kdtree->collectInRadius(*std::make_shared<Point>(x, y, 0), this->radius);
+  return 0;
 }
 
 void Surfaces::updateSurfacesBTPS() {
