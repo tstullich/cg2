@@ -11,15 +11,20 @@
 
 class Surfaces {
     public:
-        Surfaces(std::shared_ptr<KDTree> kdtree, int m, int n);
+        Surfaces(std::shared_ptr<KDTree> kdtree, int m, int n, float r);
 
-        std::shared_ptr<PointPointerList> getSurfaceMLS();
-        std::shared_ptr<PointPointerList> getSurfaceBTPS();
+        PointPointerList getSurfaceMLS();
+        PointPointerList getSurfaceBTPS();
 
         /**
          * Update m and n values, no computations.
          */
         void setGrid(int m, int n);
+
+        /**
+         * Update radius value, no computations.
+         */
+        void setRadius(float r);
 
         /**
          * Compute surface based on MLS method
@@ -32,11 +37,12 @@ class Surfaces {
         void updateSurfacesBTPS();
 
     private:
-        std::shared_ptr<PointPointerList> surfaceMLS = nullptr;
-        std::shared_ptr<PointPointerList> surfaceBTPS = nullptr;
+        PointPointerList surfaceMLS;
+        PointPointerList surfaceBTPS;
         std::shared_ptr<KDTree> kdtree;
-        int m;
-        int n;
+        int M;
+        int N;
+        float radius;
 };
 
 #endif // SURFACES_HPP

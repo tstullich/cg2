@@ -89,7 +89,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   pointList = kdtree->getPoints();
 
   // causes linker error - no idear why
-  surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN);
+  surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, radius);
 
   // Notify Sidebar of the size of K-Nearest max
   // kNearestChanged(pointList->size());
@@ -384,6 +384,36 @@ void QGLViewerWidget::drawKDTree() {
   glEnd();
 }
 
+void QGLViewerWidget::drawControlMesh() {
+  std::cout << "drawControlMesh()" << std::endl;
+}
+
+void QGLViewerWidget::drawSurfaceBTPS() {
+  std::cout << "drawSurfaceBTPS()" << std::endl;
+}
+
+void QGLViewerWidget::drawSurfaceMLS() {
+  if (surfaces == nullptr) {
+    return;
+  }
+
+  PointPointerList surfacePoints = surfaces->getSurfaceMLS();
+
+  glDisable(GL_LIGHTING);
+  glEnable(GL_POINT_SMOOTH);
+  glPointSize(10.0f);
+
+  glBegin(GL_POINTS);
+  glColor3f(0, 225, 0);
+  for (unsigned int i = 0; i < surfacePoints.size(); i++) {
+    Point p = *(surfacePoints[i]);
+    glVertex3f(p.x, p.y, p.z);
+  }
+  glEnd();
+
+  return;
+}
+
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
@@ -392,6 +422,15 @@ void QGLViewerWidget::drawScene() {
   }
   if (drawGrid) {
     drawRegularGrid();
+  }
+  if (flag_drawControlMesh) {
+    drawControlMesh();
+  }
+  if (flag_drawSurfaceBTPS) {
+    drawSurfaceBTPS();
+  }
+  if (flag_drawSurfaceMLS) {
+    drawSurfaceMLS();
   }
   if (flag_drawSelectedPoints) {
     drawSelectedPointSet();
@@ -673,6 +712,12 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       flag_drawTree = flag_drawTree ? false : true;
       break;
 
+    case Key_U:
+      if (surfaces != nullptr) {
+        surfaces->updateSurfacesMLS();
+      }
+      break;
+
     case Key_H:
       std::cout << "Keys:\n";
       std::cout << "  Print\tMake snapshot\n";
@@ -902,12 +947,18 @@ void QGLViewerWidget::setDrawRegularGrid(bool value) {
 }
 
 void QGLViewerWidget::setDrawControlMeshPoints(bool value) {
-  std::cout << "Changing control mesh points value! " << value << std::endl;
+  std::cout << "Changing drawControlMesh value to " << value << std::endl;
+  flag_drawControlMesh = value;
+  paintGL();
+  updateGL();
 }
 
 void QGLViewerWidget::setGridXDim(int value) {
   std::cout << "Changing grid X dimension value to " << value << std::endl;
   gridN = value;
+  if (surfaces != nullptr) {
+    this->surfaces->setGrid(gridM, gridN);
+  }
   paintGL();
   update();
 }
@@ -915,6 +966,9 @@ void QGLViewerWidget::setGridXDim(int value) {
 void QGLViewerWidget::setGridYDim(int value) {
   std::cout << "Changing grid Y dimension value to " << value << std::endl;
   gridM = value;
+  if (surfaces != nullptr) {
+    this->surfaces->setGrid(gridM, gridN);
+  }
   paintGL();
   update();
 }
@@ -922,12 +976,18 @@ void QGLViewerWidget::setGridYDim(int value) {
 void QGLViewerWidget::setRadius(double radius) {
   std::cout << "Changing radius to " << radius << std::endl;
   this->radius = radius;
+  if (surfaces != nullptr) {
+    this->surfaces->setRadius(radius);
+  }
   paintGL();
   update();
 }
 
 void QGLViewerWidget::setDrawBezier(bool value) {
-  std::cout << "Changing draw bezier surface value! " << value << std::endl;
+  std::cout << "Changing drawSurfaceBTPS value to " << value << std::endl;
+  flag_drawSurfaceBTPS = value;
+  paintGL();
+  updateGL();
 }
 
 void QGLViewerWidget::setBezierSubdivisions(int k) {
@@ -936,7 +996,10 @@ void QGLViewerWidget::setBezierSubdivisions(int k) {
 }
 
 void QGLViewerWidget::setDrawMls(bool value) {
-  std::cout << "Changing draw mls surface value! " << value << std::endl;
+  std::cout << "Changing drawSurfaceMLS value to " << value << std::endl;
+  flag_drawSurfaceMLS = value;
+  paintGL();
+  updateGL();
 }
 
 void QGLViewerWidget::setMlsSubdivisions(int k) {

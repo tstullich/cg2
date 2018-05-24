@@ -80,8 +80,11 @@ protected:
   // loads data points from OFF file using the parser
   bool loadPointSet(const char *filename);
 
-  void drawKDTree();
   void drawRegularGrid();
+  void drawKDTree();
+  void drawControlMesh();
+  void drawSurfaceBTPS();
+  void drawSurfaceMLS();
 
   // draw the scene: will be called by the paintGL() method.
   virtual void drawScene();
@@ -191,6 +194,9 @@ private:
   bool drawGrid = true;
   int gridM = 10;
   int gridN = 10;
+  bool flag_drawControlMesh = false;
+  bool flag_drawSurfaceMLS = false;
+  bool flag_drawSurfaceBTPS = false;
   bool flag_drawSelectedPoints = true;
   bool flag_drawTree = false;
   bool lastPointOk;
