@@ -387,6 +387,27 @@ void QGLViewerWidget::drawKDTree() {
 
 void QGLViewerWidget::drawControlMesh() {
   std::cout << "drawControlMesh()" << std::endl;
+  if (surfaces == nullptr) {
+    return;
+  }
+
+  auto surfacePoints = surfaces->getSurfaceMLS();
+  glBegin(GL_QUADS);
+  for (unsigned int i = 0; i < surfacePoints.size() - gridM; i++) {
+    if ((i % gridM > 0) && (i % gridN > 0)) {
+      auto p1 = surfacePoints[i];
+      auto p2 = surfacePoints[i + 1];
+      auto p3 = surfacePoints[i + gridM];
+      auto p4 = surfacePoints[i + gridM + 1];
+
+      glColor3f(1.0, 0.0, 0.0);
+      glVertex3f(p1->x, p1->y, p1->z);
+      glVertex3f(p2->x, p2->y, p2->z);
+      glVertex3f(p3->x, p3->y, p3->z);
+      glVertex3f(p4->x, p4->y, p4->z);
+    }
+  }
+  glEnd();
 }
 
 void QGLViewerWidget::drawSurfaceBTPS() {
