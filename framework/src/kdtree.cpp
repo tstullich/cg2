@@ -17,12 +17,14 @@ PointPointerList KDTree::collectInRadiusSimple(const Point &p, float radius) {
 
 PointPointerList KDTree::collectInRadius(const Point &p, float radius) {
   PointPointerList pl;
+  /*
   if (p.distNode(*rootnode) > 0)
     std::cout
         << "The given point is not contained in the rootnode of the KDTree box."
         << std::endl;
   else
-    recursiveLeafSearch(p, radius, *rootnode, pl);
+  */
+  recursiveLeafSearch(p, radius, *rootnode, pl);
   return pl;
 }
 
@@ -54,11 +56,12 @@ PointPointerList KDTree::collectKNearestSimple(const Point &p, int knearest) {
 
 PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
   PointPointerList pl;
+  /*
   if (p.distNode(*rootnode) > 0)
     std::cout
         << "The given point is not contained in the rootnode of the KDTree box."
         << std::endl;
-  else if (rootnode->plist.size() <= knearest + 1) {
+  else*/ if (rootnode->plist.size() <= knearest + 1) {
     PointPointerList ppl(rootnode->plist);
     pl = ppl;
   } else {
