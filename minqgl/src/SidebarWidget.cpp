@@ -100,18 +100,18 @@ void SidebarWidget::initControlPointsBox(QWidget *parent) {
   connect(drawControlPointsMeshBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawControlMeshPoints(bool)));
 
   gridXBox = new QSpinBox(this);
-  gridXBox->setRange(1, 100);
+  gridXBox->setRange(1, 1000);
   gridXBox->setValue(10);
   connect(gridXBox, SIGNAL(valueChanged(int)), parent, SLOT(setGridXDim(int)));
 
   gridYBox = new QSpinBox(this);
-  gridYBox->setRange(1, 100);
+  gridYBox->setRange(1, 1000);
   gridYBox->setValue(10);
   connect(gridYBox, SIGNAL(valueChanged(int)), parent, SLOT(setGridYDim(int)));
 
   radiusBox = new QDoubleSpinBox(this);
-  radiusBox->setRange(0.0, 10.0);
-  radiusBox->setValue(1.0);
+  radiusBox->setRange(0.0, 1000.0);
+  radiusBox->setValue(0.1);
   connect(radiusBox, SIGNAL(valueChanged(double)), parent, SLOT(setRadius(double)));
 }
 
