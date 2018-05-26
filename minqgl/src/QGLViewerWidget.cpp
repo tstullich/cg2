@@ -229,6 +229,13 @@ void QGLViewerWidget::initializeGL() {
   glLoadIdentity();
   glGetDoublev(GL_MODELVIEW_MATRIX, modelviewMatrix);
   setScenePos(vec3(0.0, 0.0, 0.0), 1.0);
+
+  // Init glew here. Not sure where else to put it :-/
+  // This class is a mess of extensions anyways
+  GLenum err = glewInit();
+  if (GLEW_OK != err) {
+    std::cout << "Error with GLEW: " << glewGetErrorString(err) << std::endl;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -379,15 +386,31 @@ void QGLViewerWidget::drawKDTree() {
 }
 
 void QGLViewerWidget::drawControlMesh() {
-  std::cout << "drawControlMesh()" << std::endl;
   if (surfaces == nullptr) {
     return;
   }
 
-  // TODO Add vertices here
-  //Shader s("../shaders/control-normals.vs", "../shaders/control-normals.fs");
-
+  // Grab our vertices to shade
   auto surfacePoints = surfaces->getSurfaceMLS();
+  // Need to allocate enough memory for each vertices' xyz coordinate
+  uint64_t vboSize = surfacePoints.size() * 3;
+  auto vertices = new float[vboSize];
+  std::cout << "VBO: " << vboSize << std::endl;
+  for (uint64_t i = 0; i < vboSize; i += 3) {
+    auto point = surfacePoints[i / 3];
+    vertices[i] = point->x;
+    vertices[i + 1] = point->y;
+    vertices[i + 2] = point->z;
+  }
+
+  // Initialize our shader
+  uint32_t VBO;
+  glGenBuffers(1, &VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(float), vertices, GL_STATIC_DRAW);
+
+  Shader s("../shaders/control-normals.vs", "../shaders/control-normals.fs");
+
   glBegin(GL_QUADS);
   for (unsigned int i = 0; i < surfacePoints.size() - gridM; i++) {
     if ((i % gridM > 0) && (i % gridN > 0)) {

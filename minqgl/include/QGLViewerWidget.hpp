@@ -22,7 +22,13 @@
 #include <QMainWindow>
 
 #include <GL/glew.h>
+
+#ifndef __APPLE__
 #include <GL/glut.h>
+#else
+#include <glut.h>
+#endif
+
 #include <QtOpenGL/qgl.h>
 #include <glm/glm.hpp>
 
