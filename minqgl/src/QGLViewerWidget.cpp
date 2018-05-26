@@ -20,13 +20,6 @@
 
 #include <cstdlib>
 
-// --------------------
-#ifndef __APPLE__
-#include <GL/glut.h>
-#else
-#include <glut.h>
-#endif
-// --------------------
 #include <qapplication.h>
 #include <qcursor.h>
 #include <qdatetime.h>
@@ -113,7 +106,7 @@ bool QGLViewerWidget::drawPointSet() {
   glEnable(GL_POINT_SMOOTH);
   glPointSize(3.0f);
   glBegin(GL_POINTS);
-  glColor3f(0, 0, 0);
+  glColor3f(0.0, 0.0, 1.0);
   for (unsigned int i = 0; i < pointList->size(); i++) {
     Point p = (*pointList)[i];
     glVertex3f(p.x, p.y, p.z);
@@ -211,7 +204,7 @@ void QGLViewerWidget::setDefaultLight(void) {
 
 void QGLViewerWidget::initializeGL() {
   // OpenGL state
-  glClearColor(1.0, 1.0, 1.0, 0.0);
+  glClearColor(0.0, 0.0, 0.0, 0.0);
   glDisable(GL_DITHER);
   glEnable(GL_DEPTH_TEST);
 
@@ -390,6 +383,9 @@ void QGLViewerWidget::drawControlMesh() {
   if (surfaces == nullptr) {
     return;
   }
+
+  // TODO Add vertices here
+  //Shader s("../shaders/control-normals.vs", "../shaders/control-normals.fs");
 
   auto surfacePoints = surfaces->getSurfaceMLS();
   glBegin(GL_QUADS);

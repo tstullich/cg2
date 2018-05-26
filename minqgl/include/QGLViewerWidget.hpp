@@ -20,13 +20,16 @@
 #include <QElapsedTimer>
 #include <QFileDialog>
 #include <QMainWindow>
-#include <QtOpenGL/qgl.h>
 
+#include <GL/glew.h>
+#include <GL/glut.h>
+#include <QtOpenGL/qgl.h>
 #include <glm/glm.hpp>
 
 // --------------------
 #include "kdtree.hpp"
 #include "parser.hpp"
+#include "shader.hpp"
 #include "surfaces.hpp"
 // --------------------
 

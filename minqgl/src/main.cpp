@@ -22,14 +22,6 @@
 #include <fstream>
 #include <iostream>
 
-#ifndef __APPLE__
-#include <GL/glut.h>
-#else
-#include <glut.h>
-#endif
-
-#include <QGLContext>
-
 #include "QGLViewerWidget.hpp"
 #include "SidebarWidget.hpp"
 
@@ -51,10 +43,6 @@ int main(int argc, char **argv) {
   QMainWindow *mainWin = new QMainWindow();
   QGLViewerWidget *w = new QGLViewerWidget(mainWin);
   mainWin->setCentralWidget(w);
-
-#if !defined(__APPLE__)
-  glutInit(&argc, argv);
-#endif
 
   createMenu(mainWin);
   createSidebar(mainWin);
