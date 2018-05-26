@@ -3,7 +3,6 @@ layout (location = 0) in vec3 aPos;   // the position variable has attribute pos
 
 out vec3 col; // output a color to the fragment shader
 
-void main()
-{
+void main() {
     gl_Position = vec4(aPos, 1.0f);
 }

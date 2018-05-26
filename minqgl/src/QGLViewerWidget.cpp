@@ -85,9 +85,6 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, radius);
   surfaces->updateSurfacesMLS();
 
-  // Notify Sidebar of the size of K-Nearest max
-  // kNearestChanged(pointList->size());
-  // clear selected point index for drawing
   selectedPointIndex = 0;
   selectedPointList.clear();
 
@@ -232,6 +229,7 @@ void QGLViewerWidget::initializeGL() {
 
   // Init glew here. Not sure where else to put it :-/
   // This class is a mess of extensions anyways
+  glewExperimental = GL_TRUE;
   GLenum err = glewInit();
   if (GLEW_OK != err) {
     std::cout << "Error with GLEW: " << glewGetErrorString(err) << std::endl;
@@ -390,12 +388,14 @@ void QGLViewerWidget::drawControlMesh() {
     return;
   }
 
+  // Initialize our shader
+  Shader shade("../shaders/control-normals.vs", "../shaders/control-normals.fs");
+
   // Grab our vertices to shade
   auto surfacePoints = surfaces->getSurfaceMLS();
   // Need to allocate enough memory for each vertices' xyz coordinate
   uint64_t vboSize = surfacePoints.size() * 3;
   auto vertices = new float[vboSize];
-  std::cout << "VBO: " << vboSize << std::endl;
   for (uint64_t i = 0; i < vboSize; i += 3) {
     auto point = surfacePoints[i / 3];
     vertices[i] = point->x;
@@ -403,30 +403,40 @@ void QGLViewerWidget::drawControlMesh() {
     vertices[i + 2] = point->z;
   }
 
-  // Initialize our shader
-  uint32_t VBO;
+  // Create our vertex buffer object and vertex attribute object
+  uint32_t VAO, VBO;
+  glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO);
+
+  // Create our vertex attribute object
+  glBindVertexArray(VAO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(float), vertices, GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
 
-  Shader s("../shaders/control-normals.vs", "../shaders/control-normals.fs");
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
 
-  glBegin(GL_QUADS);
-  for (unsigned int i = 0; i < surfacePoints.size() - gridM; i++) {
-    if ((i % gridM > 0) && (i % gridN > 0)) {
-      auto p1 = surfacePoints[i];
-      auto p2 = surfacePoints[i + 1];
-      auto p3 = surfacePoints[i + gridM];
-      auto p4 = surfacePoints[i + gridM + 1];
+  shade.use();
+  glDrawArrays(GL_TRIANGLES, 0, 3);
 
-      glColor3f(1.0, 0.0, 0.0);
-      glVertex3f(p1->x, p1->y, p1->z);
-      glVertex3f(p2->x, p2->y, p2->z);
-      glVertex3f(p3->x, p3->y, p3->z);
-      glVertex3f(p4->x, p4->y, p4->z);
-    }
-  }
-  glEnd();
+  //glBegin(GL_QUADS);
+  //for (unsigned int i = 0; i < surfacePoints.size() - gridM; i++) {
+  //  if ((i % gridM > 0) && (i % gridN > 0)) {
+  //    auto p1 = surfacePoints[i];
+  //    auto p2 = surfacePoints[i + 1];
+  //    auto p3 = surfacePoints[i + gridM];
+  //    auto p4 = surfacePoints[i + gridM + 1];
+
+  //    glColor3f(1.0, 0.0, 0.0);
+  //    glVertex3f(p1->x, p1->y, p1->z);
+  //    glVertex3f(p2->x, p2->y, p2->z);
+  //    glVertex3f(p3->x, p3->y, p3->z);
+  //    glVertex3f(p4->x, p4->y, p4->z);
+  //  }
+  //}
+  //glEnd();
 }
 
 void QGLViewerWidget::drawSurfaceBTPS() {
