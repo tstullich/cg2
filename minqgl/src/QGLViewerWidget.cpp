@@ -31,6 +31,7 @@
 // --------------------
 
 #include "QGLViewerWidget.hpp"
+#define GLM_ENABLE_EXPERIMENTAL 1
 #include "glm/gtx/intersect.hpp"
 
 #if !defined(M_PI)
@@ -47,6 +48,7 @@ using namespace glm;
 //----------------------------------------------------------------------------
 
 QGLViewerWidget::QGLViewerWidget(QWidget *_parent) : QGLWidget(_parent) {
+  assert(glGetError() == GL_NO_ERROR);
   init();
 }
 
@@ -54,6 +56,7 @@ QGLViewerWidget::QGLViewerWidget(QWidget *_parent) : QGLWidget(_parent) {
 
 QGLViewerWidget::QGLViewerWidget(QGLFormat &_fmt, QWidget *_parent)
     : QGLWidget(_fmt, _parent) {
+  assert(glGetError() == GL_NO_ERROR);
   init();
 }
 
@@ -65,6 +68,7 @@ void QGLViewerWidget::init() {
   setFocusPolicy(Qt::StrongFocus);
   setAcceptDrops(true);
   setCursor(PointingHandCursor);
+  assert(glGetError() == GL_NO_ERROR);
 }
 
 //----------------------------------------------------------------------------
@@ -201,11 +205,15 @@ void QGLViewerWidget::setDefaultLight(void) {
 void QGLViewerWidget::initializeGL() {
   // OpenGL state
   glClearColor(0.0, 0.0, 0.0, 0.0);
+  assert(glGetError() == GL_NO_ERROR);
   glDisable(GL_DITHER);
+  assert(glGetError() == GL_NO_ERROR);
   glEnable(GL_DEPTH_TEST);
+  assert(glGetError() == GL_NO_ERROR);
 
   // Material
   setDefaultMaterial();
+  assert(glGetError() == GL_NO_ERROR);
 
   // Lighting
   glLoadIdentity();
@@ -225,14 +233,6 @@ void QGLViewerWidget::initializeGL() {
   glLoadIdentity();
   glGetDoublev(GL_MODELVIEW_MATRIX, modelviewMatrix);
   setScenePos(vec3(0.0, 0.0, 0.0), 1.0);
-
-  // Init glew here. Not sure where else to put it :-/
-  // This class is a mess of extensions anyways
-  glewExperimental = GL_TRUE;
-  GLenum err = glewInit();
-  if (GLEW_OK != err) {
-    std::cout << "Error with GLEW: " << glewGetErrorString(err) << std::endl;
-  }
 }
 
 //----------------------------------------------------------------------------
@@ -382,6 +382,22 @@ void QGLViewerWidget::drawKDTree() {
   glEnd();
 }
 
+void QGLViewerWidget::calculateNormal(const Point &v1, const Point &v2) {
+  // calculate normal of the triangle with RHS coordinates
+  // Point u1(p1->x - p0->x, p1->y - p0->y, p1->z - p0->z);
+  // Point v1(p2->x - p0->x, p2->y - p0->y, p2->z - p0->z);
+  // auto normalX1 = (u1.y * v1.z) - (u1.z * v1.y);
+  // auto normalY1 = (u1.z * v1.x) - (u1.x * v1.z);
+  // auto normalZ1 = (u1.x * v1.y) - (u1.y * v1.x);
+
+  //// Normalize the cross product
+  // float d = sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+  // GLfloat normal[] = {normalX / d, normalY / d, normalZ / d};
+  // glNormal3fv(normal);
+
+  // return normal;
+}
+
 void QGLViewerWidget::drawControlMesh() {
   if (surfaces == nullptr) {
     return;
@@ -394,18 +410,19 @@ void QGLViewerWidget::drawControlMesh() {
   setDefaultMaterial();
   glShadeModel(GL_FLAT);
   glBegin(GL_TRIANGLES);
-  for (unsigned int i = 1; i < surfacePoints.size() - gridM; i++) {
-    if ((i % gridM > 0) && (i % gridN > 0)) {
-      auto p0 = surfacePoints[i - 1];
-      auto p1 = surfacePoints[i];
+
+  const uint gridM = this->gridM + 1;
+  for (uint i = 0; i < surfacePoints.size() - gridM; i++) {
+    if (i % gridM != (gridM - 1)) {
+      auto p0 = surfacePoints[i];
+      auto p1 = surfacePoints[i + 1];
       auto p2 = surfacePoints[i + gridM];
       auto p3 = surfacePoints[i + gridM + 1];
 
-      std::cout << i - 1<< " " << i << " " << i + gridM << " " << i + gridM + 1 << std::endl;
-      std::cout << p0->x << " " << p0->y << " " << p0->z << std::endl;
-      std::cout << p1->x << " " << p1->y << " " << p1->z << std::endl;
-      std::cout << p2->x << " " << p2->y << " " << p2->z << std::endl;
-      std::cout << p3->x << " " << p3->y << " " << p3->z << std::endl;
+      std::cout << "p0: " << p0->x << " " << p0->y << " " << p0->z << std::endl;
+      std::cout << "p1: " << p1->x << " " << p1->y << " " << p1->z << std::endl;
+      std::cout << "p2: " << p2->x << " " << p2->y << " " << p2->z << std::endl;
+      std::cout << "p3: " << p3->x << " " << p3->y << " " << p3->z << std::endl;
 
       // calculate normal of first triangle
       Point u1(p1->x - p0->x, p1->y - p0->y, p1->z - p0->z);
@@ -415,12 +432,14 @@ void QGLViewerWidget::drawControlMesh() {
       auto normalZ1 = (u1.x * v1.y) - (u1.y * v1.x);
 
       // Normalize the cross product
-      float d = sqrt(normalX1 * normalX1) + sqrt(normalY1 * normalY1) + sqrt(normalZ1 * normalZ1);
+      float d =
+          sqrt(normalX1 * normalX1 + normalY1 * normalY1 + normalZ1 * normalZ1);
       GLfloat normal1[] = {normalX1 / d, normalY1 / d, normalZ1 / d};
-      //glNormal3fv(normal1);
-      glColor3f(normal1[0], normal1[1], normal1[2]);
+      glNormal3fv(normal1);
+      // glColor3f(normal1[0], normal1[1], normal1[2]);
 
-      //std::cout << "Normal 1: " << normal1[0] << " " << normal1[1] << " " << normal1[2] << std::endl;
+      std::cout << "Normal 1: " << normal1[0] << " " << normal1[1] << " "
+                << normal1[2] << std::endl;
 
       // First triangle
       glVertex3f(p0->x, p0->y, p0->z);
@@ -435,12 +454,14 @@ void QGLViewerWidget::drawControlMesh() {
       auto normalZ2 = (u2.x * v2.y) - (u2.y * v2.x);
 
       // Normalize the cross product
-      float d2 = sqrt(normalX2 * normalX2) + sqrt(normalY2 * normalY2) + sqrt(normalZ2 * normalZ2);
+      float d2 =
+          sqrt(normalX2 * normalX2 + normalY2 * normalY2 + normalZ2 * normalZ2);
       GLfloat normal2[] = {normalX2 / d2, normalY2 / d2, normalZ2 / d2};
-      glColor3f(normal2[0], normal2[1], normal2[2]);
-      //glNormal3fv(normal2);
+      // glColor3f(normal2[0], normal2[1], normal2[2]);
+      glNormal3fv(normal2);
 
-      //std::cout << "Normal 2: " << normal2[0] << " " << normal2[1] << " " << normal2[2] << std::endl;
+      // std::cout << "Normal 2: " << normal2[0] << " " << normal2[1] << " " <<
+      // normal2[2] << std::endl;
 
       // Second triangle
       glVertex3f(p1->x, p1->y, p1->z);
@@ -457,7 +478,6 @@ void QGLViewerWidget::drawSurfaceBTPS() {
 }
 
 void QGLViewerWidget::drawSurfaceMLS() {
-
   if (surfaces == nullptr) {
     return;
   }
@@ -491,12 +511,12 @@ void QGLViewerWidget::drawScene() {
   if (drawGrid) {
     drawRegularGrid();
   }
-  if (flag_drawSurfaceBTPS) {
-    drawSurfaceBTPS();
-  }
-  if (flag_drawSurfaceMLS) {
-    drawSurfaceMLS();
-  }
+  // if (flag_drawSurfaceBTPS) {
+  //  drawSurfaceBTPS();
+  //}
+  // if (flag_drawSurfaceMLS) {
+  //  drawSurfaceMLS();
+  //}
 
   // Draw a coordinate system
   if (!drawGrid && kdtree == nullptr) {
@@ -771,13 +791,13 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       flag_drawTree = flag_drawTree ? false : true;
       break;
 
-    /*
-    case Key_U:
-      if (surfaces != nullptr) {
-        surfaces->updateSurfacesMLS();
-      }
-      break;
-    */
+      /*
+      case Key_U:
+        if (surfaces != nullptr) {
+          surfaces->updateSurfacesMLS();
+        }
+        break;
+      */
 
     case Key_H:
       std::cout << "Keys:\n";

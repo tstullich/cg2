@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
   QGLFormat format;
   QGLFormat::setDefaultFormat(format);
   format.setProfile(QGLFormat::CompatibilityProfile);
-  format.setVersion(3, 3);
+  format.setVersion(3, 0);
   QGLViewerWidget *w = new QGLViewerWidget(format, mainWin);
   mainWin->setCentralWidget(w);
 

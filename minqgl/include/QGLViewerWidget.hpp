@@ -21,8 +21,6 @@
 #include <QFileDialog>
 #include <QMainWindow>
 
-#include <GL/glew.h>
-
 #ifndef __APPLE__
 #include <GL/glut.h>
 #else
@@ -35,7 +33,7 @@
 // --------------------
 #include "kdtree.hpp"
 #include "parser.hpp"
-#include "shader.hpp"
+#include "point.hpp"
 #include "surfaces.hpp"
 // --------------------
 
@@ -176,6 +174,8 @@ private:
 
   // rotate the scene (around its center) and update modelview matrix
   void rotate(const glm::vec3 &axis, float angle);
+
+  void calculateNormal(const Point &v1, const Point &v2);
 
   glm::vec3 center;
   float radius;

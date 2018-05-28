@@ -49,12 +49,11 @@ void Surfaces::updateSurfacesMLS() {
 }
 
 float Surfaces::computeMLS(float x, float y) {
-
-  std::shared_ptr<Point> p = std::make_shared<Point>(x, y, 0);
+  std::shared_ptr<Point> p = std::make_shared<Point>(x, y, 0.0);
   PointPointerList points = kdtree->collectInRadius(*p, this->radius);
+  std::cout << points[0]->z << std::endl;
 
-  if(points.size() == 0)
-    return 0;
+  if (points.size() == 0) return 0;
 
   unsigned int n = 6;
   MatrixXf A(n, n);
@@ -66,7 +65,8 @@ float Surfaces::computeMLS(float x, float y) {
     float distance = p->distPoint(*p_i) / this->radius;
     // wendland component
     float theta = pow(1.0 - distance, 4.0) * (4.0 * distance + 1);
-    a << 1.0, p_i->x, p_i->y, pow(p_i->x, 2.0), p_i->x * p_i->y, pow(p_i->y, 2.0);
+    a << 1.0, p_i->x, p_i->y, pow(p_i->x, 2.0), p_i->x * p_i->y,
+        pow(p_i->y, 2.0);
     for (unsigned int j = 0; j < n; j++) {
       for (unsigned int k = 0; k < n; k++) {
         A(j, k) += a[j] * a[k] * theta;
