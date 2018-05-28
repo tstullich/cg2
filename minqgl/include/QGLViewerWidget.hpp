@@ -175,9 +175,15 @@ private:
   // rotate the scene (around its center) and update modelview matrix
   void rotate(const glm::vec3 &axis, float angle);
 
-  void calculateNormal(const Point &v1, const Point &v2);
+  glm::vec3 triangleNormal(const Point &v1, const Point &v2, const Point &v3);
+
+  glm::vec3 gourad(const Point &v1, const glm::vec3 &normal);
 
   glm::vec3 center;
+
+  // Hardcoding a position here since we are just demoing and need
+  // only one light source
+  glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
   float radius;
 
   GLdouble projectionMatrix[16], modelviewMatrix[16];

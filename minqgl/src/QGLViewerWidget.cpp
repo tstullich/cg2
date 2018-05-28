@@ -381,20 +381,35 @@ void QGLViewerWidget::drawKDTree() {
   glEnd();
 }
 
-void QGLViewerWidget::calculateNormal(const Point &v1, const Point &v2) {
-  // calculate normal of the triangle with RHS coordinates
-  // Point u1(p1->x - p0->x, p1->y - p0->y, p1->z - p0->z);
-  // Point v1(p2->x - p0->x, p2->y - p0->y, p2->z - p0->z);
-  // auto normalX1 = (u1.y * v1.z) - (u1.z * v1.y);
-  // auto normalY1 = (u1.z * v1.x) - (u1.x * v1.z);
-  // auto normalZ1 = (u1.x * v1.y) - (u1.y * v1.x);
+glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2, const Point &v3) {
+  // Get the cross product of u - v
+  glm::vec3 u(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z);
+  glm::vec3 v(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z);
+  auto normalX = (u.y * v.z) - (u.z * v.y);
+  auto normalY = (u.z * v.x) - (u.x * v.z);
+  auto normalZ = (u.x * v.y) - (u.y * v.x);
 
-  //// Normalize the cross product
-  // float d = sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
-  // GLfloat normal[] = {normalX / d, normalY / d, normalZ / d};
-  // glNormal3fv(normal);
+  // Normalize the cross product
+  float d =
+      sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
 
-  // return normal;
+  return glm::vec3(normalX / d, normalY / d, normalZ / d);
+}
+
+glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
+  glm::vec3 vertPos(v1.x, v1.y, v1.z);
+  glm::vec3 diffuseColor(1.0f, 0.0f, 0.0f);
+  glm::vec3 specularColor(1.0f, 1.0f, 1.0f);
+
+  glm::vec3 L(glm::normalize(lightPos - vertPos));
+  glm::vec3 R(glm::reflect(-L, normal));
+  glm::vec3 E(glm::normalize(-vertPos));
+
+  glm::vec3 diffuse = diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
+
+  glm::vec3 specular = specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 16.0f);
+
+  return diffuse + specular;
 }
 
 void QGLViewerWidget::drawControlMesh() {
@@ -405,9 +420,6 @@ void QGLViewerWidget::drawControlMesh() {
   // Grab our vertices to shade
   auto surfacePoints = surfaces->getControlPoints();
 
-  setDefaultLight();
-  setDefaultMaterial();
-  glShadeModel(GL_FLAT);
   glBegin(GL_TRIANGLES);
   const uint gridM = this->gridM + 1;
   for (uint i = 0; i < surfacePoints.size() - gridM; i++) {
@@ -417,45 +429,43 @@ void QGLViewerWidget::drawControlMesh() {
       auto p2 = surfacePoints[i + gridM];
       auto p3 = surfacePoints[i + gridM + 1];
 
-      // calculate normal of first triangle
-      Point u1(p1->x - p0->x, p1->y - p0->y, p1->z - p0->z);
-      Point v1(p2->x - p0->x, p2->y - p0->y, p2->z - p0->z);
-      auto normalX1 = (u1.y * v1.z) - (u1.z * v1.y);
-      auto normalY1 = (u1.z * v1.x) - (u1.x * v1.z);
-      auto normalZ1 = (u1.x * v1.y) - (u1.y * v1.x);
-
-      // Normalize the cross product
-      float d =
-          sqrt(normalX1 * normalX1 + normalY1 * normalY1 + normalZ1 * normalZ1);
-      GLfloat normal1[] = {normalX1 / d, normalY1 / d, normalZ1 / d};
-      glNormal3fv(normal1);
-
-      // First triangle
+      // Only going to calculate one normal for the
+      // two triangles. Otherwise color differs slightly
+      auto normal = triangleNormal(*p0, *p1, *p2);
+      auto col1 = gourad(*p0, normal);
+      glColor3f(col1[0], col1[1], col1[2]);
       glVertex3f(p0->x, p0->y, p0->z);
+
+      auto col2 = gourad(*p1, normal);
+      glColor3f(col2[0], col2[1], col2[2]);
       glVertex3f(p1->x, p1->y, p1->z);
+
+      auto col3 = gourad(*p2, normal);
+      glColor3f(col3[0], col3[1], col3[2]);
       glVertex3f(p2->x, p2->y, p2->z);
 
-      // calculate normal of second triangle
-      Point u2(p3->x - p1->x, p3->y - p1->y, p3->z - p1->z);
-      Point v2(p2->x - p1->x, p2->y - p1->y, p2->z - p1->z);
-      auto normalX2 = (u2.y * v2.z) - (u2.z * v2.y);
-      auto normalY2 = (u2.z * v2.x) - (u2.x * v2.z);
-      auto normalZ2 = (u2.x * v2.y) - (u2.y * v2.x);
-
-      // Normalize the cross product
-      float d2 =
-          sqrt(normalX2 * normalX2 + normalY2 * normalY2 + normalZ2 * normalZ2);
-      GLfloat normal2[] = {normalX2 / d2, normalY2 / d2, normalZ2 / d2};
-      // glColor3f(normal2[0], normal2[1], normal2[2]);
-      glNormal3fv(normal2);
-
       // Second triangle
+      auto col4 = gourad(*p1, normal);
+      glColor3f(col4[0], col4[1], col4[2]);
       glVertex3f(p1->x, p1->y, p1->z);
+
+      auto col5 = gourad(*p3, normal);
+      glColor3f(col5[0], col5[1], col5[2]);
       glVertex3f(p3->x, p3->y, p3->z);
+
+      auto col6 = gourad(*p2, normal);
+      glColor3f(col6[0], col6[1], col6[2]);
       glVertex3f(p2->x, p2->y, p2->z);
     }
   }
-  glDisable(GL_LIGHTING);
+  glEnd();
+
+  // Draw light source for debugging
+  glBegin(GL_POINTS);
+  glEnable(GL_POINT_SMOOTH);
+  glPointSize(15.0f);
+  glColor3f(1.0f, 1.0f, 1.0f);
+  glVertex3f(lightPos[0], lightPos[1], lightPos[2]);
   glEnd();
 }
 
@@ -478,7 +488,6 @@ void QGLViewerWidget::drawSurfaceMLS() {
   glColor3f(225, 0, 255);
   for (unsigned int i = 0; i < surfacePoints.size(); i++) {
     Point p = *(surfacePoints[i]);
-    std::cout << "P: " << p.x << " " << p.y << " " << p.z << std::endl;
     glVertex3f(p.x, p.y, p.z);
   }
   glEnd();
@@ -496,9 +505,9 @@ void QGLViewerWidget::drawScene() {
   if (drawGrid) {
     drawRegularGrid();
   }
-  // if (flag_drawSurfaceBTPS) {
-  //  drawSurfaceBTPS();
-  //}
+  if (flag_drawSurfaceBTPS) {
+    drawSurfaceBTPS();
+  }
   if (flag_drawSurfaceMLS) {
     drawSurfaceMLS();
   }
