@@ -19,6 +19,7 @@ class Surfaces {
 public:
   Surfaces(std::shared_ptr<KDTree> kdtree, int m, int n, float r);
 
+  PointPointerList getControlPoints();
   PointPointerList getSurfaceMLS();
   PointPointerList getSurfaceBTPS();
 
@@ -33,9 +34,14 @@ public:
   void setRadius(float r);
 
   /**
+   * compute control points based on kdtree, M and N using MLS
+   */
+  void updateControlPoints();
+
+  /**
    * Compute surface based on MLS method
    */
-  void updateSurfacesMLS();
+  void updateSurfacesMLS(int k);
 
   /*
    * Computes z value at the given point by using the MLS method.
@@ -45,9 +51,13 @@ public:
   /**
    * Compute surface based on Bézier Tensor Product Surface method
    */
-  void updateSurfacesBTPS();
+  void updateSurfacesBTPS(int k);
 
 private:
+  PointPointerList getControlPointsAtM(int m);
+  PointPointerList getControlPointsAtN(int n);
+
+  PointPointerList controlPoints;
   PointPointerList surfaceMLS;
   PointPointerList surfaceBTPS;
   std::shared_ptr<KDTree> kdtree;

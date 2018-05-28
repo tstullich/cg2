@@ -60,6 +60,7 @@ QGLViewerWidget::QGLViewerWidget(QGLFormat &_fmt, QWidget *_parent)
 //----------------------------------------------------------------------------
 
 void QGLViewerWidget::init() {
+  std::cout << "init(): radius ist " << radius << std::endl;
   // qt stuff
   setAttribute(Qt::WA_NoSystemBackground, true);
   setFocusPolicy(Qt::StrongFocus);
@@ -72,6 +73,7 @@ void QGLViewerWidget::init() {
 QGLViewerWidget::~QGLViewerWidget() {}
 
 bool QGLViewerWidget::loadPointSet(const char *filename) {
+  std::cout << "loadPointSet: radius ist " << radius << std::endl;
   Parser p;
   if (!p.open(filename)) {
     std::cout << "Unable to open file " << std::endl;
@@ -83,7 +85,6 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 
   // causes linker error - no idear why
   surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, radius);
-  surfaces->updateSurfacesMLS();
 
   selectedPointIndex = 0;
   selectedPointList.clear();
@@ -1010,6 +1011,7 @@ void QGLViewerWidget::setDrawRegularGrid(bool value) {
 void QGLViewerWidget::setDrawControlMeshPoints(bool value) {
   std::cout << "Changing drawControlMesh value to " << value << std::endl;
   flag_drawControlMesh = value;
+  surfaces->updateControlPoints();
   paintGL();
   updateGL();
 }
@@ -1047,25 +1049,35 @@ void QGLViewerWidget::setRadius(double radius) {
 void QGLViewerWidget::setDrawBezier(bool value) {
   std::cout << "Changing drawSurfaceBTPS value to " << value << std::endl;
   flag_drawSurfaceBTPS = value;
+  surfaces->updateSurfacesBTPS(kBTPS);
   paintGL();
   updateGL();
 }
 
 void QGLViewerWidget::setBezierSubdivisions(int k) {
-  std::cout << "Changing draw bezier surface subdivision value! " << k
+  std::cout << "Changing kBTPS value to " << k
             << std::endl;
+  kBTPS = k;
+  surfaces->updateSurfacesBTPS(kBTPS);
+  paintGL();
+  updateGL();
 }
 
 void QGLViewerWidget::setDrawMls(bool value) {
   std::cout << "Changing drawSurfaceMLS value to " << value << std::endl;
   flag_drawSurfaceMLS = value;
+  surfaces->updateSurfacesMLS(kMLS);
   paintGL();
   updateGL();
 }
 
 void QGLViewerWidget::setMlsSubdivisions(int k) {
-  std::cout << "Changing draw mls surface subdivision value! " << k
+  std::cout << "Changing kMLS value to " << k
             << std::endl;
+  kMLS = k;
+  surfaces->updateSurfacesMLS(kMLS);
+  paintGL();
+  updateGL();
 }
 
 void QGLViewerWidget::slotSnapshot(void) {
