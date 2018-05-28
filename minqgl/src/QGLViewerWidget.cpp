@@ -198,7 +198,6 @@ void QGLViewerWidget::setDefaultLight(void) {
 }
 
 //----------------------------------------------------------------------------
-
 void QGLViewerWidget::initializeGL() {
   // OpenGL state
   glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -388,55 +387,69 @@ void QGLViewerWidget::drawControlMesh() {
     return;
   }
 
-  // Initialize our shader
-  Shader shade("../shaders/control-normals.vs", "../shaders/control-normals.fs");
-
   // Grab our vertices to shade
   auto surfacePoints = surfaces->getSurfaceMLS();
-  // Need to allocate enough memory for each vertices' xyz coordinate
-  uint64_t vboSize = surfacePoints.size() * 3;
-  auto vertices = new float[vboSize];
-  for (uint64_t i = 0; i < vboSize; i += 3) {
-    auto point = surfacePoints[i / 3];
-    vertices[i] = point->x;
-    vertices[i + 1] = point->y;
-    vertices[i + 2] = point->z;
+
+  setDefaultLight();
+  setDefaultMaterial();
+  glShadeModel(GL_FLAT);
+  glBegin(GL_TRIANGLES);
+  for (unsigned int i = 1; i < surfacePoints.size() - gridM; i++) {
+    if ((i % gridM > 0) && (i % gridN > 0)) {
+      auto p0 = surfacePoints[i - 1];
+      auto p1 = surfacePoints[i];
+      auto p2 = surfacePoints[i + gridM];
+      auto p3 = surfacePoints[i + gridM + 1];
+
+      std::cout << i - 1<< " " << i << " " << i + gridM << " " << i + gridM + 1 << std::endl;
+      std::cout << p0->x << " " << p0->y << " " << p0->z << std::endl;
+      std::cout << p1->x << " " << p1->y << " " << p1->z << std::endl;
+      std::cout << p2->x << " " << p2->y << " " << p2->z << std::endl;
+      std::cout << p3->x << " " << p3->y << " " << p3->z << std::endl;
+
+      // calculate normal of first triangle
+      Point u1(p1->x - p0->x, p1->y - p0->y, p1->z - p0->z);
+      Point v1(p2->x - p0->x, p2->y - p0->y, p2->z - p0->z);
+      auto normalX1 = (u1.y * v1.z) - (u1.z * v1.y);
+      auto normalY1 = (u1.z * v1.x) - (u1.x * v1.z);
+      auto normalZ1 = (u1.x * v1.y) - (u1.y * v1.x);
+
+      // Normalize the cross product
+      float d = sqrt(normalX1 * normalX1) + sqrt(normalY1 * normalY1) + sqrt(normalZ1 * normalZ1);
+      GLfloat normal1[] = {normalX1 / d, normalY1 / d, normalZ1 / d};
+      //glNormal3fv(normal1);
+      glColor3f(normal1[0], normal1[1], normal1[2]);
+
+      //std::cout << "Normal 1: " << normal1[0] << " " << normal1[1] << " " << normal1[2] << std::endl;
+
+      // First triangle
+      glVertex3f(p0->x, p0->y, p0->z);
+      glVertex3f(p1->x, p1->y, p1->z);
+      glVertex3f(p2->x, p2->y, p2->z);
+
+      // calculate normal of second triangle
+      Point u2(p3->x - p1->x, p3->y - p1->y, p3->z - p1->z);
+      Point v2(p2->x - p1->x, p2->y - p1->y, p2->z - p1->z);
+      auto normalX2 = (u2.y * v2.z) - (u2.z * v2.y);
+      auto normalY2 = (u2.z * v2.x) - (u2.x * v2.z);
+      auto normalZ2 = (u2.x * v2.y) - (u2.y * v2.x);
+
+      // Normalize the cross product
+      float d2 = sqrt(normalX2 * normalX2) + sqrt(normalY2 * normalY2) + sqrt(normalZ2 * normalZ2);
+      GLfloat normal2[] = {normalX2 / d2, normalY2 / d2, normalZ2 / d2};
+      glColor3f(normal2[0], normal2[1], normal2[2]);
+      //glNormal3fv(normal2);
+
+      //std::cout << "Normal 2: " << normal2[0] << " " << normal2[1] << " " << normal2[2] << std::endl;
+
+      // Second triangle
+      glVertex3f(p1->x, p1->y, p1->z);
+      glVertex3f(p3->x, p3->y, p3->z);
+      glVertex3f(p2->x, p2->y, p2->z);
+    }
   }
-
-  // Create our vertex buffer object and vertex attribute object
-  uint32_t VAO, VBO;
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-
-  // Create our vertex attribute object
-  glBindVertexArray(VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(float), vertices, GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(0);
-
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
-
-  shade.use();
-  glDrawArrays(GL_TRIANGLES, 0, 3);
-
-  //glBegin(GL_QUADS);
-  //for (unsigned int i = 0; i < surfacePoints.size() - gridM; i++) {
-  //  if ((i % gridM > 0) && (i % gridN > 0)) {
-  //    auto p1 = surfacePoints[i];
-  //    auto p2 = surfacePoints[i + 1];
-  //    auto p3 = surfacePoints[i + gridM];
-  //    auto p4 = surfacePoints[i + gridM + 1];
-
-  //    glColor3f(1.0, 0.0, 0.0);
-  //    glVertex3f(p1->x, p1->y, p1->z);
-  //    glVertex3f(p2->x, p2->y, p2->z);
-  //    glVertex3f(p3->x, p3->y, p3->z);
-  //    glVertex3f(p4->x, p4->y, p4->z);
-  //  }
-  //}
-  //glEnd();
+  glDisable(GL_LIGHTING);
+  glEnd();
 }
 
 void QGLViewerWidget::drawSurfaceBTPS() {
@@ -469,30 +482,31 @@ void QGLViewerWidget::drawSurfaceMLS() {
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
+  if (flag_drawControlMesh) {
+    drawControlMesh();
+  }
   if (drawPoints) {
     drawPointSet();
   }
   if (drawGrid) {
     drawRegularGrid();
   }
-  if (flag_drawControlMesh) {
-    drawControlMesh();
-  }
-  if (flag_drawSurfaceBTPS) {
-    drawSurfaceBTPS();
-  }
+  //if (flag_drawSurfaceBTPS) {
+  //  drawSurfaceBTPS();
+  //}
   if (flag_drawSurfaceMLS) {
     drawSurfaceMLS();
   }
-  if (flag_drawSelectedPoints) {
-    drawSelectedPointSet();
-  }
-  if (flag_drawTree) {
-    drawKDTree();
-  }
+  //if (flag_drawSelectedPoints) {
+  //  drawSelectedPointSet();
+  //}
+  //if (flag_drawTree) {
+  //  drawKDTree();
+  //}
 
   // Draw a coordinate system
-  if (!drawGrid || kdtree == nullptr) {
+
+  if (!drawGrid && kdtree == nullptr) {
     glBegin(GL_LINES);
     // x-axis
     glColor3f(1, 0, 0);

@@ -46,7 +46,6 @@ int main(int argc, char **argv) {
     QMessageBox::critical(0, QString("OpenGL"), msg + QString(argv[1]));
     return -1;
   }
-  std::cout << QGLFormat::openGLVersionFlags() << std::endl;
 
 #if !defined(__APPLE__)
   glutInit(&argc, argv);

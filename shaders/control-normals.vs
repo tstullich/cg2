@@ -1,8 +1,9 @@
 #version 330 core
 layout (location = 0) in vec3 aPos;   // the position variable has attribute position 0
 
-out vec3 col; // output a color to the fragment shader
+uniform mat4 modelView;
+uniform mat4 projection;
 
 void main() {
-    gl_Position = vec4(aPos, 1.0f);
+    gl_Position = modelView * vec4(aPos, 1.0f);
 }
