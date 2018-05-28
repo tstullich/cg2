@@ -203,6 +203,9 @@ private:
   bool drawGrid = true;
   int gridM = 10;
   int gridN = 10;
+  // TODO Radius
+  int kMLS = 1;
+  int kBTPS = 1;
   bool flag_drawControlMesh = false;
   bool flag_drawSurfaceMLS = false;
   bool flag_drawSurfaceBTPS = false;

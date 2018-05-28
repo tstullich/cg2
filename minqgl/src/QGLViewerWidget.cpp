@@ -87,7 +87,6 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 
   // causes linker error - no idear why
   surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, radius);
-  surfaces->updateSurfacesMLS();
 
   selectedPointIndex = 0;
   selectedPointList.clear();
@@ -404,13 +403,12 @@ void QGLViewerWidget::drawControlMesh() {
   }
 
   // Grab our vertices to shade
-  auto surfacePoints = surfaces->getSurfaceMLS();
+  auto surfacePoints = surfaces->getControlPoints();
 
   setDefaultLight();
   setDefaultMaterial();
   glShadeModel(GL_FLAT);
   glBegin(GL_TRIANGLES);
-
   const uint gridM = this->gridM + 1;
   for (uint i = 0; i < surfacePoints.size() - gridM; i++) {
     if (i % gridM != (gridM - 1)) {
@@ -418,11 +416,6 @@ void QGLViewerWidget::drawControlMesh() {
       auto p1 = surfacePoints[i + 1];
       auto p2 = surfacePoints[i + gridM];
       auto p3 = surfacePoints[i + gridM + 1];
-
-      std::cout << "p0: " << p0->x << " " << p0->y << " " << p0->z << std::endl;
-      std::cout << "p1: " << p1->x << " " << p1->y << " " << p1->z << std::endl;
-      std::cout << "p2: " << p2->x << " " << p2->y << " " << p2->z << std::endl;
-      std::cout << "p3: " << p3->x << " " << p3->y << " " << p3->z << std::endl;
 
       // calculate normal of first triangle
       Point u1(p1->x - p0->x, p1->y - p0->y, p1->z - p0->z);
@@ -436,10 +429,6 @@ void QGLViewerWidget::drawControlMesh() {
           sqrt(normalX1 * normalX1 + normalY1 * normalY1 + normalZ1 * normalZ1);
       GLfloat normal1[] = {normalX1 / d, normalY1 / d, normalZ1 / d};
       glNormal3fv(normal1);
-      // glColor3f(normal1[0], normal1[1], normal1[2]);
-
-      std::cout << "Normal 1: " << normal1[0] << " " << normal1[1] << " "
-                << normal1[2] << std::endl;
 
       // First triangle
       glVertex3f(p0->x, p0->y, p0->z);
@@ -459,9 +448,6 @@ void QGLViewerWidget::drawControlMesh() {
       GLfloat normal2[] = {normalX2 / d2, normalY2 / d2, normalZ2 / d2};
       // glColor3f(normal2[0], normal2[1], normal2[2]);
       glNormal3fv(normal2);
-
-      // std::cout << "Normal 2: " << normal2[0] << " " << normal2[1] << " " <<
-      // normal2[2] << std::endl;
 
       // Second triangle
       glVertex3f(p1->x, p1->y, p1->z);
@@ -489,14 +475,13 @@ void QGLViewerWidget::drawSurfaceMLS() {
   glPointSize(10.0f);
 
   glBegin(GL_POINTS);
-  glColor3f(0, 225, 0);
+  glColor3f(225, 0, 255);
   for (unsigned int i = 0; i < surfacePoints.size(); i++) {
     Point p = *(surfacePoints[i]);
+    std::cout << "P: " << p.x << " " << p.y << " " << p.z << std::endl;
     glVertex3f(p.x, p.y, p.z);
   }
   glEnd();
-
-  return;
 }
 
 void QGLViewerWidget::drawScene() {
@@ -514,9 +499,9 @@ void QGLViewerWidget::drawScene() {
   // if (flag_drawSurfaceBTPS) {
   //  drawSurfaceBTPS();
   //}
-  // if (flag_drawSurfaceMLS) {
-  //  drawSurfaceMLS();
-  //}
+  if (flag_drawSurfaceMLS) {
+    drawSurfaceMLS();
+  }
 
   // Draw a coordinate system
   if (!drawGrid && kdtree == nullptr) {
@@ -1030,6 +1015,7 @@ void QGLViewerWidget::setDrawRegularGrid(bool value) {
 void QGLViewerWidget::setDrawControlMeshPoints(bool value) {
   std::cout << "Changing drawControlMesh value to " << value << std::endl;
   flag_drawControlMesh = value;
+  surfaces->updateControlPoints();
   paintGL();
   updateGL();
 }
@@ -1067,25 +1053,33 @@ void QGLViewerWidget::setRadius(double radius) {
 void QGLViewerWidget::setDrawBezier(bool value) {
   std::cout << "Changing drawSurfaceBTPS value to " << value << std::endl;
   flag_drawSurfaceBTPS = value;
+  surfaces->updateSurfacesBTPS(kBTPS);
   paintGL();
   updateGL();
 }
 
 void QGLViewerWidget::setBezierSubdivisions(int k) {
-  std::cout << "Changing draw bezier surface subdivision value! " << k
-            << std::endl;
+  std::cout << "Changing kBTPS value to " << k << std::endl;
+  kBTPS = k;
+  surfaces->updateSurfacesBTPS(kBTPS);
+  paintGL();
+  updateGL();
 }
 
 void QGLViewerWidget::setDrawMls(bool value) {
   std::cout << "Changing drawSurfaceMLS value to " << value << std::endl;
   flag_drawSurfaceMLS = value;
+  surfaces->updateSurfacesMLS(kMLS);
   paintGL();
   updateGL();
 }
 
 void QGLViewerWidget::setMlsSubdivisions(int k) {
-  std::cout << "Changing draw mls surface subdivision value! " << k
-            << std::endl;
+  std::cout << "Changing kMLS value to " << k << std::endl;
+  kMLS = k;
+  surfaces->updateSurfacesMLS(kMLS);
+  paintGL();
+  updateGL();
 }
 
 void QGLViewerWidget::slotSnapshot(void) {
