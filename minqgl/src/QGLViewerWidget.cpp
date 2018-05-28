@@ -491,21 +491,14 @@ void QGLViewerWidget::drawScene() {
   if (drawGrid) {
     drawRegularGrid();
   }
-  //if (flag_drawSurfaceBTPS) {
-  //  drawSurfaceBTPS();
-  //}
+  if (flag_drawSurfaceBTPS) {
+    drawSurfaceBTPS();
+  }
   if (flag_drawSurfaceMLS) {
     drawSurfaceMLS();
   }
-  //if (flag_drawSelectedPoints) {
-  //  drawSelectedPointSet();
-  //}
-  //if (flag_drawTree) {
-  //  drawKDTree();
-  //}
 
   // Draw a coordinate system
-
   if (!drawGrid && kdtree == nullptr) {
     glBegin(GL_LINES);
     // x-axis
