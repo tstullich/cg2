@@ -398,6 +398,7 @@ glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2, cons
 
 glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   glm::vec3 vertPos(v1.x, v1.y, v1.z);
+  glm::vec3 ambientColor(0.1f, 0.0f, 0.0f);
   glm::vec3 diffuseColor(1.0f, 0.0f, 0.0f);
   glm::vec3 specularColor(1.0f, 1.0f, 1.0f);
 
@@ -409,7 +410,7 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
 
   glm::vec3 specular = specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 16.0f);
 
-  return diffuse + specular;
+  return ambientColor + diffuse + specular;
 }
 
 void QGLViewerWidget::drawControlMesh() {
