@@ -15,6 +15,17 @@
 
 using namespace Eigen;
 
+struct trianglePrimitiv {
+  std::shared_ptr<Point> p0;
+  std::shared_ptr<Point> p1;
+  std::shared_ptr<Point> p2;
+};
+
+struct quadPrimitiv {
+  struct trianglePrimitiv t0;
+  struct trianglePrimitiv t1;
+};
+
 class Surfaces {
 public:
   Surfaces(std::shared_ptr<KDTree> kdtree, int m, int n, float r);
@@ -22,6 +33,7 @@ public:
   PointPointerList getControlPoints();
   PointPointerList getSurfaceMLS();
   PointPointerList getSurfaceBTPS();
+  std::vector<quadPrimitiv> getSurfaceFacesBTPS();
 
   /**
    * Update m and n values, no computations.
@@ -52,11 +64,14 @@ public:
    * Compute surface based on Bézier Tensor Product Surface method
    */
   void updateSurfacesBTPS(int k);
+  void updateSurfacesFacesBTPS(int k);
 
   /*
    * Computes z value at the given point by using the BTPS method.
    */
   float computeBTPS(float u, float v);
+
+  glm::vec3 computeNormalBTPS(float u, float v);
 
 private:
   PointPointerList getControlPointsAtM(int m);
@@ -65,6 +80,7 @@ private:
   PointPointerList controlPoints;
   PointPointerList surfaceMLS;
   PointPointerList surfaceBTPS;
+  std::vector<quadPrimitiv> surfaceFacesBTPS;
   std::shared_ptr<KDTree> kdtree;
   int M;
   int N;

@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <assert.h>
 
 #include <QElapsedTimer>
 #include <QFileDialog>
@@ -180,6 +181,10 @@ private:
   glm::vec3 gourad(const Point &v1, const glm::vec3 &normal);
 
   glm::vec3 center;
+
+  glm::mat4 computeModelViewInv();
+
+  glm::vec3 computeCamPos();
 
   // Hardcoding a position here since we are just demoing and need
   // only one light source

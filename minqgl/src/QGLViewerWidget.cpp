@@ -397,17 +397,21 @@ glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2, cons
 
 glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   glm::vec3 vertPos(v1.x, v1.y, v1.z);
-  glm::vec3 ambientColor(0.1f, 0.0f, 0.0f);
+  glm::vec3 ambientColor(0.3f, 0.0f, 0.0f);
   glm::vec3 diffuseColor(1.0f, 0.0f, 0.0f);
   glm::vec3 specularColor(1.0f, 1.0f, 1.0f);
 
+  // camara positions
+  glm::vec3 camPos = computeCamPos();
+
+  glm::vec3 vertToCam = glm::normalize(camPos - vertPos);
   glm::vec3 vertToLight = lightPos - vertPos;
   float len = sqrt(vertToLight[0] * vertToLight[0] + vertToLight[1] * vertToLight[1] + vertToLight[2] * vertToLight[2]);
   float attenuation = 1.0f / (1.0f + 0.1f * len + 0.01f * len * len);
 
   glm::vec3 L(glm::normalize(vertToLight));
   glm::vec3 R(glm::reflect(-L, normal));
-  glm::vec3 E(glm::normalize(-vertPos));
+  glm::vec3 E(glm::normalize(vertToCam));
 
   glm::vec3 diffuse = attenuation * diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
 
@@ -433,31 +437,30 @@ void QGLViewerWidget::drawControlMesh() {
       auto p2 = surfacePoints[i + gridM];
       auto p3 = surfacePoints[i + gridM + 1];
 
-      // Only going to calculate one normal for the
-      // two triangles. Otherwise color differs slightly
-      auto normal = triangleNormal(*p0, *p1, *p2);
-      auto col1 = gourad(*p0, normal);
+      auto normalT0 = triangleNormal(*p0, *p1, *p2);
+      auto normalT1 = triangleNormal(*p1, *p3, *p2);
+      auto col1 = gourad(*p0, normalT0);
       glColor3f(col1[0], col1[1], col1[2]);
       glVertex3f(p0->x, p0->y, p0->z);
 
-      auto col2 = gourad(*p1, normal);
+      auto col2 = gourad(*p1, normalT0);
       glColor3f(col2[0], col2[1], col2[2]);
       glVertex3f(p1->x, p1->y, p1->z);
 
-      auto col3 = gourad(*p2, normal);
+      auto col3 = gourad(*p2, normalT0);
       glColor3f(col3[0], col3[1], col3[2]);
       glVertex3f(p2->x, p2->y, p2->z);
 
       // Second triangle
-      auto col4 = gourad(*p1, normal);
+      auto col4 = gourad(*p1, normalT1);
       glColor3f(col4[0], col4[1], col4[2]);
       glVertex3f(p1->x, p1->y, p1->z);
 
-      auto col5 = gourad(*p3, normal);
+      auto col5 = gourad(*p3, normalT1);
       glColor3f(col5[0], col5[1], col5[2]);
       glVertex3f(p3->x, p3->y, p3->z);
 
-      auto col6 = gourad(*p2, normal);
+      auto col6 = gourad(*p2, normalT1);
       glColor3f(col6[0], col6[1], col6[2]);
       glVertex3f(p2->x, p2->y, p2->z);
     }
@@ -478,18 +481,61 @@ void QGLViewerWidget::drawSurfaceBTPS() {
     return;
   }
 
-  PointPointerList surfacePoints = surfaces->getSurfaceBTPS();
+  // Grab our vertices to shade
+  auto surfaceFaces = surfaces->getSurfaceFacesBTPS();
 
-  glDisable(GL_LIGHTING);
-  glEnable(GL_POINT_SMOOTH);
-  glPointSize(10.0f);
+  glBegin(GL_TRIANGLES);
+  for (uint i = 0; i < surfaceFaces.size(); i++) {
+    struct trianglePrimitiv t0 = surfaceFaces[i].t0;
+    struct trianglePrimitiv t1 = surfaceFaces[i].t1;
 
-  glBegin(GL_POINTS);
-  glColor3f(225, 0, 255);
-  for (unsigned int i = 0; i < surfacePoints.size(); i++) {
-    Point p = *(surfacePoints[i]);
-    glVertex3f(p.x, p.y, p.z);
+    assert(t0.p0 == t1.p1);
+    assert(t0.p1 == t1.p0);
+
+    auto p0 = t1.p1;
+    auto p1 = t1.p2;
+    auto p2 = t0.p2;
+    auto p3 = t1.p0;
+
+    auto normal = triangleNormal(*p0, *p1, *p2);
+    auto normal0 = (glm::length(p0->normal)) ? p0->normal : normal;
+    auto normal1 = (glm::length(p1->normal)) ? p1->normal : normal;
+    auto normal2 = (glm::length(p2->normal)) ? p2->normal : normal;
+    auto normal3 = (glm::length(p3->normal)) ? p3->normal : normal;
+
+    auto col1 = gourad(*p0, normal0);
+    glColor3f(col1[0], col1[1], col1[2]);
+    glVertex3f(p0->x, p0->y, p0->z);
+
+    auto col2 = gourad(*p1, normal1);
+    glColor3f(col2[0], col2[1], col2[2]);
+    glVertex3f(p1->x, p1->y, p1->z);
+
+    auto col3 = gourad(*p3, normal3);
+    glColor3f(col3[0], col3[1], col3[2]);
+    glVertex3f(p3->x, p3->y, p3->z);
+
+    // Second triangle
+    auto col4 = gourad(*p0, normal0);
+    glColor3f(col4[0], col4[1], col4[2]);
+    glVertex3f(p0->x, p0->y, p0->z);
+
+    auto col5 = gourad(*p3, normal3);
+    glColor3f(col5[0], col5[1], col5[2]);
+    glVertex3f(p3->x, p3->y, p3->z);
+
+    auto col6 = gourad(*p2, normal2);
+    glColor3f(col6[0], col6[1], col6[2]);
+    glVertex3f(p2->x, p2->y, p2->z);
   }
+  glEnd();
+
+  // Draw light source for debugging
+  glBegin(GL_POINTS);
+  glEnable(GL_POINT_SMOOTH);
+  glPointSize(15.0f);
+  glColor3f(1.0f, 1.0f, 1.0f);
+  glVertex3f(lightPos[0], lightPos[1], lightPos[2]);
   glEnd();
 }
 
@@ -671,12 +717,7 @@ bool intersectRayPoint(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 pointPos,
   return true;
 }
 
-int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points,
-                                   GLdouble mouseX, GLdouble mouseY) {
-  if (points == nullptr) {
-    return -1;
-  }
-
+glm::mat4 QGLViewerWidget::computeModelViewInv() {
   glm::mat4 modelView_inv;
   modelView_inv[0][0] = modelviewMatrix[0];
   modelView_inv[0][1] = modelviewMatrix[1];
@@ -695,6 +736,29 @@ int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points,
   modelView_inv[3][2] = modelviewMatrix[14];
   modelView_inv[3][3] = modelviewMatrix[15];
   modelView_inv = glm::inverse(modelView_inv);
+
+  return modelView_inv;
+}
+
+glm::vec3 QGLViewerWidget::computeCamPos() {
+  glm::mat4 modelView_inv = computeModelViewInv();
+
+  glm::vec4 tmp = (modelView_inv * vec4(0, 0, 0, 1));
+  glm::vec3 camPos;  // camera position
+  camPos[0] = tmp[0] / tmp[3];
+  camPos[1] = tmp[1] / tmp[3];
+  camPos[2] = tmp[2] / tmp[3];
+
+  return camPos;
+}
+
+int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points,
+                                   GLdouble mouseX, GLdouble mouseY) {
+  if (points == nullptr) {
+    return -1;
+  }
+
+  glm::mat4 modelView_inv = computeModelViewInv();
 
   // collect information
   glm::vec4 tmp = (modelView_inv * vec4(0, 0, 0, 1));
@@ -1080,7 +1144,7 @@ void QGLViewerWidget::setDrawBezier(bool value) {
   /* std::cout << "Changing drawSurfaceBTPS value to " << value << std::endl; */
   flag_drawSurfaceBTPS = value;
   if (surfaces != nullptr && value != 0) {
-    surfaces->updateSurfacesBTPS(kBTPS);
+    surfaces->updateSurfacesFacesBTPS(kBTPS);
   }
   paintGL();
   updateGL();
@@ -1090,7 +1154,7 @@ void QGLViewerWidget::setBezierSubdivisions(int k) {
   /* std::cout << "Changing kBTPS value to " << k << std::endl; */
   kBTPS = k;
   if (surfaces != nullptr && flag_drawSurfaceBTPS != 0) {
-    surfaces->updateSurfacesBTPS(kBTPS);
+    surfaces->updateSurfacesFacesBTPS(kBTPS);
   }
   paintGL();
   updateGL();

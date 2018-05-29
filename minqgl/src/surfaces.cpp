@@ -10,6 +10,7 @@ PointPointerList Surfaces::getControlPoints() { return controlPoints; }
 PointPointerList Surfaces::getSurfaceMLS() { return surfaceMLS; }
 
 PointPointerList Surfaces::getSurfaceBTPS() { return surfaceBTPS; }
+std::vector<quadPrimitiv> Surfaces::getSurfaceFacesBTPS() { return surfaceFacesBTPS; }
 
 void Surfaces::setGrid(int m, int n) {
   this->M = m;
@@ -151,7 +152,59 @@ void Surfaces::updateSurfacesBTPS(int k) {
       float x = xMin + (n * nDelta);
       float y = yMin + (m * mDelta);
       float z = computeBTPS(x, y);
+      /* glm::vec3 norm = computeNormalBTPS(x, y); */
       surfaceBTPS.push_back(std::make_shared<Point>(x, y, z));
+      /* surfaceBTPS.back()->normal = norm; */
+    }
+  }
+}
+
+void Surfaces::updateSurfacesFacesBTPS(int k) {
+  int subdivM = k * M;
+  int subdivN = k * N;
+
+  surfaceFacesBTPS = std::vector<quadPrimitiv>(subdivM * subdivN);
+
+  Borders borders = kdtree->getRootnode()->borders;
+  float xMin = borders.xMin;
+  float xMax = borders.xMax;
+  float yMin = borders.yMin;
+  float yMax = borders.yMax;
+  float mDelta = double(yMax - yMin) / subdivM;
+  float nDelta = double(xMax - xMin) / subdivN;
+
+  // for each grid intersection compute new point
+  for (int m = 0; m <= subdivM; ++m) {
+    for (int n = 0; n <= subdivN; ++n) {
+      float x = xMin + (n * nDelta);
+      float y = yMin + (m * mDelta);
+      float z = computeBTPS(x, y);
+      std::shared_ptr<Point> newPoint = std::make_shared<Point>(x, y, z);
+      newPoint->normal = computeNormalBTPS(x, y);
+
+      // 4 quadPrimitiv can be adjacend to this grid point
+      // 1: m-1 n-1
+      if (m > 0 && n > 0) {
+	int quad_index = (m-1) * subdivM + (n-1);
+	surfaceFacesBTPS[quad_index].t0.p1 = newPoint;
+	surfaceFacesBTPS[quad_index].t1.p0 = newPoint;
+      }
+      // 2: m-1 n
+      if (m > 0 && n < subdivN) {
+	int quad_index = (m-1) * subdivM + (n);
+	surfaceFacesBTPS[quad_index].t0.p2 = newPoint;
+      }
+      // 1: m   n-1
+      if (m < subdivM && n > 0) {
+	int quad_index = (m) * subdivM + (n-1);
+	surfaceFacesBTPS[quad_index].t1.p2 = newPoint;
+      }
+      // 4: m   n
+      if (m < subdivM && n < subdivN) {
+	int quad_index = (m) * subdivM + (n);
+	surfaceFacesBTPS[quad_index].t0.p0 = newPoint;
+	surfaceFacesBTPS[quad_index].t1.p1 = newPoint;
+      }
     }
   }
 }
@@ -180,4 +233,32 @@ float Surfaces::computeBTPS(float u, float v) {
   glm::vec3 bezierPoint = deCasteljau(points, v, 0, points.size()-1);
 
   return bezierPoint[2];
+}
+
+glm::vec3 Surfaces::computeNormalBTPS(float u, float v) {
+  // compute tangent 1
+  PointPointerList mPoints;
+  for (int m = 0; m <= M; ++m) {
+    PointPointerList tmp = getControlPointsAtM(m);
+    glm::vec3 bezierPoint = deCasteljau(tmp, u, 0, tmp.size()-1);
+    mPoints.push_back(std::make_shared<Point>(bezierPoint));
+  }
+  glm::vec3 tangent_11 = glm::normalize(deCasteljau(mPoints, v, 0, mPoints.size()-2));
+  glm::vec3 tangent_12 = glm::normalize(deCasteljau(mPoints, v, 1, mPoints.size()-2));
+  glm::vec3 tangent_1 = glm::normalize(tangent_11 - tangent_12);
+
+  // compute tangent 2
+  PointPointerList nPoints;
+  for (int n = 0; n <= N; ++n) {
+    PointPointerList tmp = getControlPointsAtN(n);
+    glm::vec3 bezierPoint = deCasteljau(tmp, u, 0, tmp.size()-1);
+    nPoints.push_back(std::make_shared<Point>(bezierPoint));
+  }
+  glm::vec3 tangent_21 = glm::normalize(deCasteljau(nPoints, v, 0, nPoints.size()-2));
+  glm::vec3 tangent_22 = glm::normalize(deCasteljau(nPoints, v, 1, nPoints.size()-2));
+  glm::vec3 tangent_2 = glm::normalize(tangent_21 - tangent_22);
+
+  glm::vec3 norm = glm::normalize(glm::cross(tangent_2, tangent_1));
+
+  return norm;
 }
