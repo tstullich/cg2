@@ -32,7 +32,6 @@
 
 #include "QGLViewerWidget.hpp"
 #define GLM_ENABLE_EXPERIMENTAL 1
-#include "glm/gtx/intersect.hpp"
 
 #if !defined(M_PI)
 #define M_PI 3.1415926535897932
@@ -475,7 +474,23 @@ void QGLViewerWidget::drawControlMesh() {
 }
 
 void QGLViewerWidget::drawSurfaceBTPS() {
-  std::cout << "drawSurfaceBTPS()" << std::endl;
+  if (surfaces == nullptr) {
+    return;
+  }
+
+  PointPointerList surfacePoints = surfaces->getSurfaceBTPS();
+
+  glDisable(GL_LIGHTING);
+  glEnable(GL_POINT_SMOOTH);
+  glPointSize(10.0f);
+
+  glBegin(GL_POINTS);
+  glColor3f(225, 0, 255);
+  for (unsigned int i = 0; i < surfacePoints.size(); i++) {
+    Point p = *(surfacePoints[i]);
+    glVertex3f(p.x, p.y, p.z);
+  }
+  glEnd();
 }
 
 void QGLViewerWidget::drawSurfaceMLS() {

@@ -1,6 +1,14 @@
 #include "point.hpp"
 #include "kdtree.hpp"
 
+Point::Point(float x, float y, float z) : x(x), y(y), z(z) {
+  normal = glm::vec3(0.0f, 0.0f, 0.0f);
+}
+
+Point::Point(glm::vec3 v) : x(v[0]), y(v[1]), z(v[2]) {
+  normal = glm::vec3(0.0f, 0.0f, 0.0f);
+}
+
 float Point::fetchPointValue(int axis) {
   if (axis == 0) {
     return x;
@@ -39,4 +47,8 @@ float Point::distNode(const Node &n) const {
     d = std::max(d, std::min(std::abs(n.borders.zMin - this->z),
                              std::abs(n.borders.zMax - this->z)));
   return d;
+}
+
+glm::vec3 Point::toVec3() {
+  return glm::vec3(x, y, z);
 }

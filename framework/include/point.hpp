@@ -5,6 +5,8 @@
 #include <cmath>
 #include <limits>
 
+#include <glm/glm.hpp>
+
 // Forward declaration so we can use Node class
 struct Node;
 
@@ -15,15 +17,18 @@ struct Node;
  */
 class Point {
 public:
-  Point(float x, float y, float z) : x(x), y(y), z(z) {}
+  Point(float x, float y, float z);
+  Point(glm::vec3 v);
 
   float fetchPointValue(int axis);
   float distPoint(const Point &b) const;
   float distNode(const Node &b) const;
+  glm::vec3 toVec3();
 
   float x;
   float y;
   float z;
   float dist;
+  glm::vec3 normal;
 };
 #endif // POINT_HPP

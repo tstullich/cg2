@@ -117,7 +117,7 @@ float Surfaces::computeMLS(float x, float y) {
 PointPointerList Surfaces::getControlPointsAtM(int m) {
   PointPointerList points;
   for (int n = 0; n <= N; ++n) {
-    points.push_back(controlPoints[M * m + n]);
+    points.push_back(controlPoints[(M+1) * m + n]);
   }
   return points;
 }
@@ -125,13 +125,59 @@ PointPointerList Surfaces::getControlPointsAtM(int m) {
 PointPointerList Surfaces::getControlPointsAtN(int n) {
   PointPointerList points;
   for (int m = 0; m <= M; ++m) {
-    points.push_back(controlPoints[M * m + n]);
+    points.push_back(controlPoints[(M+1) * m + n]);
   }
   return points;
 }
 
 void Surfaces::updateSurfacesBTPS(int k) {
-  PointPointerList points = getControlPointsAtM(1);
-  for (int i = 0; i < points.size(); ++i) {
+  // first empty the container
+  surfaceBTPS.clear();
+
+  int subdivM = k * M;
+  int subdivN = k * N;
+
+  Borders borders = kdtree->getRootnode()->borders;
+  float xMin = borders.xMin;
+  float xMax = borders.xMax;
+  float yMin = borders.yMin;
+  float yMax = borders.yMax;
+  float mDelta = double(yMax - yMin) / subdivM;
+  float nDelta = double(xMax - xMin) / subdivN;
+
+  // for each grid intersection compute new point
+  for (int m = 0; m <= subdivM; ++m) {
+    for (int n = 0; n <= subdivN; ++n) {
+      float x = xMin + (n * nDelta);
+      float y = yMin + (m * mDelta);
+      float z = computeBTPS(x, y);
+      surfaceBTPS.push_back(std::make_shared<Point>(x, y, z));
+    }
   }
+}
+
+glm::vec3 deCasteljau(PointPointerList points, float u, int i, int r) {
+  if (r == 0) {
+    return points[i]->toVec3();
+  }
+
+  glm::vec3 p1 = deCasteljau(points, u, i+1, r-1);
+  glm::vec3 p2 = deCasteljau(points, u, i, r-1);
+
+  return (u * p1) + ((1.0f - u) * p2);
+}
+
+float Surfaces::computeBTPS(float u, float v) {
+  // compute bezier points on curves along n (x-axis) direction
+  PointPointerList points;
+  for (int m = 0; m <= M; ++m) {
+    PointPointerList mPoints = getControlPointsAtM(m);
+    glm::vec3 bezierPoint = deCasteljau(mPoints, u, 0, mPoints.size()-1);
+    points.push_back(std::make_shared<Point>(bezierPoint));
+  }
+
+  // compute z from points
+  glm::vec3 bezierPoint = deCasteljau(points, v, 0, points.size()-1);
+
+  return bezierPoint[2];
 }

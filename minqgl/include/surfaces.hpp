@@ -53,6 +53,11 @@ public:
    */
   void updateSurfacesBTPS(int k);
 
+  /*
+   * Computes z value at the given point by using the BTPS method.
+   */
+  float computeBTPS(float u, float v);
+
 private:
   PointPointerList getControlPointsAtM(int m);
   PointPointerList getControlPointsAtN(int n);
