@@ -183,7 +183,7 @@ private:
 
   // Hardcoding a position here since we are just demoing and need
   // only one light source
-  glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
+  glm::vec3 lightPos = glm::vec3(1.0f, 1.0f, 1.0f);
   float radius;
 
   GLdouble projectionMatrix[16], modelviewMatrix[16];
@@ -209,7 +209,7 @@ private:
   bool drawGrid = true;
   int gridM = 10;
   int gridN = 10;
-  // TODO Radius
+  float gridR = 0.5;
   int kMLS = 1;
   int kBTPS = 1;
   bool flag_drawControlMesh = false;

@@ -86,7 +86,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   pointList = kdtree->getPoints();
 
   // causes linker error - no idear why
-  surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, radius);
+  surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, gridR);
 
   selectedPointIndex = 0;
   selectedPointList.clear();
@@ -516,6 +516,9 @@ void QGLViewerWidget::drawScene() {
   if (flag_drawSurfaceMLS) {
     drawSurfaceMLS();
   }
+  if (flag_drawTree) {
+    drawKDTree();
+  }
 
   // Draw a coordinate system
   if (!drawGrid && kdtree == nullptr) {
@@ -632,15 +635,15 @@ bool intersectRayPoint(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 pointPos,
   glm::vec3 vecRS = pointPos - rayPos;
   float lenRS = glm::length(vecRS);
 
-  float radius = 0.005 * lenRS;  // relativ to distance between camera and point
+  float r = 0.005 * lenRS;  // relativ to distance between camera and point
 
   float t_ca = glm::dot(vecRS, rayDir);
 
   float t_ca_Sqrt = std::pow(t_ca, 2.0f);
   float lenRS_Sqrt = std::pow(lenRS, 2.0f);
-  float radius_Sqrt = std::pow(radius, 2.0f);
+  float r_Sqrt = std::pow(r, 2.0f);
 
-  float t_hc_Sqrt = radius_Sqrt - lenRS_Sqrt + t_ca_Sqrt;
+  float t_hc_Sqrt = r_Sqrt - lenRS_Sqrt + t_ca_Sqrt;
   if (t_hc_Sqrt < 0.0f) {  // no intersection
     return false;
   }
@@ -789,14 +792,6 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
     case Key_T:
       flag_drawTree = flag_drawTree ? false : true;
       break;
-
-      /*
-      case Key_U:
-        if (surfaces != nullptr) {
-          surfaces->updateSurfacesMLS();
-        }
-        break;
-      */
 
     case Key_H:
       std::cout << "Keys:\n";
@@ -1056,11 +1051,11 @@ void QGLViewerWidget::setGridYDim(int value) {
   update();
 }
 
-void QGLViewerWidget::setRadius(double radius) {
+void QGLViewerWidget::setRadius(double r) {
   /* std::cout << "Changing radius to " << radius << std::endl; */
-  this->radius = radius;
+  this->gridR = r;
   if (surfaces != nullptr) {
-    this->surfaces->setRadius(radius);
+    this->surfaces->setRadius(r);
   }
   paintGL();
   update();

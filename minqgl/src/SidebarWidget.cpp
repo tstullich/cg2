@@ -111,7 +111,7 @@ void SidebarWidget::initControlPointsBox(QWidget *parent) {
 
   radiusBox = new QDoubleSpinBox(this);
   radiusBox->setRange(0.0, 1000.0);
-  radiusBox->setValue(0.1);
+  radiusBox->setValue(0.5);
   connect(radiusBox, SIGNAL(valueChanged(double)), parent, SLOT(setRadius(double)));
 }
 
