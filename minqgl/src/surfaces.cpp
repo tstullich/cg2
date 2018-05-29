@@ -2,10 +2,7 @@
 
 Surfaces::Surfaces(std::shared_ptr<KDTree> kdtree, int m, int n, float r)
     : kdtree(std::move(kdtree)), M(m), N(n), radius(r) {
-  std::cout << "kdtree:" << this->kdtree << std::endl;
-  std::cout << "m:" << this->M << std::endl;
-  std::cout << "n:" << this->N << std::endl;
-  std::cout << "r:" << this->radius << std::endl;
+  this->updateControlPoints();
 }
 
 PointPointerList Surfaces::getControlPoints() { return controlPoints; }
@@ -45,8 +42,6 @@ void Surfaces::updateControlPoints() {
 }
 
 void Surfaces::updateSurfacesMLS(int k) {
-  std::cout << "updateSurfacesMLS()" << std::endl;
-
   // first empty the container
   surfaceMLS.clear();
 
@@ -138,7 +133,5 @@ PointPointerList Surfaces::getControlPointsAtN(int n) {
 void Surfaces::updateSurfacesBTPS(int k) {
   PointPointerList points = getControlPointsAtM(1);
   for (int i = 0; i < points.size(); ++i) {
-    std::cout << i << ": (" << points[i]->x << ",\t" << points[i]->y << ")"
-              << std::endl;
   }
 }

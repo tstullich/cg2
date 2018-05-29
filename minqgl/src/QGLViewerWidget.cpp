@@ -1013,29 +1013,31 @@ void QGLViewerWidget::updateTreeState(int value) {
 }
 
 void QGLViewerWidget::setDrawPoints(bool value) {
-  std::cout << "Changing drawPoints value to " << value << std::endl;
+  /* std::cout << "Changing drawPoints value to " << value << std::endl; */
   drawPoints = value;
   paintGL();
   updateGL();
 }
 
 void QGLViewerWidget::setDrawRegularGrid(bool value) {
-  std::cout << "Changing drawGrid value to " << value << std::endl;
+  /* std::cout << "Changing drawGrid value to " << value << std::endl; */
   drawGrid = value;
   paintGL();
   updateGL();
 }
 
 void QGLViewerWidget::setDrawControlMeshPoints(bool value) {
-  std::cout << "Changing drawControlMesh value to " << value << std::endl;
+  /* std::cout << "Changing drawControlMesh value to " << value << std::endl; */
   flag_drawControlMesh = value;
-  surfaces->updateControlPoints();
+  if (surfaces != nullptr && value != 0) {
+    surfaces->updateControlPoints();
+  }
   paintGL();
   updateGL();
 }
 
 void QGLViewerWidget::setGridXDim(int value) {
-  std::cout << "Changing grid X dimension value to " << value << std::endl;
+  /* std::cout << "Changing grid X dimension value to " << value << std::endl; */
   gridN = value;
   if (surfaces != nullptr) {
     this->surfaces->setGrid(gridM, gridN);
@@ -1045,7 +1047,7 @@ void QGLViewerWidget::setGridXDim(int value) {
 }
 
 void QGLViewerWidget::setGridYDim(int value) {
-  std::cout << "Changing grid Y dimension value to " << value << std::endl;
+  /* std::cout << "Changing grid Y dimension value to " << value << std::endl; */
   gridM = value;
   if (surfaces != nullptr) {
     this->surfaces->setGrid(gridM, gridN);
@@ -1055,7 +1057,7 @@ void QGLViewerWidget::setGridYDim(int value) {
 }
 
 void QGLViewerWidget::setRadius(double radius) {
-  std::cout << "Changing radius to " << radius << std::endl;
+  /* std::cout << "Changing radius to " << radius << std::endl; */
   this->radius = radius;
   if (surfaces != nullptr) {
     this->surfaces->setRadius(radius);
@@ -1065,33 +1067,41 @@ void QGLViewerWidget::setRadius(double radius) {
 }
 
 void QGLViewerWidget::setDrawBezier(bool value) {
-  std::cout << "Changing drawSurfaceBTPS value to " << value << std::endl;
+  /* std::cout << "Changing drawSurfaceBTPS value to " << value << std::endl; */
   flag_drawSurfaceBTPS = value;
-  surfaces->updateSurfacesBTPS(kBTPS);
+  if (surfaces != nullptr && value != 0) {
+    surfaces->updateSurfacesBTPS(kBTPS);
+  }
   paintGL();
   updateGL();
 }
 
 void QGLViewerWidget::setBezierSubdivisions(int k) {
-  std::cout << "Changing kBTPS value to " << k << std::endl;
+  /* std::cout << "Changing kBTPS value to " << k << std::endl; */
   kBTPS = k;
-  surfaces->updateSurfacesBTPS(kBTPS);
+  if (surfaces != nullptr && flag_drawSurfaceBTPS != 0) {
+    surfaces->updateSurfacesBTPS(kBTPS);
+  }
   paintGL();
   updateGL();
 }
 
 void QGLViewerWidget::setDrawMls(bool value) {
-  std::cout << "Changing drawSurfaceMLS value to " << value << std::endl;
+  /* std::cout << "Changing drawSurfaceMLS value to " << value << std::endl; */
   flag_drawSurfaceMLS = value;
-  surfaces->updateSurfacesMLS(kMLS);
+  if (surfaces != nullptr && value != 0) {
+    surfaces->updateSurfacesMLS(kMLS);
+  }
   paintGL();
   updateGL();
 }
 
 void QGLViewerWidget::setMlsSubdivisions(int k) {
-  std::cout << "Changing kMLS value to " << k << std::endl;
+  /* std::cout << "Changing kMLS value to " << k << std::endl; */
   kMLS = k;
-  surfaces->updateSurfacesMLS(kMLS);
+  if (surfaces != nullptr && flag_drawSurfaceMLS != 0) {
+    surfaces->updateSurfacesMLS(kMLS);
+  }
   paintGL();
   updateGL();
 }
