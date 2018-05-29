@@ -402,13 +402,17 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   glm::vec3 diffuseColor(1.0f, 0.0f, 0.0f);
   glm::vec3 specularColor(1.0f, 1.0f, 1.0f);
 
-  glm::vec3 L(glm::normalize(lightPos - vertPos));
+  glm::vec3 vertToLight = lightPos - vertPos;
+  float len = sqrt(vertToLight[0] * vertToLight[0] + vertToLight[1] * vertToLight[1] + vertToLight[2] * vertToLight[2]);
+  float attenuation = 1.0f / (1.0f + 0.1f * len + 0.01f * len * len);
+
+  glm::vec3 L(glm::normalize(vertToLight));
   glm::vec3 R(glm::reflect(-L, normal));
   glm::vec3 E(glm::normalize(-vertPos));
 
-  glm::vec3 diffuse = diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
+  glm::vec3 diffuse = attenuation * diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
 
-  glm::vec3 specular = specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 16.0f);
+  glm::vec3 specular = attenuation * specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 16.0f);
 
   return ambientColor + diffuse + specular;
 }
