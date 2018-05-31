@@ -19,6 +19,7 @@ struct trianglePrimitiv {
   std::shared_ptr<Point> p0;
   std::shared_ptr<Point> p1;
   std::shared_ptr<Point> p2;
+  glm::vec3 norm;
 };
 
 struct quadPrimitiv {
@@ -33,6 +34,7 @@ public:
   PointPointerList getControlPoints();
   PointPointerList getSurfaceMLS();
   PointPointerList getSurfaceBTPS();
+  std::vector<quadPrimitiv> getSurfaceFacesMLS();
   std::vector<quadPrimitiv> getSurfaceFacesBTPS();
 
   /**
@@ -54,11 +56,7 @@ public:
    * Compute surface based on MLS method
    */
   void updateSurfacesMLS(int k);
-
-  /*
-   * Computes z value at the given point by using the MLS method.
-   */
-  float computeMLS(float x, float y);
+  void updateSurfacesFacesMLS(int k);
 
   /**
    * Compute surface based on Bézier Tensor Product Surface method
@@ -66,19 +64,38 @@ public:
   void updateSurfacesBTPS(int k);
   void updateSurfacesFacesBTPS(int k);
 
+private:
+  /*
+   * Computes z value at the given point by using the MLS method.
+   */
+  float computeMLS(float x, float y);
+
   /*
    * Computes z value at the given point by using the BTPS method.
    */
   float computeBTPS(float u, float v);
 
-  glm::vec3 computeNormalBTPS(float u, float v);
+  /*
+   * applies deCasteljau twice to calculate the surface normal at (u,v)
+   */
+  glm::vec3 computeVertxNormalBTPS(float u, float v);
 
-private:
+glm::vec3 triangleNormal(std::shared_ptr<Point> v1,
+                         std::shared_ptr<Point> v2,
+                         std::shared_ptr<Point> v3);
+
+  /**
+   * compute face and vertex normals for given set of primitives
+   */
+  void computeNormalsMLS(int k);
+  void computeFaceNormalsBTPS();
+
   PointPointerList getControlPointsAtM(int m);
   PointPointerList getControlPointsAtN(int n);
 
   PointPointerList controlPoints;
   PointPointerList surfaceMLS;
+  std::vector<quadPrimitiv> surfaceFacesMLS;
   PointPointerList surfaceBTPS;
   std::vector<quadPrimitiv> surfaceFacesBTPS;
   std::shared_ptr<KDTree> kdtree;
