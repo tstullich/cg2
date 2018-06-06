@@ -20,9 +20,13 @@ std::vector<quadPrimitiv> Surfaces::getSurfaceFacesBTPS() { return surfaceFacesB
 void Surfaces::setGrid(int m, int n) {
   this->M = m;
   this->N = n;
+  this->updateControlPoints();
 }
 
-void Surfaces::setRadius(float r) { this->radius = r; }
+void Surfaces::setRadius(float r) {
+  this->radius = r;
+  this->updateControlPoints();
+}
 
 void Surfaces::updateControlPoints() {
   // first empty the container
@@ -230,7 +234,7 @@ float Surfaces::computeMLS(float x, float y) {
 PointPointerList Surfaces::getControlPointsAtM(int m) {
   PointPointerList points;
   for (int n = 0; n <= N; ++n) {
-    points.push_back(controlPoints[(M+1) * m + n]);
+    points.push_back(controlPoints[(N+1) * m + n]);
   }
   return points;
 }
@@ -238,7 +242,7 @@ PointPointerList Surfaces::getControlPointsAtM(int m) {
 PointPointerList Surfaces::getControlPointsAtN(int n) {
   PointPointerList points;
   for (int m = 0; m <= M; ++m) {
-    points.push_back(controlPoints[(M+1) * m + n]);
+    points.push_back(controlPoints[(N+1) * m + n]);
   }
   return points;
 }
@@ -292,7 +296,7 @@ void Surfaces::updateSurfacesFacesBTPS(int k) {
       float y = yMin + (m * mDelta);
       float z = computeBTPS(x, y);
       std::shared_ptr<Point> newPoint = std::make_shared<Point>(x, y, z);
-      newPoint->normal = computeVertxNormalBTPS(x, y);
+      /* newPoint->normal = computeVertxNormalBTPS(x, y); */
 
       // 4 quadPrimitiv can be adjacend to this grid point
       // 1: m-1 n-1
@@ -320,7 +324,7 @@ void Surfaces::updateSurfacesFacesBTPS(int k) {
     }
   }
 
-  computeFaceNormalsBTPS();
+  computeNormalsBTPS(k);
 
   return;
 }
@@ -468,13 +472,76 @@ void Surfaces::computeNormalsMLS(int k) {
   }
 }
 
-void Surfaces::computeFaceNormalsBTPS() {
+void Surfaces::computeNormalsBTPS(int k) {
   for (int i = 0; i < surfaceFacesBTPS.size(); ++i) {
     struct trianglePrimitiv t0 = surfaceFacesBTPS[i].t0;
     struct trianglePrimitiv t1 = surfaceFacesBTPS[i].t1;
 
     surfaceFacesBTPS[i].t0.norm = triangleNormal(t0.p0, t0.p1, t0.p2);
     surfaceFacesBTPS[i].t1.norm = triangleNormal(t1.p0, t1.p1, t1.p2);
+  }
+
+  int subdivM = k * M;
+  int subdivN = k * N;
+
+  for (int m = 0; m <= subdivM; ++m) {
+    for (int n = 0; n <= subdivN; ++n) {
+      int cntCases = 0;
+      glm::vec3 newNorm = glm::vec3(0.0f, 0.0f, 0.0f);
+      // first we sum up all face normals
+      // 4 quadPrimitiv can be adjacend to this grid point
+      // 1: m-1 n-1
+      if (m > 0 && n > 0) {
+        int quad_index = (m-1) * subdivN + (n-1);
+        newNorm += surfaceFacesBTPS[quad_index].t0.norm;
+        newNorm += surfaceFacesBTPS[quad_index].t1.norm;
+        cntCases += 2;
+      }
+      // 2: m-1 n
+      if (m > 0 && n < subdivN) {
+        int quad_index = (m-1) * subdivN + (n);
+        newNorm += surfaceFacesBTPS[quad_index].t0.norm;
+        cntCases += 1;
+      }
+      // 1: m   n-1
+      if (m < subdivM && n > 0) {
+        int quad_index = (m) * subdivN + (n-1);
+        newNorm += surfaceFacesBTPS[quad_index].t1.norm;
+        cntCases += 1;
+      }
+      // 4: m   n
+      if (m < subdivM && n < subdivN) {
+        int quad_index = (m) * subdivN + (n);
+        newNorm += surfaceFacesBTPS[quad_index].t0.norm;
+        newNorm += surfaceFacesBTPS[quad_index].t1.norm;
+        cntCases += 2;
+      }
+      // second we compute the average and assign it
+      newNorm /= cntCases;
+      newNorm = glm::normalize(newNorm);
+      // 1: m-1 n-1
+      if (m > 0 && n > 0) {
+        int quad_index = (m-1) * subdivN + (n-1);
+        surfaceFacesBTPS[quad_index].t0.p1->normal = newNorm;
+        surfaceFacesBTPS[quad_index].t1.p0->normal = newNorm;
+      }
+      // 2: m-1 n
+      if (m > 0 && n < subdivN) {
+        int quad_index = (m-1) * subdivN + (n);
+        surfaceFacesBTPS[quad_index].t0.p2->normal = newNorm;
+      }
+      // 1: m   n-1
+      if (m < subdivM && n > 0) {
+        int quad_index = (m) * subdivN + (n-1);
+        surfaceFacesBTPS[quad_index].t1.p2->normal = newNorm;
+      }
+      // 4: m   n
+      if (m < subdivM && n < subdivN) {
+        int quad_index = (m) * subdivN + (n);
+        surfaceFacesBTPS[quad_index].t0.p0->normal = newNorm;
+        surfaceFacesBTPS[quad_index].t1.p1->normal = newNorm;
+      }
+    }
   }
 }
 

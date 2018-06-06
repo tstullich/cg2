@@ -90,7 +90,7 @@ private:
    * compute face and vertex normals for given set of primitives
    */
   void computeNormalsMLS(int k);
-  void computeFaceNormalsBTPS();
+  void computeNormalsBTPS(int k);
   void computeControlFaceNormals();
 
   PointPointerList getControlPointsAtM(int m);

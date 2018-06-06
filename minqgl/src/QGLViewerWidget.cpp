@@ -1174,7 +1174,6 @@ void QGLViewerWidget::setGridYDim(int value) {
       surfaces->updateControlFaces();
     }
     if (flag_drawSurfaceBTPS) {
-      surfaces->updateControlPoints();
       surfaces->updateSurfacesFacesBTPS(kBTPS);
     }
     if (flag_drawSurfaceMLS) {
@@ -1196,7 +1195,6 @@ void QGLViewerWidget::setRadius(double r) {
       surfaces->updateControlFaces();
     }
     if (flag_drawSurfaceBTPS) {
-      surfaces->updateControlPoints();
       surfaces->updateSurfacesFacesBTPS(kBTPS);
     }
     if (flag_drawSurfaceMLS) {
