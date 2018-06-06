@@ -17,6 +17,7 @@
 #include <vector>
 #include <chrono>
 #include <assert.h>
+#include <thread>
 
 #include <QElapsedTimer>
 #include <QFileDialog>
@@ -158,6 +159,8 @@ private slots:
 private:
   void init();
 
+  void animateLight();
+
   // initialize OpenGL states (triggered by Qt)
   void initializeGL();
 
@@ -180,6 +183,10 @@ private:
 
   glm::vec3 gourad(const Point &v1, const glm::vec3 &normal);
 
+  glm::vec3 gourad(const Point &v1,
+                   const glm::vec3 &normal,
+                   std::vector<quadPrimitiv> surface);
+
   glm::vec3 center;
 
   glm::mat4 computeModelViewInv();
@@ -188,7 +195,7 @@ private:
 
   // Hardcoding a position here since we are just demoing and need
   // only one light source
-  glm::vec3 lightPos = glm::vec3(1.0f, 1.0f, 1.0f);
+  glm::vec3 lightPos = glm::vec3(1.25f, 1.25f, 1.0f);
   float radius;
 
   GLdouble projectionMatrix[16], modelviewMatrix[16];
@@ -225,6 +232,8 @@ private:
   bool lastPointOk;
   bool performLinearSearch = false;
   bool selectOnRelease = false;
+  bool flag_animate = false;
+  std::vector<std::thread> threads;
 
   GLdouble zNearFactor = 0.01;
   GLdouble zFarFactor = 500.0;

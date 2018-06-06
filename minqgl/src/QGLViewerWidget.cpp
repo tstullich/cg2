@@ -68,6 +68,7 @@ void QGLViewerWidget::init() {
   setAcceptDrops(true);
   setCursor(PointingHandCursor);
   assert(glGetError() == GL_NO_ERROR);
+  threads.push_back(std::thread(&QGLViewerWidget::animateLight, this));
 }
 
 //----------------------------------------------------------------------------
@@ -93,6 +94,20 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   updateGL();
 
   return true;
+}
+
+void QGLViewerWidget::animateLight() {
+  unsigned frameCounter = 300;
+  while(true) {
+    if (flag_animate) {
+      lightPos[0] = sin(double(frameCounter) * M_PI / 100) + 0.5f;
+      lightPos[1] = cos((double(frameCounter) * M_PI / 100) - M_PI) + 0.5f;
+      frameCounter = (frameCounter + 1) % 200;
+      update();
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 }
 
 bool QGLViewerWidget::drawPointSet() {
@@ -397,7 +412,7 @@ glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2, cons
 
 glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   glm::vec3 vertPos(v1.x, v1.y, v1.z);
-  glm::vec3 ambientColor(0.3f, 0.0f, 0.0f);
+  glm::vec3 ambientColor(0.1f, 0.0f, 0.0f);
   glm::vec3 diffuseColor(1.0f, 0.0f, 0.0f);
   glm::vec3 specularColor(1.0f, 1.0f, 1.0f);
 
@@ -409,15 +424,75 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   float len = sqrt(vertToLight[0] * vertToLight[0] + vertToLight[1] * vertToLight[1] + vertToLight[2] * vertToLight[2]);
   float attenuation = 1.0f / (1.0f + 0.1f * len + 0.01f * len * len);
 
+  glm::vec3 N(glm::normalize(normal));
   glm::vec3 L(glm::normalize(vertToLight));
-  glm::vec3 R(glm::reflect(-L, normal));
   glm::vec3 E(glm::normalize(vertToCam));
+  glm::vec3 R(0.0f, 0.0f, 0.0f);
+  float NL = glm::dot(N, L);
+  if (NL >= 0.0f) {
+    R = glm::normalize((2.0f * (N * NL)) - L);
+  }
 
   glm::vec3 diffuse = attenuation * diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
 
-  glm::vec3 specular = attenuation * specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 16.0f);
+  glm::vec3 specular = attenuation * specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 50.0f);
 
   return ambientColor + diffuse + specular;
+}
+
+bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2) {
+  glm::vec3 v01(p1 - p0);
+  glm::vec3 v02(p2 - p0);
+  glm::vec3 h(glm::cross(rayDir, v02));
+  double a = glm::dot(h, v01);
+  if (a > -0.00001 && a < 0.00001) {
+    return false;
+  }
+
+  double a_inv = 1/a;
+  glm::vec3 s(rayPos - p0);
+  double u = a_inv * glm::dot(h, s);
+  if (u <= 0.0 || u >= 1.0) {
+    return false;
+  }
+
+  glm::vec3 q(glm::cross(s, v01));
+  double v = a_inv * glm::dot(q, rayDir);
+  if (v <= 0.0 || u+v >= 1.0) {
+    return false;
+  }
+
+  double t = a_inv * glm::dot(q, v02);
+  if (t > 0.00001) {
+    return true;
+  } else {
+    return false;;
+  }
+}
+
+
+glm::vec3 QGLViewerWidget::gourad(const Point &v1,
+                                  const glm::vec3 &normal,
+                                  std::vector<quadPrimitiv> surface) {
+  // shadow test
+  glm::vec3 rayPos(v1.x, v1.y, v1.z);
+  glm::vec3 rayDir(glm::normalize(lightPos - rayPos));
+  for (int i = 0; i < surface.size(); ++i) {
+    struct trianglePrimitiv t0 = surface[i].t0;
+    glm::vec3 p00 = t0.p0->toVec3();
+    glm::vec3 p01 = t0.p1->toVec3();
+    glm::vec3 p02 = t0.p2->toVec3();
+    struct trianglePrimitiv t1 = surface[i].t1;
+    glm::vec3 p10 = t1.p0->toVec3();
+    glm::vec3 p11 = t1.p1->toVec3();
+    glm::vec3 p12 = t1.p2->toVec3();
+    if (intersectRayTriangle(rayPos, rayDir, p00, p01, p02) ||
+        intersectRayTriangle(rayPos, rayDir, p10, p11, p12)) {
+      return glm::vec3(0.1f, 0.0f, 0.0f);
+    }
+  }
+
+  return gourad(v1, normal);
 }
 
 void QGLViewerWidget::drawControlMesh() {
@@ -560,27 +635,33 @@ void QGLViewerWidget::drawSurfaceMLS() {
     auto normal2 = (glm::length(p2->normal)) ? p2->normal : normal;
     auto normal3 = (glm::length(p3->normal)) ? p3->normal : normal;
 
+    /* auto col1 = gourad(*p0, normal0, surfaceFaces); */
     auto col1 = gourad(*p0, normal0);
     glColor3f(col1[0], col1[1], col1[2]);
     glVertex3f(p0->x, p0->y, p0->z);
 
+    /* auto col2 = gourad(*p1, normal1, surfaceFaces); */
     auto col2 = gourad(*p1, normal1);
     glColor3f(col2[0], col2[1], col2[2]);
     glVertex3f(p1->x, p1->y, p1->z);
 
+    /* auto col3 = gourad(*p3, normal3, surfaceFaces); */
     auto col3 = gourad(*p3, normal3);
     glColor3f(col3[0], col3[1], col3[2]);
     glVertex3f(p3->x, p3->y, p3->z);
 
     // Second triangle
+    /* auto col4 = gourad(*p0, normal0, surfaceFaces); */
     auto col4 = gourad(*p0, normal0);
     glColor3f(col4[0], col4[1], col4[2]);
     glVertex3f(p0->x, p0->y, p0->z);
 
+    /* auto col5 = gourad(*p3, normal3, surfaceFaces); */
     auto col5 = gourad(*p3, normal3);
     glColor3f(col5[0], col5[1], col5[2]);
     glVertex3f(p3->x, p3->y, p3->z);
 
+    /* auto col6 = gourad(*p2, normal2, surfaceFaces); */
     auto col6 = gourad(*p2, normal2);
     glColor3f(col6[0], col6[1], col6[2]);
     glVertex3f(p2->x, p2->y, p2->z);
@@ -897,6 +978,10 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       slotSnapshot();
       break;
 
+    case Key_A:
+      flag_animate = (flag_animate) ? false : true;
+      break;
+
     case Key_J:
       if (drawLevelsOfTree > 0) drawLevelsOfTree--;
       break;
@@ -1154,7 +1239,7 @@ void QGLViewerWidget::setGridXDim(int value) {
     this->surfaces->setGrid(gridM, gridN);
   }
   paintGL();
-  update();
+  updateGL();
 }
 
 void QGLViewerWidget::setGridYDim(int value) {
@@ -1164,7 +1249,7 @@ void QGLViewerWidget::setGridYDim(int value) {
     this->surfaces->setGrid(gridM, gridN);
   }
   paintGL();
-  update();
+  updateGL();
 }
 
 void QGLViewerWidget::setRadius(double r) {
@@ -1174,7 +1259,7 @@ void QGLViewerWidget::setRadius(double r) {
     this->surfaces->setRadius(r);
   }
   paintGL();
-  update();
+  updateGL();
 }
 
 void QGLViewerWidget::setDrawBezier(bool value) {
