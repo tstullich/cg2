@@ -91,6 +91,7 @@ protected:
 
   void drawRegularGrid();
   void drawKDTree();
+  void drawSurface(std::vector<quadPrimitiv> surfaceFaces);
   void drawControlMesh();
   void drawSurfaceBTPS();
   void drawSurfaceMLS();

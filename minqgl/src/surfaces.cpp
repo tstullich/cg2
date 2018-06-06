@@ -9,9 +9,11 @@ PointPointerList Surfaces::getControlPoints() { return controlPoints; }
 
 PointPointerList Surfaces::getSurfaceMLS() { return surfaceMLS; }
 
-std::vector<quadPrimitiv> Surfaces::getSurfaceFacesMLS() { return surfaceFacesMLS; }
-
 PointPointerList Surfaces::getSurfaceBTPS() { return surfaceBTPS; }
+
+std::vector<quadPrimitiv> Surfaces::getControlFaces() { return controlFaces; }
+
+std::vector<quadPrimitiv> Surfaces::getSurfaceFacesMLS() { return surfaceFacesMLS; }
 
 std::vector<quadPrimitiv> Surfaces::getSurfaceFacesBTPS() { return surfaceFacesBTPS; }
 
@@ -43,6 +45,60 @@ void Surfaces::updateControlPoints() {
       controlPoints.push_back(std::make_shared<Point>(x, y, z));
     }
   }
+}
+
+void Surfaces::updateControlFaces() {
+  // first empty the container
+  controlPoints.clear();
+
+  controlFaces = std::vector<quadPrimitiv>(M * N);
+
+  Borders borders = kdtree->getRootnode()->borders;
+  float xMin = borders.xMin;
+  float xMax = borders.xMax;
+  float yMin = borders.yMin;
+  float yMax = borders.yMax;
+  float mDelta = double(yMax - yMin) / M;
+  float nDelta = double(xMax - xMin) / N;
+
+  // for each grid intersection compute new point
+  for (int m = 0; m <= M; ++m) {
+    for (int n = 0; n <= N; ++n) {
+      float x = xMin + (n * nDelta);
+      float y = yMin + (m * mDelta);
+      float z = computeMLS(x, y);
+      std::shared_ptr<Point> newPoint = std::make_shared<Point>(x, y, z);
+      controlPoints.push_back(std::make_shared<Point>(x, y, z));
+
+      // 4 quadPrimitiv can be adjacend to this grid point
+      // 1: m-1 n-1
+      if (m > 0 && n > 0) {
+        int quad_index = (m-1) * N + (n-1);
+        controlFaces[quad_index].t0.p1 = newPoint;
+        controlFaces[quad_index].t1.p0 = newPoint;
+      }
+      // 2: m-1 n
+      if (m > 0 && n < N) {
+        int quad_index = (m-1) * N + (n);
+        controlFaces[quad_index].t0.p2 = newPoint;
+      }
+      // 1: m   n-1
+      if (m < M && n > 0) {
+        int quad_index = (m) * N + (n-1);
+        controlFaces[quad_index].t1.p2 = newPoint;
+      }
+      // 4: m   n
+      if (m < M && n < N) {
+        int quad_index = (m) * N + (n);
+        controlFaces[quad_index].t0.p0 = newPoint;
+        controlFaces[quad_index].t1.p1 = newPoint;
+      }
+    }
+  }
+
+  computeControlFaceNormals();
+
+  return;
 }
 
 void Surfaces::updateSurfacesMLS(int k) {
@@ -96,23 +152,23 @@ void Surfaces::updateSurfacesFacesMLS(int k) {
       // 4 quadPrimitiv can be adjacend to this grid point
       // 1: m-1 n-1
       if (m > 0 && n > 0) {
-        int quad_index = (m-1) * subdivM + (n-1);
+        int quad_index = (m-1) * subdivN + (n-1);
         surfaceFacesMLS[quad_index].t0.p1 = newPoint;
         surfaceFacesMLS[quad_index].t1.p0 = newPoint;
       }
       // 2: m-1 n
       if (m > 0 && n < subdivN) {
-        int quad_index = (m-1) * subdivM + (n);
+        int quad_index = (m-1) * subdivN + (n);
         surfaceFacesMLS[quad_index].t0.p2 = newPoint;
       }
       // 1: m   n-1
       if (m < subdivM && n > 0) {
-        int quad_index = (m) * subdivM + (n-1);
+        int quad_index = (m) * subdivN + (n-1);
         surfaceFacesMLS[quad_index].t1.p2 = newPoint;
       }
       // 4: m   n
       if (m < subdivM && n < subdivN) {
-        int quad_index = (m) * subdivM + (n);
+        int quad_index = (m) * subdivN + (n);
         surfaceFacesMLS[quad_index].t0.p0 = newPoint;
         surfaceFacesMLS[quad_index].t1.p1 = newPoint;
       }
@@ -241,23 +297,23 @@ void Surfaces::updateSurfacesFacesBTPS(int k) {
       // 4 quadPrimitiv can be adjacend to this grid point
       // 1: m-1 n-1
       if (m > 0 && n > 0) {
-        int quad_index = (m-1) * subdivM + (n-1);
+        int quad_index = (m-1) * subdivN + (n-1);
         surfaceFacesBTPS[quad_index].t0.p1 = newPoint;
         surfaceFacesBTPS[quad_index].t1.p0 = newPoint;
       }
       // 2: m-1 n
       if (m > 0 && n < subdivN) {
-        int quad_index = (m-1) * subdivM + (n);
+        int quad_index = (m-1) * subdivN + (n);
         surfaceFacesBTPS[quad_index].t0.p2 = newPoint;
       }
       // 1: m   n-1
       if (m < subdivM && n > 0) {
-        int quad_index = (m) * subdivM + (n-1);
+        int quad_index = (m) * subdivN + (n-1);
         surfaceFacesBTPS[quad_index].t1.p2 = newPoint;
       }
       // 4: m   n
       if (m < subdivM && n < subdivN) {
-        int quad_index = (m) * subdivM + (n);
+        int quad_index = (m) * subdivN + (n);
         surfaceFacesBTPS[quad_index].t0.p0 = newPoint;
         surfaceFacesBTPS[quad_index].t1.p1 = newPoint;
       }
@@ -359,26 +415,26 @@ void Surfaces::computeNormalsMLS(int k) {
       // 4 quadPrimitiv can be adjacend to this grid point
       // 1: m-1 n-1
       if (m > 0 && n > 0) {
-        int quad_index = (m-1) * subdivM + (n-1);
+        int quad_index = (m-1) * subdivN + (n-1);
         newNorm += surfaceFacesMLS[quad_index].t0.norm;
         newNorm += surfaceFacesMLS[quad_index].t1.norm;
         cntCases += 2;
       }
       // 2: m-1 n
       if (m > 0 && n < subdivN) {
-        int quad_index = (m-1) * subdivM + (n);
+        int quad_index = (m-1) * subdivN + (n);
         newNorm += surfaceFacesMLS[quad_index].t0.norm;
         cntCases += 1;
       }
       // 1: m   n-1
       if (m < subdivM && n > 0) {
-        int quad_index = (m) * subdivM + (n-1);
+        int quad_index = (m) * subdivN + (n-1);
         newNorm += surfaceFacesMLS[quad_index].t1.norm;
         cntCases += 1;
       }
       // 4: m   n
       if (m < subdivM && n < subdivN) {
-        int quad_index = (m) * subdivM + (n);
+        int quad_index = (m) * subdivN + (n);
         newNorm += surfaceFacesMLS[quad_index].t0.norm;
         newNorm += surfaceFacesMLS[quad_index].t1.norm;
         cntCases += 2;
@@ -388,23 +444,23 @@ void Surfaces::computeNormalsMLS(int k) {
       newNorm = glm::normalize(newNorm);
       // 1: m-1 n-1
       if (m > 0 && n > 0) {
-        int quad_index = (m-1) * subdivM + (n-1);
+        int quad_index = (m-1) * subdivN + (n-1);
         surfaceFacesMLS[quad_index].t0.p1->normal = newNorm;
         surfaceFacesMLS[quad_index].t1.p0->normal = newNorm;
       }
       // 2: m-1 n
       if (m > 0 && n < subdivN) {
-        int quad_index = (m-1) * subdivM + (n);
+        int quad_index = (m-1) * subdivN + (n);
         surfaceFacesMLS[quad_index].t0.p2->normal = newNorm;
       }
       // 1: m   n-1
       if (m < subdivM && n > 0) {
-        int quad_index = (m) * subdivM + (n-1);
+        int quad_index = (m) * subdivN + (n-1);
         surfaceFacesMLS[quad_index].t1.p2->normal = newNorm;
       }
       // 4: m   n
       if (m < subdivM && n < subdivN) {
-        int quad_index = (m) * subdivM + (n);
+        int quad_index = (m) * subdivN + (n);
         surfaceFacesMLS[quad_index].t0.p0->normal = newNorm;
         surfaceFacesMLS[quad_index].t1.p1->normal = newNorm;
       }
@@ -419,5 +475,17 @@ void Surfaces::computeFaceNormalsBTPS() {
 
     surfaceFacesBTPS[i].t0.norm = triangleNormal(t0.p0, t0.p1, t0.p2);
     surfaceFacesBTPS[i].t1.norm = triangleNormal(t1.p0, t1.p1, t1.p2);
+  }
+}
+
+void Surfaces::computeControlFaceNormals() {
+  for (int i = 0; i < controlFaces.size(); ++i) {
+    struct trianglePrimitiv t0 = controlFaces[i].t0;
+    struct trianglePrimitiv t1 = controlFaces[i].t1;
+
+    glm::vec3 normal0 = triangleNormal(t0.p0, t0.p1, t0.p2);
+    controlFaces[i].t0.norm = normal0;
+    glm::vec3 normal1 = triangleNormal(t1.p0, t1.p1, t1.p2);
+    controlFaces[i].t1.norm = normal1;
   }
 }

@@ -34,6 +34,7 @@ public:
   PointPointerList getControlPoints();
   PointPointerList getSurfaceMLS();
   PointPointerList getSurfaceBTPS();
+  std::vector<quadPrimitiv> getControlFaces();
   std::vector<quadPrimitiv> getSurfaceFacesMLS();
   std::vector<quadPrimitiv> getSurfaceFacesBTPS();
 
@@ -51,6 +52,7 @@ public:
    * compute control points based on kdtree, M and N using MLS
    */
   void updateControlPoints();
+  void updateControlFaces();
 
   /**
    * Compute surface based on MLS method
@@ -80,23 +82,25 @@ private:
    */
   glm::vec3 computeVertxNormalBTPS(float u, float v);
 
-glm::vec3 triangleNormal(std::shared_ptr<Point> v1,
-                         std::shared_ptr<Point> v2,
-                         std::shared_ptr<Point> v3);
+  glm::vec3 triangleNormal(std::shared_ptr<Point> v1,
+                           std::shared_ptr<Point> v2,
+                           std::shared_ptr<Point> v3);
 
   /**
    * compute face and vertex normals for given set of primitives
    */
   void computeNormalsMLS(int k);
   void computeFaceNormalsBTPS();
+  void computeControlFaceNormals();
 
   PointPointerList getControlPointsAtM(int m);
   PointPointerList getControlPointsAtN(int n);
 
   PointPointerList controlPoints;
   PointPointerList surfaceMLS;
-  std::vector<quadPrimitiv> surfaceFacesMLS;
   PointPointerList surfaceBTPS;
+  std::vector<quadPrimitiv> controlFaces;
+  std::vector<quadPrimitiv> surfaceFacesMLS;
   std::vector<quadPrimitiv> surfaceFacesBTPS;
   std::shared_ptr<KDTree> kdtree;
   int M;
