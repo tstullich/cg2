@@ -296,7 +296,7 @@ void Surfaces::updateSurfacesFacesBTPS(int k) {
       float y = yMin + (m * mDelta);
       float z = computeBTPS(x, y);
       std::shared_ptr<Point> newPoint = std::make_shared<Point>(x, y, z);
-      /* newPoint->normal = computeVertxNormalBTPS(x, y); */
+      newPoint->normal = computeVertxNormalBTPS(x, y);
 
       // 4 quadPrimitiv can be adjacend to this grid point
       // 1: m-1 n-1
@@ -329,6 +329,52 @@ void Surfaces::updateSurfacesFacesBTPS(int k) {
   return;
 }
 
+glm::vec3 deCasteljauFastTangent(PointPointerList points, float u) {
+  float R = points.size()-1;
+  int numOfNodes = ((((R+1)*(R+1)) + (R+1)) / 2) - 1;
+  std::vector<glm::vec3> nodes(numOfNodes);
+
+  int offset = 0;
+  for (int r = 0; r < R; ++r) {
+    for (int i = 0; i <= R-r; ++i) {
+      int index = offset + i;
+      if (r == 0) {
+        nodes[index] = points[i]->toVec3();
+      } else {
+        int childIndex = index - (R+2-r);
+        nodes[index] = u * nodes[childIndex+1] + (1-u) * nodes[childIndex];
+      }
+    }
+    offset += R+1-r;
+  }
+
+  glm::vec3 tangent = glm::normalize((nodes[numOfNodes-1]) - (nodes[numOfNodes-2]));
+
+  return tangent;
+}
+
+glm::vec3 deCasteljauFast(PointPointerList points, float u) {
+  float R = points.size()-1;
+  int numOfNodes = (((R+1)*(R+1)) + (R+1)) / 2;
+  std::vector<glm::vec3> nodes(numOfNodes);
+
+  int offset = 0;
+  for (int r = 0; r <= R; ++r) {
+    for (int i = 0; i <= R-r; ++i) {
+      int index = offset + i;
+      if (r == 0) {
+        nodes[index] = points[i]->toVec3();
+      } else {
+        int childIndex = index - (R+2-r);
+        nodes[index] = u * nodes[childIndex+1] + (1-u) * nodes[childIndex];
+      }
+    }
+    offset += R+1-r;
+  }
+
+  return nodes.back();
+}
+
 glm::vec3 deCasteljau(PointPointerList points, float u, int i, int r) {
   if (r == 0) {
     return points[i]->toVec3();
@@ -345,12 +391,14 @@ float Surfaces::computeBTPS(float u, float v) {
   PointPointerList points;
   for (int m = 0; m <= M; ++m) {
     PointPointerList mPoints = getControlPointsAtM(m);
-    glm::vec3 bezierPoint = deCasteljau(mPoints, u, 0, mPoints.size()-1);
+    glm::vec3 bezierPoint = deCasteljauFast(mPoints, u);
+    /* glm::vec3 bezierPoint = deCasteljau(mPoints, u, 0, mPoints.size()-1); */
     points.push_back(std::make_shared<Point>(bezierPoint));
   }
 
   // compute z from points
-  glm::vec3 bezierPoint = deCasteljau(points, v, 0, points.size()-1);
+  glm::vec3 bezierPoint = deCasteljauFast(points, v);
+  /* glm::vec3 bezierPoint = deCasteljau(points, v, 0, points.size()-1); */
 
   return bezierPoint[2];
 }
@@ -360,23 +408,19 @@ glm::vec3 Surfaces::computeVertxNormalBTPS(float u, float v) {
   PointPointerList mPoints;
   for (int m = 0; m <= M; ++m) {
     PointPointerList tmp = getControlPointsAtM(m);
-    glm::vec3 bezierPoint = deCasteljau(tmp, u, 0, tmp.size()-1);
+    glm::vec3 bezierPoint = deCasteljauFast(tmp, u);
     mPoints.push_back(std::make_shared<Point>(bezierPoint));
   }
-  glm::vec3 tangent_11 = glm::normalize(deCasteljau(mPoints, v, 0, mPoints.size()-2));
-  glm::vec3 tangent_12 = glm::normalize(deCasteljau(mPoints, v, 1, mPoints.size()-2));
-  glm::vec3 tangent_1 = glm::normalize(tangent_11 - tangent_12);
+  glm::vec3 tangent_1 = deCasteljauFastTangent(mPoints, v);
 
   // compute tangent 2
   PointPointerList nPoints;
   for (int n = 0; n <= N; ++n) {
     PointPointerList tmp = getControlPointsAtN(n);
-    glm::vec3 bezierPoint = deCasteljau(tmp, u, 0, tmp.size()-1);
+    glm::vec3 bezierPoint = deCasteljauFast(tmp, v);
     nPoints.push_back(std::make_shared<Point>(bezierPoint));
   }
-  glm::vec3 tangent_21 = glm::normalize(deCasteljau(nPoints, v, 0, nPoints.size()-2));
-  glm::vec3 tangent_22 = glm::normalize(deCasteljau(nPoints, v, 1, nPoints.size()-2));
-  glm::vec3 tangent_2 = glm::normalize(tangent_21 - tangent_22);
+  glm::vec3 tangent_2 = deCasteljauFastTangent(nPoints, u);
 
   glm::vec3 norm = glm::normalize(glm::cross(tangent_2, tangent_1));
 
@@ -481,68 +525,68 @@ void Surfaces::computeNormalsBTPS(int k) {
     surfaceFacesBTPS[i].t1.norm = triangleNormal(t1.p0, t1.p1, t1.p2);
   }
 
-  int subdivM = k * M;
-  int subdivN = k * N;
+  /* int subdivM = k * M; */
+  /* int subdivN = k * N; */
 
-  for (int m = 0; m <= subdivM; ++m) {
-    for (int n = 0; n <= subdivN; ++n) {
-      int cntCases = 0;
-      glm::vec3 newNorm = glm::vec3(0.0f, 0.0f, 0.0f);
-      // first we sum up all face normals
-      // 4 quadPrimitiv can be adjacend to this grid point
-      // 1: m-1 n-1
-      if (m > 0 && n > 0) {
-        int quad_index = (m-1) * subdivN + (n-1);
-        newNorm += surfaceFacesBTPS[quad_index].t0.norm;
-        newNorm += surfaceFacesBTPS[quad_index].t1.norm;
-        cntCases += 2;
-      }
-      // 2: m-1 n
-      if (m > 0 && n < subdivN) {
-        int quad_index = (m-1) * subdivN + (n);
-        newNorm += surfaceFacesBTPS[quad_index].t0.norm;
-        cntCases += 1;
-      }
-      // 1: m   n-1
-      if (m < subdivM && n > 0) {
-        int quad_index = (m) * subdivN + (n-1);
-        newNorm += surfaceFacesBTPS[quad_index].t1.norm;
-        cntCases += 1;
-      }
-      // 4: m   n
-      if (m < subdivM && n < subdivN) {
-        int quad_index = (m) * subdivN + (n);
-        newNorm += surfaceFacesBTPS[quad_index].t0.norm;
-        newNorm += surfaceFacesBTPS[quad_index].t1.norm;
-        cntCases += 2;
-      }
-      // second we compute the average and assign it
-      newNorm /= cntCases;
-      newNorm = glm::normalize(newNorm);
-      // 1: m-1 n-1
-      if (m > 0 && n > 0) {
-        int quad_index = (m-1) * subdivN + (n-1);
-        surfaceFacesBTPS[quad_index].t0.p1->normal = newNorm;
-        surfaceFacesBTPS[quad_index].t1.p0->normal = newNorm;
-      }
-      // 2: m-1 n
-      if (m > 0 && n < subdivN) {
-        int quad_index = (m-1) * subdivN + (n);
-        surfaceFacesBTPS[quad_index].t0.p2->normal = newNorm;
-      }
-      // 1: m   n-1
-      if (m < subdivM && n > 0) {
-        int quad_index = (m) * subdivN + (n-1);
-        surfaceFacesBTPS[quad_index].t1.p2->normal = newNorm;
-      }
-      // 4: m   n
-      if (m < subdivM && n < subdivN) {
-        int quad_index = (m) * subdivN + (n);
-        surfaceFacesBTPS[quad_index].t0.p0->normal = newNorm;
-        surfaceFacesBTPS[quad_index].t1.p1->normal = newNorm;
-      }
-    }
-  }
+  /* for (int m = 0; m <= subdivM; ++m) { */
+  /*   for (int n = 0; n <= subdivN; ++n) { */
+  /*     int cntCases = 0; */
+  /*     glm::vec3 newNorm = glm::vec3(0.0f, 0.0f, 0.0f); */
+  /*     // first we sum up all face normals */
+  /*     // 4 quadPrimitiv can be adjacend to this grid point */
+  /*     // 1: m-1 n-1 */
+  /*     if (m > 0 && n > 0) { */
+  /*       int quad_index = (m-1) * subdivN + (n-1); */
+  /*       newNorm += surfaceFacesBTPS[quad_index].t0.norm; */
+  /*       newNorm += surfaceFacesBTPS[quad_index].t1.norm; */
+  /*       cntCases += 2; */
+  /*     } */
+  /*     // 2: m-1 n */
+  /*     if (m > 0 && n < subdivN) { */
+  /*       int quad_index = (m-1) * subdivN + (n); */
+  /*       newNorm += surfaceFacesBTPS[quad_index].t0.norm; */
+  /*       cntCases += 1; */
+  /*     } */
+  /*     // 1: m   n-1 */
+  /*     if (m < subdivM && n > 0) { */
+  /*       int quad_index = (m) * subdivN + (n-1); */
+  /*       newNorm += surfaceFacesBTPS[quad_index].t1.norm; */
+  /*       cntCases += 1; */
+  /*     } */
+  /*     // 4: m   n */
+  /*     if (m < subdivM && n < subdivN) { */
+  /*       int quad_index = (m) * subdivN + (n); */
+  /*       newNorm += surfaceFacesBTPS[quad_index].t0.norm; */
+  /*       newNorm += surfaceFacesBTPS[quad_index].t1.norm; */
+  /*       cntCases += 2; */
+  /*     } */
+  /*     // second we compute the average and assign it */
+  /*     newNorm /= cntCases; */
+  /*     newNorm = glm::normalize(newNorm); */
+  /*     // 1: m-1 n-1 */
+  /*     if (m > 0 && n > 0) { */
+  /*       int quad_index = (m-1) * subdivN + (n-1); */
+  /*       surfaceFacesBTPS[quad_index].t0.p1->normal = newNorm; */
+  /*       surfaceFacesBTPS[quad_index].t1.p0->normal = newNorm; */
+  /*     } */
+  /*     // 2: m-1 n */
+  /*     if (m > 0 && n < subdivN) { */
+  /*       int quad_index = (m-1) * subdivN + (n); */
+  /*       surfaceFacesBTPS[quad_index].t0.p2->normal = newNorm; */
+  /*     } */
+  /*     // 1: m   n-1 */
+  /*     if (m < subdivM && n > 0) { */
+  /*       int quad_index = (m) * subdivN + (n-1); */
+  /*       surfaceFacesBTPS[quad_index].t1.p2->normal = newNorm; */
+  /*     } */
+  /*     // 4: m   n */
+  /*     if (m < subdivM && n < subdivN) { */
+  /*       int quad_index = (m) * subdivN + (n); */
+  /*       surfaceFacesBTPS[quad_index].t0.p0->normal = newNorm; */
+  /*       surfaceFacesBTPS[quad_index].t1.p1->normal = newNorm; */
+  /*     } */
+  /*   } */
+  /* } */
 }
 
 void Surfaces::computeControlFaceNormals() {
