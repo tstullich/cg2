@@ -168,9 +168,12 @@ bool KDTree::buildTree(Borders &outerBox) {
   rootnode = std::make_shared<Node>();
   rootnode->borders = outerBox;
 
+  centerOfGravity = glm::vec3(0.0f, 0.0f, 0.0f);
   for (unsigned int i = 0; i < plist->size(); i++) {
     rootnode->plist.push_back(std::make_shared<Point>(plist->at(i)));
+    centerOfGravity += rootnode->plist.back()->toVec3();
   }
+  centerOfGravity /= rootnode->plist.size();
 
   std::cout << "Start to build KDTree from " << rootnode->plist.size()
             << " data points." << std::endl;
@@ -349,4 +352,8 @@ void KDTree::swapPoints(const std::vector<std::shared_ptr<Point>> &pointList,
   auto tempPoint = *pointList[leftIndex];
   *pointList[leftIndex] = *pointList[rightIndex];
   *pointList[rightIndex] = tempPoint;
+}
+
+glm::vec3 KDTree::getCenterOfGravity() {
+  return centerOfGravity;
 }

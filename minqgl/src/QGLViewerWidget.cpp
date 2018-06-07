@@ -88,6 +88,9 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   // causes linker error - no idear why
   surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, gridR);
 
+  /* setScenePos(kdtree->getCenterOfGravity(), 1.0); */
+  setScenePos(glm::vec3(0.5f, 0.5f, 0.35f), 1.0f);
+
   selectedPointIndex = 0;
   selectedPointList.clear();
 
@@ -97,15 +100,14 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 }
 
 void QGLViewerWidget::animateLight() {
-  unsigned frameCounter = 300;
+  unsigned frameCounter = 25;
   while(true) {
     if (flag_animate) {
       lightPos[0] = sin(double(frameCounter) * M_PI / 100) + 0.5f;
-      lightPos[1] = cos((double(frameCounter) * M_PI / 100) - M_PI) + 0.5f;
+      lightPos[1] = cos(double(frameCounter) * M_PI / 100) + 0.5f;
       frameCounter = (frameCounter + 1) % 200;
       update();
     }
-
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
@@ -545,10 +547,12 @@ void QGLViewerWidget::drawSurface(std::vector<quadPrimitiv> surfaceFaces) {
   glEnd();
 
   // Draw light source for debugging
+  float distToLight = glm::length(lightPos-computeCamPos());
+  distToLight *= distToLight * 0.5f;
+  glPointSize(32.0f/distToLight);
   glBegin(GL_POINTS);
   glEnable(GL_POINT_SMOOTH);
-  glPointSize(15.0f);
-  glColor3f(1.0f, 1.0f, 1.0f);
+  glColor3f(1.0f, 1.0f, 0.0f);
   glVertex3f(lightPos[0], lightPos[1], lightPos[2]);
   glEnd();
 }
@@ -890,6 +894,10 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
 
     case Key_A:
       flag_animate = (flag_animate) ? false : true;
+      break;
+
+    case Key_C:
+      setScenePos(glm::vec3(0.5f, 0.5f, 0.35f), 1.0f);
       break;
 
     case Key_J:

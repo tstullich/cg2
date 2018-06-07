@@ -196,7 +196,8 @@ private:
 
   // Hardcoding a position here since we are just demoing and need
   // only one light source
-  glm::vec3 lightPos = glm::vec3(1.25f, 1.25f, 1.0f);
+  // 1.2071067812f to start in sync w/ point animation
+  glm::vec3 lightPos = glm::vec3(1.2071067812f, 1.2071067812f, 1.0f);
   float radius;
 
   GLdouble projectionMatrix[16], modelviewMatrix[16];
