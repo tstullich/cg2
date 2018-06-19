@@ -14,6 +14,8 @@
 
 class Point;
 
+enum filetypeOFF { OFF, NOFF };
+
 // limits of a particular cell are saved here
 struct Borders {
   float xMin = std::numeric_limits<float>::max();
@@ -73,6 +75,7 @@ private:
   void clearOuterBox();
 
   std::ifstream inputStream;
+  filetypeOFF mode;
   int numPoints;
   int numFaces;
   int numEdges;

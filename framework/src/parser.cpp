@@ -7,7 +7,11 @@ bool Parser::open(const std::string &fileName) {
   if (inputStream.is_open()) {
     std::string off;
     inputStream >> off;
-    if (off != "OFF") {
+    if (off == "OFF") {
+      mode = OFF;
+    } else if (off == "NOFF") {
+      mode = NOFF;
+    } else {
       std::cout << "OFF file does not start with 'OFF' declaration. Invalid "
                    "file format"
                 << std::endl;
@@ -32,9 +36,20 @@ std::unique_ptr<std::vector<Point>> Parser::getPoints() {
   clearOuterBox();
 
   auto points = std::make_unique<std::vector<Point>>(numPoints, Point(0, 0, 0));
-  float x, y, z;
+  float x, y, z, n0, n1, n2;
   for (int i = 0; i < numPoints; i++) {
-    inputStream >> x >> y >> z;
+    if (mode == OFF) {
+      inputStream >> x >> y >> z;
+      points->at(i).x = x;
+      points->at(i).y = y;
+      points->at(i).z = z;
+    } else if (mode == NOFF) {
+      inputStream >> x >> y >> z >> n0 >> n1 >> n2;
+      points->at(i).x = x;
+      points->at(i).y = y;
+      points->at(i).z = z;
+      points->at(i).normal = glm::vec3(n0, n1, n2);
+    }
 
     outerBox.xMin = std::min(outerBox.xMin, x);
     outerBox.xMax = std::max(outerBox.xMax, x);
@@ -42,10 +57,6 @@ std::unique_ptr<std::vector<Point>> Parser::getPoints() {
     outerBox.yMax = std::max(outerBox.yMax, y);
     outerBox.zMin = std::min(outerBox.zMin, z);
     outerBox.zMax = std::max(outerBox.zMax, z);
-
-    points->at(i).x = x;
-    points->at(i).y = y;
-    points->at(i).z = z;
   }
 
   // make outer box slightly bigger

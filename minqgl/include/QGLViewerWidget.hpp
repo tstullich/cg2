@@ -238,7 +238,7 @@ private:
   std::vector<std::thread> threads;
 
   GLdouble zNearFactor = 0.01;
-  GLdouble zFarFactor = 500.0;
+  GLdouble zFarFactor = 10000.0;
 
   unsigned drawLevelsOfTree = 0;
   int64_t selectedPointIndex = -1;

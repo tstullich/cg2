@@ -44,6 +44,8 @@ class KDTree {
 public:
   KDTree(std::unique_ptr<PointList> plist, Borders outerBox);
 
+  glm::vec3 getCenter();
+
   glm::vec3 getCenterOfGravity();
 
   void add(int k, const Point &p, PriorityQueue &pq, PointPointerList &pl);
@@ -149,6 +151,7 @@ private:
   // 5 was the suggested size on wikipedia but we may be able to change this
   const int partitionSize = 5;
 
+  glm::vec3 center;
   glm::vec3 centerOfGravity;
 };
 

@@ -88,8 +88,9 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   // causes linker error - no idear why
   surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, gridR);
 
+  setScenePos(kdtree->getCenter(), 1.0);
   /* setScenePos(kdtree->getCenterOfGravity(), 1.0); */
-  setScenePos(glm::vec3(0.5f, 0.5f, 0.35f), 1.0f);
+  /* setScenePos(glm::vec3(0.5f, 0.5f, 0.35f), 1.0f); */
 
   selectedPointIndex = 0;
   selectedPointList.clear();
