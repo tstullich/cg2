@@ -10,29 +10,43 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
   layout = new QVBoxLayout();
 
   initDrawPointsBox(parent);
-  initControlPointsBox(parent);
-  initBezierSurfaceBox(parent);
-  initMLSSurfaceBox(parent);
+  initGridBox(parent);
+  initMarchingCubesBox(parent);
 
+  // Points Section
   auto pointsBox = new QGroupBox("Points");
   auto pointsLayout = new QVBoxLayout;
   pointsLayout->addWidget(drawPointsBox);
+  pointsLayout->addWidget(drawNormalsBox);
+  pointsLayout->addWidget(flipNormalsButton);
   pointsBox->setLayout(pointsLayout);
 
-  // Control Points Section
-  auto controlPointsBox = new QGroupBox("Control Points");
-  auto controlPointsLayout = new QVBoxLayout;
-  controlPointsLayout->addWidget(drawRegularGridBox);
-  controlPointsLayout->addWidget(drawControlPointsMeshBox);
+  // Grid Section
+  auto gridBox = new QGroupBox("Grid");
+  auto gridBoxLayout = new QVBoxLayout;
+  gridBoxLayout->addWidget(drawSamplesBox);
+  gridBoxLayout->addWidget(drawConstraintsBox);
 
-  auto gridSizeLayout = new QHBoxLayout;
-  gridSizeLayout->addWidget(new QLabel("Grid size:"));
-  gridSizeLayout->addWidget(gridXBox);
-  gridSizeLayout->addWidget(new QLabel("x"));
-  gridSizeLayout->addWidget(gridYBox);
+  auto gridSubdivisionLayout = new QHBoxLayout;
+  gridSubdivisionLayout->addWidget(new QLabel("Grid subdivision:"));
+  gridSubdivisionLayout->addWidget(gridSubdivisionBox);
 
-  auto gridPointsWrapper = new QWidget;
-  gridPointsWrapper->setLayout(gridSizeLayout);
+  auto gridSubdivisionWrapper = new QWidget;
+  gridSubdivisionWrapper->setLayout(gridSubdivisionLayout);
+
+  auto boundingBoxFactorLayout = new QHBoxLayout;
+  boundingBoxFactorLayout->addWidget(new QLabel("Bounding box factor:"));
+  boundingBoxFactorLayout->addWidget(boundingBoxFactorBox);
+
+  auto boundingBoxFactorWrapper = new QWidget;
+  boundingBoxFactorWrapper->setLayout(boundingBoxFactorLayout);
+
+  auto epsilonLayout = new QHBoxLayout;
+  epsilonLayout->addWidget(new QLabel("Epsilon:"));
+  epsilonLayout->addWidget(epsilonBox);
+
+  auto epsilonWrapper = new QWidget;
+  epsilonWrapper->setLayout(epsilonLayout);
 
   auto radiusBoxLayout = new QHBoxLayout;
   radiusBoxLayout->addWidget(new QLabel("Radius:"));
@@ -41,44 +55,27 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
   auto radiusWrapper = new QWidget;
   radiusWrapper->setLayout(radiusBoxLayout);
 
-  controlPointsLayout->addWidget(gridPointsWrapper);
-  controlPointsLayout->addWidget(radiusWrapper);
-  controlPointsBox->setLayout(controlPointsLayout);
+  gridBoxLayout->addWidget(gridSubdivisionWrapper);
+  gridBoxLayout->addWidget(boundingBoxFactorWrapper);
+  gridBoxLayout->addWidget(epsilonWrapper);
+  gridBoxLayout->addWidget(radiusWrapper);
+  gridBoxLayout->addWidget(computeSamplesButton);
+  gridBox->setLayout(gridBoxLayout);
 
-  // Bezier Surface Section
-  auto bezierSurfaceBox = new QGroupBox("Bezier Surface");
-  auto bezierSurfaceLayout = new QVBoxLayout;
-  bezierSurfaceLayout->addWidget(drawBezierSurfaceBox);
-
-  auto bezierSubdivisionsLayout = new QHBoxLayout;
-  bezierSubdivisionsLayout->addWidget(new QLabel("Subdivisions k"));
-  bezierSubdivisionsLayout->addWidget(bezierSubDivisionsBox);
-
-  auto bezierSubdivisionsWrapper = new QWidget;
-  bezierSubdivisionsWrapper->setLayout(bezierSubdivisionsLayout);
-  bezierSurfaceLayout->addWidget(bezierSubdivisionsWrapper);
-  bezierSurfaceBox->setLayout(bezierSurfaceLayout);
-
-  // MLS Surface
-  auto mlsSurfaceBox = new QGroupBox("MLS Surface");
-  auto mlsSurfaceLayout = new QVBoxLayout;
-  mlsSurfaceLayout->addWidget(drawMLSSurfaceBox);
-
-  auto mlsSubdivisionsLayout = new QHBoxLayout;
-  mlsSubdivisionsLayout->addWidget(new QLabel("Subdivisions k"));
-  mlsSubdivisionsLayout->addWidget(mlsSubDivisionsBox);
-
-  auto mlsSubDivisionsWrapper = new QWidget;
-  mlsSubDivisionsWrapper->setLayout(mlsSubdivisionsLayout);
-  mlsSurfaceLayout->addWidget(mlsSubDivisionsWrapper);
-  mlsSurfaceBox->setLayout(mlsSurfaceLayout);
+  // Marching Cubes Section
+  auto drawMCBox = new QGroupBox("Marching Cubes");
+  auto drawMCLayout = new QVBoxLayout;
+  drawMCLayout->addWidget(drawMCMeshBox);
+  drawMCLayout->addWidget(computeMCButton);
+  drawMCLayout->addWidget(computeEMCButton);
+  drawMCBox->setLayout(drawMCLayout);
 
   // Add all the widgets to the final layout
   layout->addWidget(pointsBox);
-  layout->addWidget(controlPointsBox);
-  layout->addWidget(bezierSurfaceBox);
-  layout->addWidget(mlsSurfaceBox);
+  layout->addWidget(gridBox);
+  layout->addWidget(drawMCBox);
   layout->setSizeConstraint(QLayout::SetFixedSize);
+  std::cout << "Stuff" << std::endl;
 
   container->setLayout(layout);
   setWidget(container);
@@ -87,49 +84,58 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
 void SidebarWidget::initDrawPointsBox(QWidget *parent) {
   drawPointsBox = new QCheckBox("Draw Points", this);
   drawPointsBox->setCheckState(Qt::Checked);
-
   connect(drawPointsBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawPoints(bool)));
+
+  drawNormalsBox = new QCheckBox("Draw Normals", this);
+  drawNormalsBox->setCheckState(Qt::Checked);
+  connect(drawNormalsBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawNormals(bool)));
+
+  flipNormalsButton = new QPushButton("Flip Normals", this);
+  connect(flipNormalsButton, SIGNAL(clicked()), parent, SLOT(flipNormals()));
 }
 
-void SidebarWidget::initControlPointsBox(QWidget *parent) {
-  drawRegularGridBox = new QCheckBox("Draw regular grid", this);
-  drawRegularGridBox->setCheckState(Qt::Checked);
-  connect(drawRegularGridBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawRegularGrid(bool)));
+void SidebarWidget::initGridBox(QWidget *parent) {
+  drawSamplesBox = new QCheckBox("Draw samples", this);
+  drawSamplesBox->setCheckState(Qt::Checked);
+  connect(drawSamplesBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawSamples(bool)));
 
-  drawControlPointsMeshBox = new QCheckBox("Draw control points mesh", this);
-  connect(drawControlPointsMeshBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawControlMeshPoints(bool)));
+  drawConstraintsBox = new QCheckBox("Draw constraints", this);
+  connect(drawConstraintsBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawConstraints(bool)));
 
-  gridXBox = new QSpinBox(this);
-  gridXBox->setRange(1, 1000);
-  gridXBox->setValue(10);
-  connect(gridXBox, SIGNAL(valueChanged(int)), parent, SLOT(setGridXDim(int)));
+  gridSubdivisionBox = new QSpinBox(this);
+  gridSubdivisionBox->setRange(1, 1000);
+  gridSubdivisionBox->setValue(10);
+  connect(gridSubdivisionBox, SIGNAL(valueChanged(int)), parent, SLOT(setGridSubdivision(int)));
 
-  gridYBox = new QSpinBox(this);
-  gridYBox->setRange(1, 1000);
-  gridYBox->setValue(10);
-  connect(gridYBox, SIGNAL(valueChanged(int)), parent, SLOT(setGridYDim(int)));
+  boundingBoxFactorBox = new QDoubleSpinBox(this);
+  boundingBoxFactorBox->setRange(0.0, 10.0);
+  boundingBoxFactorBox->setSingleStep(0.1);
+  boundingBoxFactorBox->setValue(0.5);
+  connect(boundingBoxFactorBox, SIGNAL(valueChanged(double)), parent, SLOT(setBoundingBoxFactor(double)));
+
+  epsilonBox = new QDoubleSpinBox(this);
+  epsilonBox->setRange(0.0, 10.0);
+  epsilonBox->setSingleStep(0.1);
+  epsilonBox->setValue(0.5);
+  connect(epsilonBox, SIGNAL(valueChanged(double)), parent, SLOT(setEpsilon(double)));
 
   radiusBox = new QDoubleSpinBox(this);
   radiusBox->setRange(0.0, 10.0);
   radiusBox->setSingleStep(0.1);
   radiusBox->setValue(0.5);
   connect(radiusBox, SIGNAL(valueChanged(double)), parent, SLOT(setRadius(double)));
+
+  computeSamplesButton = new QPushButton("Compute Samples", this);
+  connect(computeSamplesButton, SIGNAL(clicked()), parent, SLOT(computeSamples()));
 }
 
-void SidebarWidget::initBezierSurfaceBox(QWidget *parent) {
-  drawBezierSurfaceBox = new QCheckBox("Draw bezier surface", this);
-  connect(drawBezierSurfaceBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawBezier(bool)));
+void SidebarWidget::initMarchingCubesBox(QWidget *parent) {
+  drawMCMeshBox = new QCheckBox("Draw MC mesh", this);
+  connect(drawMCMeshBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawMCMesh(bool)));
 
-  bezierSubDivisionsBox = new QSpinBox(this);
-  bezierSubDivisionsBox->setRange(1, 20);
-  connect(bezierSubDivisionsBox, SIGNAL(valueChanged(int)), parent, SLOT(setBezierSubdivisions(int)));
-}
+  computeMCButton = new QPushButton("Compute MC", this);
+  connect(computeMCButton, SIGNAL(clicked()), parent, SLOT(computeMC()));
 
-void SidebarWidget::initMLSSurfaceBox(QWidget *parent) {
-  drawMLSSurfaceBox = new QCheckBox("Draw MLS surface", this);
-  connect(drawMLSSurfaceBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawMls(bool)));
-
-  mlsSubDivisionsBox = new QSpinBox(this);
-  mlsSubDivisionsBox->setRange(1, 20);
-  connect(mlsSubDivisionsBox, SIGNAL(valueChanged(int)), parent, SLOT(setMlsSubdivisions(int)));
+  computeEMCButton = new QPushButton("Compute EMC", this);
+  connect(computeEMCButton, SIGNAL(clicked()), parent, SLOT(computeEMC()));
 }

@@ -9,6 +9,7 @@
 #include <QDoubleSpinBox>
 #include <QGroupBox>
 #include <QLabel>
+#include <QPushButton>
 #include <QSlider>
 #include <QSpinBox>
 #include <QString>
@@ -21,9 +22,8 @@ public:
 
 private:
   void initDrawPointsBox(QWidget *parent);
-  void initControlPointsBox(QWidget *parent);
-  void initBezierSurfaceBox(QWidget *parent);
-  void initMLSSurfaceBox(QWidget *parent);
+  void initGridBox(QWidget *parent);
+  void initMarchingCubesBox(QWidget *parent);
 
   const int HYPER_PLANE_DEFAULT_MIN = 0;
   const int HYPER_PLANE_DEFAULT_MAX = 8;
@@ -38,18 +38,21 @@ private:
   static const QString CURRENT_VALUE_LABEL;
 
   QCheckBox *drawPointsBox;
-  QCheckBox *drawRegularGridBox;
-  QCheckBox *drawControlPointsMeshBox;
+  QCheckBox *drawNormalsBox;
+  QGroupBox *shadingBox;
+  QPushButton *flipNormalsButton;
 
-  QSpinBox *gridXBox;
-  QSpinBox *gridYBox;
+  QCheckBox *drawSamplesBox;
+  QCheckBox *drawConstraintsBox;
+  QSpinBox *gridSubdivisionBox;
+  QDoubleSpinBox *boundingBoxFactorBox;
+  QDoubleSpinBox *epsilonBox;
   QDoubleSpinBox *radiusBox;
+  QPushButton *computeSamplesButton;
 
-  QCheckBox *drawBezierSurfaceBox;
-  QSpinBox *bezierSubDivisionsBox;
-
-  QCheckBox *drawMLSSurfaceBox;
-  QSpinBox *mlsSubDivisionsBox;
+  QCheckBox *drawMCMeshBox;
+  QPushButton *computeMCButton;
+  QPushButton *computeEMCButton;
 
   QVBoxLayout *layout;
   QWidget *container;

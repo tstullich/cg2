@@ -143,19 +143,21 @@ private slots:
   void updateTreeState(int value);
 
   void setDrawPoints(bool value);
-  void setDrawRegularGrid(bool value);
-  void setDrawControlMeshPoints(bool value);
+  void setDrawNormals(bool value);
+  //void setShading(bool value);
+  void flipNormals();
 
-  void setGridXDim(int value);
-  void setGridYDim(int value);
+  void setDrawSamples(bool value);
+  void setDrawConstraints(bool value);
+  void setGridSubdivision(int value);
+  void setBoundingBoxFactor(double value);
+  void setEpsilon(double value);
+  void setRadius(double value);
+  void computeSamples();
 
-  void setRadius(double radius);
-
-  void setDrawBezier(bool value);
-  void setBezierSubdivisions(int k);
-
-  void setDrawMls(bool value);
-  void setMlsSubdivisions(int k);
+  void setDrawMCMesh(bool value);
+  void computeMC();
+  void computeEMC();
 
 private:
   void init();

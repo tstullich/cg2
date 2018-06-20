@@ -1128,130 +1128,57 @@ void QGLViewerWidget::updateTreeState(int value) {
 }
 
 void QGLViewerWidget::setDrawPoints(bool value) {
-  /* std::cout << "Changing drawPoints value to " << value << std::endl; */
   drawPoints = value;
   paintGL();
   updateGL();
 }
 
-void QGLViewerWidget::setDrawRegularGrid(bool value) {
-  /* std::cout << "Changing drawGrid value to " << value << std::endl; */
-  drawGrid = value;
-  paintGL();
-  updateGL();
+void QGLViewerWidget::setDrawNormals(bool value) {
+  std::cout << "Changing drawNormals value to " << value << std::endl;
 }
 
-void QGLViewerWidget::setDrawControlMeshPoints(bool value) {
-  /* std::cout << "Changing drawControlMesh value to " << value << std::endl; */
-  flag_drawControlMesh = value;
-  if (surfaces != nullptr && value != 0) {
-    surfaces->updateControlFaces();
-  }
-  paintGL();
-  updateGL();
+void QGLViewerWidget::flipNormals() {
+  std::cout << "Calling flipNormals()" << std::endl;
 }
 
-void QGLViewerWidget::setGridXDim(int value) {
-  /* std::cout << "Changing grid X dimension value to " << value << std::endl; */
-  gridN = value;
-  if (surfaces != nullptr) {
-    this->surfaces->setGrid(gridM, gridN);
-
-    // update surface if draw flag ist true
-    if (flag_drawControlMesh) {
-      surfaces->updateControlFaces();
-    }
-    if (flag_drawSurfaceBTPS) {
-      surfaces->updateSurfacesFacesBTPS(kBTPS);
-    }
-    if (flag_drawSurfaceMLS) {
-      surfaces->updateSurfacesFacesMLS(kMLS);
-    }
-  }
-  paintGL();
-  updateGL();
+void QGLViewerWidget::setDrawSamples(bool value) {
+  std::cout << "Changing drawSamples value to " << value << std::endl;
 }
 
-void QGLViewerWidget::setGridYDim(int value) {
-  /* std::cout << "Changing grid Y dimension value to " << value << std::endl; */
-  gridM = value;
-  if (surfaces != nullptr) {
-    this->surfaces->setGrid(gridM, gridN);
-
-    // update surface if draw flag ist true
-    if (flag_drawControlMesh) {
-      surfaces->updateControlFaces();
-    }
-    if (flag_drawSurfaceBTPS) {
-      surfaces->updateSurfacesFacesBTPS(kBTPS);
-    }
-    if (flag_drawSurfaceMLS) {
-      surfaces->updateSurfacesFacesMLS(kMLS);
-    }
-  }
-  paintGL();
-  updateGL();
+void QGLViewerWidget::setDrawConstraints(bool value) {
+  std::cout << "Changing drawConstraints value to " << value << std::endl;
 }
 
-void QGLViewerWidget::setRadius(double r) {
-  /* std::cout << "Changing radius to " << radius << std::endl; */
-  this->gridR = r;
-  if (surfaces != nullptr) {
-    this->surfaces->setRadius(r);
-
-    // update surface if draw flag ist true
-    if (flag_drawControlMesh) {
-      surfaces->updateControlFaces();
-    }
-    if (flag_drawSurfaceBTPS) {
-      surfaces->updateSurfacesFacesBTPS(kBTPS);
-    }
-    if (flag_drawSurfaceMLS) {
-      surfaces->updateSurfacesFacesMLS(kMLS);
-    }
-  }
-  paintGL();
-  updateGL();
+void QGLViewerWidget::setGridSubdivision(int value) {
+  std::cout << "Changing grid dimension value to " << value << std::endl;
 }
 
-void QGLViewerWidget::setDrawBezier(bool value) {
-  /* std::cout << "Changing drawSurfaceBTPS value to " << value << std::endl; */
-  flag_drawSurfaceBTPS = value;
-  if (surfaces != nullptr && value != 0) {
-    surfaces->updateSurfacesFacesBTPS(kBTPS);
-  }
-  paintGL();
-  updateGL();
+void QGLViewerWidget::setBoundingBoxFactor(double value) {
+  std::cout << "Changing boundingBoxFactor to " << value << std::endl;
 }
 
-void QGLViewerWidget::setBezierSubdivisions(int k) {
-  /* std::cout << "Changing kBTPS value to " << k << std::endl; */
-  kBTPS = k;
-  if (surfaces != nullptr && flag_drawSurfaceBTPS != 0) {
-    surfaces->updateSurfacesFacesBTPS(kBTPS);
-  }
-  paintGL();
-  updateGL();
+void QGLViewerWidget::setEpsilon(double value) {
+  std::cout << "Changing epsilon to " << value << std::endl;
 }
 
-void QGLViewerWidget::setDrawMls(bool value) {
-  /* std::cout << "Changing drawSurfaceMLS value to " << value << std::endl; */
-  flag_drawSurfaceMLS = value;
-  if (surfaces != nullptr && value != 0) {
-    surfaces->updateSurfacesFacesMLS(kMLS);
-  }
-  paintGL();
-  updateGL();
+void QGLViewerWidget::setRadius(double value) {
+  std::cout << "Changing radius to " << value << std::endl;
 }
 
-void QGLViewerWidget::setMlsSubdivisions(int k) {
-  /* std::cout << "Changing kMLS value to " << k << std::endl; */
-  kMLS = k;
-  if (surfaces != nullptr && flag_drawSurfaceMLS != 0) {
-    surfaces->updateSurfacesFacesMLS(kMLS);
-  }
-  paintGL();
-  updateGL();
+void QGLViewerWidget::computeSamples() {
+  std::cout << "Calling computeSamples" << std::endl;
+}
+
+void QGLViewerWidget::setDrawMCMesh(bool value) {
+  std::cout << "Changing setDrawMCMesh value to " << value << std::endl;
+}
+
+void QGLViewerWidget::computeMC() {
+  std::cout << "Calling computeMC()" << std::endl;
+}
+
+void QGLViewerWidget::computeEMC() {
+  std::cout << "Calling computeEMC()" << std::endl;
 }
 
 void QGLViewerWidget::slotSnapshot(void) {
