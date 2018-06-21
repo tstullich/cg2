@@ -37,6 +37,7 @@
 #include "parser.hpp"
 #include "point.hpp"
 #include "surfaces.hpp"
+#include "ImplicitSurface.hpp"
 // --------------------
 
 //== FORWARD DECLARATIONS =====================================================
@@ -247,6 +248,7 @@ private:
 
   std::shared_ptr<KDTree> kdtree;
   std::shared_ptr<Surfaces> surfaces;
+  std::shared_ptr<ImplicitSurface> implicitSurface;
 };
 
 //=============================================================================

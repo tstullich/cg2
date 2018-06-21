@@ -60,7 +60,7 @@ std::unique_ptr<std::vector<Point>> Parser::getPoints() {
   }
 
   // make outer box slightly bigger
-  float scalar = 0.01;
+  float scalar = 0.05;
   float xShift = scalar * std::abs(outerBox.xMax - outerBox.xMin);
   outerBox.xMin -= xShift;
   outerBox.xMax += xShift;

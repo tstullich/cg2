@@ -50,8 +50,14 @@ public:
 
   void add(int k, const Point &p, PriorityQueue &pq, PointPointerList &pl);
 
+  void addToTree(std::shared_ptr<Point> point);
+
+  void recursiveAddToTree(std::shared_ptr<Node> n, std::shared_ptr<Point> p);
+
   PointPointerList collectInRadiusSimple(const Point &p, float radius);
   PointPointerList collectInRadius(const Point &p, float radius);
+
+  bool isClosestPoint(const Point &p, const Point &referencePoint);
 
   PointPointerList collectKNearestSimple(const Point &p, int knearest);
   PointPointerList collectKNearest(const Point &p, int knearest);
@@ -145,7 +151,7 @@ private:
   const unsigned int maxPoints = 50;
 
   // The number of dimensions for the KD Tree.
-  static const int kDimension = 2;
+  static const int kDimension = 3;
 
   // Sets the maximum size of a partition.
   // 5 was the suggested size on wikipedia but we may be able to change this

@@ -86,7 +86,9 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   pointList = kdtree->getPoints();
 
   // causes linker error - no idear why
-  surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, gridR);
+  //surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, gridR);
+
+  implicitSurface = std::make_shared<ImplicitSurface>(kdtree);
 
   setScenePos(kdtree->getCenter(), 1.0);
   /* setScenePos(kdtree->getCenterOfGravity(), 1.0); */

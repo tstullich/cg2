@@ -5,6 +5,29 @@ KDTree::KDTree(std::unique_ptr<PointList> plist, Borders outerBox)
   buildTree(outerBox);
 }
 
+void KDTree::addToTree(std::shared_ptr<Point> point) {
+  plist->push_back(*point);
+
+  if(point->distNode(*this->getRootnode()) == 0)
+    recursiveAddToTree(this->getRootnode(), point);
+  else
+    std::cerr << "Error: New point is outside the outer box!" << std::endl;
+}
+
+void KDTree::recursiveAddToTree(std::shared_ptr<Node> n, std::shared_ptr<Point> p) {
+
+  n->plist.push_back(p);
+  if (!n->nlist.empty()) {
+    if ((n->split.axis == 0 && p->x < n->split.value) ||
+        (n->split.axis == 1 && p->y < n->split.value) ||
+        (n->split.axis == 2 && p->z < n->split.value)) {
+      recursiveAddToTree(n->nlist[0], p);
+    } else {
+      recursiveAddToTree(n->nlist[1], p);
+    }
+  }
+}
+
 PointPointerList KDTree::collectInRadiusSimple(const Point &p, float radius) {
   PointPointerList plist;
   for (int i = 0; i < static_cast<int>(rootnode->plist.size()); i++) {
@@ -42,6 +65,15 @@ void KDTree::recursiveLeafSearch(const Point &p, float radius, const Node &n,
       }
     }
   }
+}
+
+bool KDTree::isClosestPoint(const Point &p, const Point &referencePoint) {
+  std::shared_ptr<Point> nearestPoint = this->collectKNearest(p, 1)[1];
+  if(referencePoint.x == nearestPoint->x && referencePoint.y == nearestPoint->y &&
+      referencePoint.z == nearestPoint->z) {
+    return true;
+  }
+  return false;
 }
 
 PointPointerList KDTree::collectKNearestSimple(const Point &p, int knearest) {
