@@ -28,6 +28,7 @@ public:
   float x;
   float y;
   float z;
+  float f = 0;
   float dist;
   glm::vec3 normal;
 };

@@ -97,6 +97,8 @@ protected:
   void drawSurfaceBTPS();
   void drawSurfaceMLS();
 
+  void drawImplicitGridPoints();
+
   // draw the scene: will be called by the paintGL() method.
   virtual void drawScene();
 
@@ -201,7 +203,6 @@ private:
   // only one light source
   // 1.2071067812f to start in sync w/ point animation
   glm::vec3 lightPos = glm::vec3(1.2071067812f, 1.2071067812f, 1.0f);
-  float radius;
 
   GLdouble projectionMatrix[16], modelviewMatrix[16];
 
@@ -213,6 +214,7 @@ private:
   typedef std::map<QString, QAction *> ActionMap;
   ActionMap namesToActions;
 
+  float radius;
   // virtual trackball: map 2D screen point to unit sphere
   bool mapToSphere(const QPoint &point, glm::vec3 &result);
 
@@ -227,6 +229,11 @@ private:
   int gridM = 10;
   int gridN = 10;
   float gridR = 0.5;
+  bool drawImplicitGrid = false;
+  int gridX = 10;
+  int gridY = 10;
+  int gridZ = 10;
+  float implicitRadius = 0.02;
   int kMLS = 1;
   int kBTPS = 1;
   bool flag_drawControlMesh = false;

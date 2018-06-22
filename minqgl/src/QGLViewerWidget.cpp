@@ -88,7 +88,8 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   // causes linker error - no idear why
   //surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, gridR);
 
-  implicitSurface = std::make_shared<ImplicitSurface>(kdtree);
+  implicitSurface = std::make_shared<ImplicitSurface>(kdtree, this->gridX, this->gridY, this->gridZ,
+      this->implicitRadius);
 
   setScenePos(kdtree->getCenter(), 1.0);
   /* setScenePos(kdtree->getCenterOfGravity(), 1.0); */
@@ -177,6 +178,44 @@ bool QGLViewerWidget::drawSelectedPointSet() {
   glEnd();
 
   return true;
+}
+
+void QGLViewerWidget::drawImplicitGridPoints() {
+  if ( this->implicitSurface == nullptr) {
+    return;
+  }
+
+  std::vector<std::vector<std::vector<std::shared_ptr<Point>>>> implicitGridPoints =
+    this->implicitSurface->getImplicitGridPoints();
+
+  if(implicitGridPoints.size() == 0) {
+    return;
+  }
+
+  glDisable(GL_LIGHTING);
+
+  glEnable(GL_POINT_SMOOTH);
+  glPointSize(5.0f);
+  glBegin(GL_POINTS);
+
+  for(unsigned int i = 0; i < implicitGridPoints.size(); i++) {
+    for(unsigned int j = 0; j < implicitGridPoints[0].size(); j++) {
+      for(unsigned int k = 0; k < implicitGridPoints[0][0].size(); k++) {
+        std::shared_ptr<Point> p = implicitGridPoints[i][j][k];
+        //TODO change such that all points are shown
+        if(p->f == std::numeric_limits<float>::max()){
+          //glColor3f(0.0, 0.0, 0.0);
+        } else {
+          if(p->f > 0.0) glColor3f(0.0, 0.0, 255.0);
+          else if(p->f == 0.0) glColor3f(255.0, 0.0, 0.0);
+          else if(p->f < 0.0) glColor3f(255.0, 255.0, 0.0);
+          glVertex3f(p->x, p->y, p->z);
+        }
+      }
+    }
+  }
+
+  glEnd();
 }
 
 //----------------------------------------------------------------------------
@@ -605,6 +644,9 @@ void QGLViewerWidget::drawScene() {
   }
   if (drawGrid) {
     drawRegularGrid();
+  }
+  if (drawImplicitGrid) {
+    drawImplicitGridPoints();
   }
   if (flag_drawSurfaceBTPS) {
     drawSurfaceBTPS();
@@ -1145,6 +1187,8 @@ void QGLViewerWidget::flipNormals() {
 
 void QGLViewerWidget::setDrawSamples(bool value) {
   std::cout << "Changing drawSamples value to " << value << std::endl;
+  this->drawImplicitGrid = value;
+  updateGL();
 }
 
 void QGLViewerWidget::setDrawConstraints(bool value) {
@@ -1153,6 +1197,8 @@ void QGLViewerWidget::setDrawConstraints(bool value) {
 
 void QGLViewerWidget::setGridSubdivision(int value) {
   std::cout << "Changing grid dimension value to " << value << std::endl;
+  this->implicitSurface->setGrid(value, value, value);
+  updateGL();
 }
 
 void QGLViewerWidget::setBoundingBoxFactor(double value) {
@@ -1165,10 +1211,15 @@ void QGLViewerWidget::setEpsilon(double value) {
 
 void QGLViewerWidget::setRadius(double value) {
   std::cout << "Changing radius to " << value << std::endl;
+  this->implicitRadius = value;
+  this->implicitSurface->setRadius(this->implicitRadius);
+  updateGL();
 }
 
 void QGLViewerWidget::computeSamples() {
   std::cout << "Calling computeSamples" << std::endl;
+  this->implicitSurface->computeImplicitGridPoints();
+  updateGL();
 }
 
 void QGLViewerWidget::setDrawMCMesh(bool value) {

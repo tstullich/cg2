@@ -96,7 +96,7 @@ void SidebarWidget::initDrawPointsBox(QWidget *parent) {
 
 void SidebarWidget::initGridBox(QWidget *parent) {
   drawSamplesBox = new QCheckBox("Draw samples", this);
-  drawSamplesBox->setCheckState(Qt::Checked);
+  //drawSamplesBox->setCheckState(Qt::Checked);
   connect(drawSamplesBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawSamples(bool)));
 
   drawConstraintsBox = new QCheckBox("Draw constraints", this);
@@ -121,8 +121,8 @@ void SidebarWidget::initGridBox(QWidget *parent) {
 
   radiusBox = new QDoubleSpinBox(this);
   radiusBox->setRange(0.0, 10.0);
-  radiusBox->setSingleStep(0.1);
-  radiusBox->setValue(0.5);
+  radiusBox->setSingleStep(0.02);
+  radiusBox->setValue(0.02);
   connect(radiusBox, SIGNAL(valueChanged(double)), parent, SLOT(setRadius(double)));
 
   computeSamplesButton = new QPushButton("Compute Samples", this);
