@@ -102,6 +102,8 @@ protected:
   // draw the scene: will be called by the paintGL() method.
   virtual void drawScene();
 
+  bool drawPointSetNormals();
+
   // draws the given point list
   bool drawPointSet();
 
@@ -225,14 +227,13 @@ private:
   int currentSliderValue = 0;
 
   bool drawPoints = true;
-  bool drawGrid = true;
+  bool flag_drawPointSetNormals = true;
+  bool drawGrid = false;
   int gridM = 10;
   int gridN = 10;
   float gridR = 0.5;
   bool drawImplicitGrid = false;
-  int gridX = 10;
-  int gridY = 10;
-  int gridZ = 10;
+  int gridSubdivision = 10;
   float implicitRadius = 0.02;
   int kMLS = 1;
   int kBTPS = 1;

@@ -16,10 +16,10 @@ using namespace Eigen;
 
 class ImplicitSurface {
   public:
-    ImplicitSurface(std::shared_ptr<KDTree> kdtree, unsigned int nX, unsigned int nY, unsigned int nZ,
+    ImplicitSurface(std::shared_ptr<KDTree> kdtree, unsigned int nSubdivision,
         float r);
 
-    void setGrid(unsigned int nX, unsigned int nY, unsigned int nZ);
+    void setGrid(unsigned int nSubdivision);
     void setRadius(float r);
 
     std::vector<std::vector<std::vector<std::shared_ptr<Point>>>> getImplicitGridPoints();
@@ -42,9 +42,7 @@ class ImplicitSurface {
 
     std::vector<std::vector<std::vector<std::shared_ptr<Point>>>> implicitGridPoints;
 
-    unsigned int gridNX;
-    unsigned int gridNY;
-    unsigned int gridNZ;
+    unsigned int gridSubdivision;
     float radius;
 
     //TODO maybe trigger by gui

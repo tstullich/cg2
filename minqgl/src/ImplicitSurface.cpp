@@ -1,17 +1,15 @@
 #include "ImplicitSurface.hpp"
 
-ImplicitSurface::ImplicitSurface(std::shared_ptr<KDTree> kdtree, unsigned int nX, unsigned int nY,
-    unsigned int nZ, float r)
-  : kdtree(std::move(kdtree)), gridNX(nX), gridNY(nY), gridNZ(nZ), radius(r) {
+ImplicitSurface::ImplicitSurface(std::shared_ptr<KDTree> kdtree,
+    unsigned int nSubdivision, float r)
+  : kdtree(std::move(kdtree)), gridSubdivision(nSubdivision), radius(r) {
 
   this->points = this->kdtree->getRootnode()->plist;
   this->createAdditionalPoints();
 }
 
-void ImplicitSurface::setGrid(unsigned int nX, unsigned int nY, unsigned int nZ) {
-  this->gridNX = nX;
-  this->gridNY = nY;
-  this->gridNZ = nZ;
+void ImplicitSurface::setGrid(unsigned int nSubdivision) {
+  this->gridSubdivision = nSubdivision;
   computeImplicitGridPoints();
 }
 
@@ -28,18 +26,18 @@ void ImplicitSurface::computeImplicitGridPoints() {
   this->implicitGridPoints.clear();
 
   Borders outerBox = kdtree->getRootnode()->borders;
-  float xDelta = (outerBox.xMax - outerBox.xMin) / gridNX;
-  float yDelta = (outerBox.yMax - outerBox.yMin) / gridNY;
-  float zDelta = (outerBox.zMax - outerBox.zMin) / gridNZ;
+  float xDelta = (outerBox.xMax - outerBox.xMin) / gridSubdivision;
+  float yDelta = (outerBox.yMax - outerBox.yMin) / gridSubdivision;
+  float zDelta = (outerBox.zMax - outerBox.zMin) / gridSubdivision;
 
   float x, y, z;
-  for(unsigned int i=0; i <= gridNX; i++) {
+  for(unsigned int i=0; i <= gridSubdivision; i++) {
     this->implicitGridPoints.push_back(std::vector<std::vector<std::shared_ptr<Point>>>());
     x = outerBox.xMin + (i * xDelta);
-    for(unsigned int j=0; j <= gridNY; j++) {
+    for(unsigned int j=0; j <= gridSubdivision; j++) {
       this->implicitGridPoints[i].push_back(std::vector<std::shared_ptr<Point>>());
       y = outerBox.yMin + (j * yDelta);
-      for(unsigned int k=0; k <= gridNZ; k++) {
+      for(unsigned int k=0; k <= gridSubdivision; k++) {
         z = outerBox.zMin + (k * zDelta);
         Point p(x, y, z);
         p.f = this->computeMLS(p);
@@ -53,7 +51,7 @@ float ImplicitSurface::computeMLS(const Point &p) {
 
   PointPointerList points = kdtree->collectInRadius(p, this->radius);
 
-  unsigned int n;
+  unsigned int n = 1;
 
   if(this->basisPolynomDegree == 0)
     n = 1;
@@ -133,6 +131,7 @@ void ImplicitSurface::createAdditionalPoints() {
     while(true) {
       std::shared_ptr<Point> newPositivePoint = std::make_shared<Point>(
           p->x+eps*p->normal[0], p->y+eps*p->normal[1], p->z+eps*p->normal[2]);
+      newPositivePoint->type = positivPoint;
       if(kdtree->isClosestPoint(*newPositivePoint, *p)) {
         newPositivePoint->f = eps;
         kdtree->addToTree(newPositivePoint);
@@ -146,6 +145,7 @@ void ImplicitSurface::createAdditionalPoints() {
     while(true) {
       std::shared_ptr<Point> newNegativePoint = std::make_shared<Point>(
           p->x+eps*p->normal[0], p->y+eps*p->normal[1], p->z+eps*p->normal[2]);
+      newNegativePoint->type = negativPoint;
       if(kdtree->isClosestPoint(*newNegativePoint, *p)) {
         newNegativePoint->f = eps;
         kdtree->addToTree(newNegativePoint);

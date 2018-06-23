@@ -88,7 +88,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   // causes linker error - no idear why
   //surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, gridR);
 
-  implicitSurface = std::make_shared<ImplicitSurface>(kdtree, this->gridX, this->gridY, this->gridZ,
+  implicitSurface = std::make_shared<ImplicitSurface>(kdtree, this->gridSubdivision,
       this->implicitRadius);
 
   setScenePos(kdtree->getCenter(), 1.0);
@@ -116,6 +116,29 @@ void QGLViewerWidget::animateLight() {
   }
 }
 
+bool QGLViewerWidget::drawPointSetNormals() {
+  if (pointList == nullptr || pointList->size() == 0) {
+    return false;
+  }
+
+  float lengthScalar = 0.1;
+  glDisable(GL_LIGHTING);
+  glBegin(GL_LINES);
+  glColor3f(0.5f, 0.5f, 0.5f);
+  for (unsigned int i = 0; i < pointList->size(); i++) {
+    Point p = (*pointList)[i];
+    if (p.type == originalPoint) {
+      glVertex3f(p.x, p.y, p.z);
+      glVertex3f(p.x + lengthScalar * p.normal[0],
+                 p.y + lengthScalar * p.normal[1],
+                 p.z + lengthScalar * p.normal[2]);
+    }
+  }
+  glEnd();
+
+  return true;
+}
+
 bool QGLViewerWidget::drawPointSet() {
   if (pointList == nullptr || pointList->size() == 0) {
     return false;
@@ -129,6 +152,20 @@ bool QGLViewerWidget::drawPointSet() {
   glColor3f(1.0, 1.0, 1.0);
   for (unsigned int i = 0; i < pointList->size(); i++) {
     Point p = (*pointList)[i];
+    switch(p.type) {
+      case originalPoint:
+        glColor3f(1.0f, 0.0f, 0.0f);
+        break;
+      case positivPoint:
+        glColor3f(0.0f, 1.0f, 0.0f);
+        break;
+      case negativPoint:
+        glColor3f(0.0f, 0.0f, 1.0f);
+        break;
+      default:
+        glColor3f(1.0f, 1.0f, 1.0f);
+        break;
+    }
     glVertex3f(p.x, p.y, p.z);
   }
   glEnd();
@@ -202,15 +239,14 @@ void QGLViewerWidget::drawImplicitGridPoints() {
     for(unsigned int j = 0; j < implicitGridPoints[0].size(); j++) {
       for(unsigned int k = 0; k < implicitGridPoints[0][0].size(); k++) {
         std::shared_ptr<Point> p = implicitGridPoints[i][j][k];
-        //TODO change such that all points are shown
         if(p->f == std::numeric_limits<float>::max()){
-          //glColor3f(0.0, 0.0, 0.0);
+          glColor3f(0.1, 0.1, 0.1);
         } else {
-          if(p->f > 0.0) glColor3f(0.0, 0.0, 255.0);
-          else if(p->f == 0.0) glColor3f(255.0, 0.0, 0.0);
-          else if(p->f < 0.0) glColor3f(255.0, 255.0, 0.0);
-          glVertex3f(p->x, p->y, p->z);
+          if(p->f > 0.0) glColor3f(0.0, 0.0, 1.0);
+          else if(p->f == 0.0) glColor3f(1.0, 0.0, 0.0);
+          else if(p->f < 0.0) glColor3f(1.0, 1.0, 0.0);
         }
+          glVertex3f(p->x, p->y, p->z);
       }
     }
   }
@@ -641,6 +677,9 @@ void QGLViewerWidget::drawScene() {
   }
   if (drawPoints) {
     drawPointSet();
+  }
+  if (flag_drawPointSetNormals) {
+    drawPointSetNormals();
   }
   if (drawGrid) {
     drawRegularGrid();
@@ -1179,6 +1218,9 @@ void QGLViewerWidget::setDrawPoints(bool value) {
 
 void QGLViewerWidget::setDrawNormals(bool value) {
   std::cout << "Changing drawNormals value to " << value << std::endl;
+  flag_drawPointSetNormals = value;
+  paintGL();
+  updateGL();
 }
 
 void QGLViewerWidget::flipNormals() {
@@ -1197,7 +1239,9 @@ void QGLViewerWidget::setDrawConstraints(bool value) {
 
 void QGLViewerWidget::setGridSubdivision(int value) {
   std::cout << "Changing grid dimension value to " << value << std::endl;
-  this->implicitSurface->setGrid(value, value, value);
+  if (implicitSurface != nullptr) {
+    this->implicitSurface->setGrid(value);
+  }
   updateGL();
 }
 
@@ -1212,13 +1256,17 @@ void QGLViewerWidget::setEpsilon(double value) {
 void QGLViewerWidget::setRadius(double value) {
   std::cout << "Changing radius to " << value << std::endl;
   this->implicitRadius = value;
-  this->implicitSurface->setRadius(this->implicitRadius);
+  if (implicitSurface != nullptr) {
+    this->implicitSurface->setRadius(this->implicitRadius);
+  }
   updateGL();
 }
 
 void QGLViewerWidget::computeSamples() {
   std::cout << "Calling computeSamples" << std::endl;
-  this->implicitSurface->computeImplicitGridPoints();
+  if (implicitSurface != nullptr) {
+    this->implicitSurface->computeImplicitGridPoints();
+  }
   updateGL();
 }
 

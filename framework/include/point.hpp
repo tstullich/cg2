@@ -7,6 +7,8 @@
 
 #include <glm/glm.hpp>
 
+enum pointType {originalPoint, positivPoint, negativPoint};
+
 // Forward declaration so we can use Node class
 struct Node;
 
@@ -29,6 +31,8 @@ public:
   float y;
   float z;
   float f = 0;
+  pointType type = originalPoint;
+
   float dist;
   glm::vec3 normal;
 };
