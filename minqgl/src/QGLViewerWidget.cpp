@@ -121,13 +121,19 @@ bool QGLViewerWidget::drawPointSetNormals() {
     return false;
   }
 
-  float lengthScalar = 0.1;
+  Borders outerBox = this->kdtree->getRootnode()->borders;
+  Point p1(outerBox.xMin, outerBox.yMin, outerBox.zMin);
+  Point p2(outerBox.xMax, outerBox.yMax, outerBox.zMax);
+  double lengthScalar = 0.03 * p1.distPoint(p2);
+
   glDisable(GL_LIGHTING);
   glBegin(GL_LINES);
-  glColor3f(0.5f, 0.5f, 0.5f);
+  glColor3f(0.75f, 0.75f, 0.75f);
   for (unsigned int i = 0; i < pointList->size(); i++) {
     Point p = (*pointList)[i];
     if (p.type == originalPoint) {
+      if (glm::length(p.normal) == 0) {
+      }
       glVertex3f(p.x, p.y, p.z);
       glVertex3f(p.x + lengthScalar * p.normal[0],
                  p.y + lengthScalar * p.normal[1],
@@ -156,10 +162,10 @@ bool QGLViewerWidget::drawPointSet() {
       case originalPoint:
         glColor3f(1.0f, 0.0f, 0.0f);
         break;
-      case positivPoint:
+      case positivePoint:
         glColor3f(0.0f, 1.0f, 0.0f);
         break;
-      case negativPoint:
+      case negativePoint:
         glColor3f(0.0f, 0.0f, 1.0f);
         break;
       default:
@@ -230,7 +236,6 @@ void QGLViewerWidget::drawImplicitGridPoints() {
   }
 
   glDisable(GL_LIGHTING);
-
   glEnable(GL_POINT_SMOOTH);
   glPointSize(5.0f);
   glBegin(GL_POINTS);
@@ -246,7 +251,7 @@ void QGLViewerWidget::drawImplicitGridPoints() {
           else if(p->f == 0.0) glColor3f(1.0, 0.0, 0.0);
           else if(p->f < 0.0) glColor3f(1.0, 1.0, 0.0);
         }
-          glVertex3f(p->x, p->y, p->z);
+        glVertex3f(p->x, p->y, p->z);
       }
     }
   }
@@ -981,7 +986,7 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       break;
 
     case Key_C:
-      setScenePos(glm::vec3(0.5f, 0.5f, 0.35f), 1.0f);
+      setScenePos(kdtree->getCenter(), 1.0);
       break;
 
     case Key_J:
@@ -1239,6 +1244,7 @@ void QGLViewerWidget::setDrawConstraints(bool value) {
 
 void QGLViewerWidget::setGridSubdivision(int value) {
   std::cout << "Changing grid dimension value to " << value << std::endl;
+  this->gridSubdivision = value;
   if (implicitSurface != nullptr) {
     this->implicitSurface->setGrid(value);
   }

@@ -7,7 +7,7 @@
 
 #include <glm/glm.hpp>
 
-enum pointType {originalPoint, positivPoint, negativPoint};
+enum pointType {originalPoint, positivePoint, negativePoint};
 
 // Forward declaration so we can use Node class
 struct Node;
@@ -25,13 +25,15 @@ public:
   float fetchPointValue(int axis);
   float distPoint(const Point &b) const;
   float distNode(const Node &b) const;
-  glm::vec3 toVec3();
+  glm::vec3 toVec3() const;
 
   float x;
   float y;
   float z;
   float f = 0;
   pointType type = originalPoint;
+  std::shared_ptr<Point> positivePoint;
+  std::shared_ptr<Point> negativePoint;
 
   float dist;
   glm::vec3 normal;

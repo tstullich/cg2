@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <map>
 
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
@@ -26,21 +27,27 @@ class ImplicitSurface {
 
     void computeImplicitGridPoints();
 
+    float computeMLS(const Point &p);
+    float evaluteImplicitFunction(const Point &p);
+    void computeImplicitFunction();
+
   private:
     void createAdditionalPoints();
 
-    float computeMLS(const Point &p);
+
+    bool computeCoefficients(const Point &p, VectorXf &coefficients);
 
     std::shared_ptr<KDTree> kdtree;
 
+    // The Five Vectors
     PointPointerList points;
     PointPointerList positivePoints;
     PointPointerList negativePoints;
-
     std::vector<double> positiveFunctionValues;
     std::vector<double> negativeFunctionValues;
 
     std::vector<std::vector<std::vector<std::shared_ptr<Point>>>> implicitGridPoints;
+    std::vector<VectorXf> implicitFunction;
 
     unsigned int gridSubdivision;
     float radius;

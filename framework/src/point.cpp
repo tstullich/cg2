@@ -49,6 +49,6 @@ float Point::distNode(const Node &n) const {
   return d;
 }
 
-glm::vec3 Point::toVec3() {
+glm::vec3 Point::toVec3() const {
   return glm::vec3(x, y, z);
 }

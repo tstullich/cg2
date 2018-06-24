@@ -120,7 +120,7 @@ void SidebarWidget::initGridBox(QWidget *parent) {
   connect(epsilonBox, SIGNAL(valueChanged(double)), parent, SLOT(setEpsilon(double)));
 
   radiusBox = new QDoubleSpinBox(this);
-  radiusBox->setRange(0.0, 10.0);
+  radiusBox->setRange(0.0, 1000.0);
   radiusBox->setSingleStep(0.02);
   radiusBox->setValue(0.02);
   connect(radiusBox, SIGNAL(valueChanged(double)), parent, SLOT(setRadius(double)));
