@@ -23,6 +23,9 @@ class ImplicitSurface {
     void setGrid(unsigned int nSubdivision);
     void setRadius(float r);
 
+    PointPointerList getOriginalPoints();
+    PointPointerList getPositivePoints();
+    PointPointerList getNegativePoints();
     std::vector<std::vector<std::vector<std::shared_ptr<Point>>>> getImplicitGridPoints();
 
     void computeImplicitGridPoints();

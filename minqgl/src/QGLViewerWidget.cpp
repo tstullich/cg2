@@ -155,25 +155,22 @@ bool QGLViewerWidget::drawPointSet() {
   glEnable(GL_POINT_SMOOTH);
   glPointSize(3.0f);
   glBegin(GL_POINTS);
-  glColor3f(1.0, 1.0, 1.0);
-  for (unsigned int i = 0; i < pointList->size(); i++) {
-    Point p = (*pointList)[i];
-    switch(p.type) {
-      case originalPoint:
-        glColor3f(1.0f, 0.0f, 0.0f);
-        break;
-      case positivePoint:
-        glColor3f(0.0f, 1.0f, 0.0f);
-        break;
-      case negativePoint:
-        glColor3f(0.0f, 0.0f, 1.0f);
-        break;
-      default:
-        glColor3f(1.0f, 1.0f, 1.0f);
-        break;
-    }
-    glVertex3f(p.x, p.y, p.z);
+
+  glColor3f(1.0f, 0.0f, 0.0f);
+  for (std::shared_ptr<Point> p : this->implicitSurface->getOriginalPoints()) {
+    glVertex3f(p->x, p->y, p->z);
   }
+
+  glColor3f(0.0f, 1.0f, 0.0f);
+  for (std::shared_ptr<Point> p : this->implicitSurface->getPositivePoints()) {
+    glVertex3f(p->x, p->y, p->z);
+  }
+
+  glColor3f(0.0f, 0.0f, 1.0f);
+  for (std::shared_ptr<Point> p : this->implicitSurface->getNegativePoints()) {
+    glVertex3f(p->x, p->y, p->z);
+  }
+
   glEnd();
 
   return true;
@@ -245,11 +242,16 @@ void QGLViewerWidget::drawImplicitGridPoints() {
       for(unsigned int k = 0; k < implicitGridPoints[0][0].size(); k++) {
         std::shared_ptr<Point> p = implicitGridPoints[i][j][k];
         if(p->f == std::numeric_limits<float>::max()){
+          continue;
           glColor3f(0.1, 0.1, 0.1);
         } else {
-          if(p->f > 0.0) glColor3f(0.0, 0.0, 1.0);
-          else if(p->f == 0.0) glColor3f(1.0, 0.0, 0.0);
-          else if(p->f < 0.0) glColor3f(1.0, 1.0, 0.0);
+          if(p->f > 0.0) {
+            glColor3f(0.0, 0.0, 1.0);
+          } else if(p->f == 0.0) {
+            glColor3f(1.0, 0.0, 0.0);
+          } else if(p->f < 0.0) {
+            glColor3f(1.0, 1.0, 0.0);
+          }
         }
         glVertex3f(p->x, p->y, p->z);
       }

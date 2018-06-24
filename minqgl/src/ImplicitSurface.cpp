@@ -18,6 +18,16 @@ void ImplicitSurface::setRadius(float r) {
   computeImplicitGridPoints();
 }
 
+PointPointerList ImplicitSurface::getOriginalPoints(){
+  return this->points;
+}
+PointPointerList ImplicitSurface::getPositivePoints(){
+  return this->positivePoints;
+}
+PointPointerList ImplicitSurface::getNegativePoints(){
+  return this->negativePoints;
+}
+
 std::vector<std::vector<std::vector<std::shared_ptr<Point>>>> ImplicitSurface::getImplicitGridPoints() {
   return implicitGridPoints;
 }
@@ -48,8 +58,7 @@ void ImplicitSurface::computeImplicitGridPoints() {
 }
 
 float ImplicitSurface::computeMLS(const Point &p) {
-
-  PointPointerList points = kdtree->collectInRadius(p, this->radius);
+  PointPointerList collectedPoints = kdtree->collectInRadius(p, this->radius);
 
   unsigned int n = 1;
 
@@ -61,14 +70,13 @@ float ImplicitSurface::computeMLS(const Point &p) {
     n = 10;
 
   //TODO maybe change
-  if (points.size() < 3*n) {
+  if (collectedPoints.size() < 3*n) {
     //std::cerr << "No points in radius " << this->radius << std::endl;
     return std::numeric_limits<float>::max();
   }
 
   MatrixXf A(n, n);
-  VectorXf a(n), b(n);
-
+  VectorXf ao(n), ap(n), an(n), b(n);
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
       A(i, j) = 0.0;
@@ -76,25 +84,47 @@ float ImplicitSurface::computeMLS(const Point &p) {
     b(i) = 0.0;
   }
 
-  for (unsigned int i = 0; i < points.size(); i++) {
-    std::shared_ptr<Point> p_i = points[i];
-    float distance = p.distPoint(*p_i) / this->radius;
-    // wendland component
-    float theta = pow(1.0 - distance, 4.0) * (4.0 * distance + 1);
+  // for each original point fill up the MLS componants
+  for (std::shared_ptr<Point> po_i : collectedPoints) {
+    // get corresponding positiv and negativ point
+    std::shared_ptr<Point> pp_i = po_i->positivePoint;
+    std::shared_ptr<Point> np_i = po_i->negativePoint;
 
-    if(this->basisPolynomDegree == 0)
-      a << 1.0;
-    else if(this->basisPolynomDegree == 1)
-      a << 1.0, p_i->x, p_i->y, p_i->z;
-    else if(this->basisPolynomDegree == 2)
-      a << 1.0, p_i->x, p_i->y, p_i->z, p_i->x * p_i->y, p_i->x * p_i->z, p_i->y * p_i->z,
-          pow(p_i->x, 2.0), pow(p_i->y, 2.0), pow(p_i->z, 2.0);
+    float distance_po = p.distPoint(*po_i) / radius;
+    float distance_pp = p.distPoint(*pp_i) / radius;
+    float distance_np = p.distPoint(*np_i) / radius;
+    float theta_po = pow(1.0 - distance_po, 4.0) * (4.0 * distance_po + 1);
+    float theta_pp = pow(1.0 - distance_pp, 4.0) * (4.0 * distance_pp + 1);
+    float theta_np = pow(1.0 - distance_np, 4.0) * (4.0 * distance_np + 1);
+
+    // set up basis vector for filling A and b
+    if(this->basisPolynomDegree == 0) {
+      ao << 1.0;
+      ap << 1.0;
+      an << 1.0;
+    } else if(this->basisPolynomDegree == 1) {
+      ao << 1.0, po_i->x, po_i->y, po_i->z;
+      ap << 1.0, pp_i->x, pp_i->y, pp_i->z;
+      an << 1.0, np_i->x, np_i->y, np_i->z;
+    } else if(this->basisPolynomDegree == 2) {
+      ao << 1.0, po_i->x, po_i->y, po_i->z, po_i->x * po_i->y, po_i->x * po_i->z, po_i->y * po_i->z,
+        pow(po_i->x, 2.0), pow(po_i->y, 2.0), pow(po_i->z, 2.0);
+      ap << 1.0, pp_i->x, pp_i->y, pp_i->z, pp_i->x * pp_i->y, pp_i->x * pp_i->z, pp_i->y * pp_i->z,
+        pow(pp_i->x, 2.0), pow(pp_i->y, 2.0), pow(pp_i->z, 2.0);
+      an << 1.0, np_i->x, np_i->y, np_i->z, np_i->x * np_i->y, np_i->x * np_i->z, np_i->y * np_i->z,
+        pow(np_i->x, 2.0), pow(np_i->y, 2.0), pow(np_i->z, 2.0);
+    }
 
     for (unsigned int j = 0; j < n; j++) {
       for (unsigned int k = 0; k < n; k++) {
-        A(j, k) += a[j] * a[k] * theta;
+        A(j, k) += ao[j] * ao[k] * theta_po;
+        A(j, k) += ap[j] * ap[k] * theta_pp;
+        A(j, k) += an[j] * an[k] * theta_np;
+
       }
-      b[j] += a[j] * theta * p_i->f;
+      b[j] += ao[j] * theta_po * po_i->f;
+      b[j] += ap[j] * theta_pp * pp_i->f;
+      b[j] += an[j] * theta_np * np_i->f;
     }
   }
 
@@ -111,10 +141,8 @@ float ImplicitSurface::computeMLS(const Point &p) {
     c << 1.0, p.x, p.y, p.z, p.x * p.y, p.x * p.z, p.y * p.z,
         pow(p.x, 2.0), pow(p.y, 2.0), pow(p.z, 2.0);
 
-  float v;
-  for (unsigned int i = 0; i < n; i++) {
-    v = c.dot(X);
-  }
+  float v = c.dot(X);
+
   return v;
 }
 
@@ -133,8 +161,7 @@ float ImplicitSurface::evaluteImplicitFunction(const Point &p) {
         pow(p.x, 2.0), pow(p.y, 2.0), pow(p.z, 2.0);
     }
 
-    float tmp = 0.0;
-    tmp = c.dot(implicitFunction[i]);
+    float tmp = c.dot(implicitFunction[i]);
     v = (tmp < v)? tmp : v;
   }
 
@@ -262,7 +289,7 @@ void ImplicitSurface::createAdditionalPoints() {
       newPositivePoint->type = positivePoint;
       if(kdtree->isClosestPoint(*newPositivePoint, *p)) {
         newPositivePoint->f = eps;
-        kdtree->addToTree(newPositivePoint);
+        /* kdtree->addToTree(newPositivePoint); */
         positivePoints.push_back(newPositivePoint);
         p->positivePoint = newPositivePoint;
         positiveFunctionValues.push_back(eps);
@@ -279,7 +306,7 @@ void ImplicitSurface::createAdditionalPoints() {
       newNegativePoint->type = negativePoint;
       if(kdtree->isClosestPoint(*newNegativePoint, *p)) {
         newNegativePoint->f = eps;
-        kdtree->addToTree(newNegativePoint);
+        /* kdtree->addToTree(newNegativePoint); */
         p->negativePoint = newNegativePoint;
         negativePoints.push_back(newNegativePoint);
         negativeFunctionValues.push_back(eps);
