@@ -83,25 +83,4 @@ void Parser::clearOuterBox() {
   outerBox.zMax = std::numeric_limits<double>::min();
 };
 
-std::unique_ptr<std::vector<Face>> Parser::getFaces() {
-  if (!inputStream.is_open()) {
-    std::cout << "Unable to open file!" << std::endl;
-    return std::make_unique<std::vector<Face>>();
-  }
-
-  auto faces = std::make_unique<std::vector<Face>>(numFaces);
-  int vertexCount, faceIndex;
-  for (int i = 0; i < numFaces; i++) {
-    inputStream >> vertexCount;
-    Face face;
-    while (vertexCount-- > 0) {
-      inputStream >> faceIndex;
-      face.add(faceIndex);
-    }
-    faces->at(i) = face;
-  }
-
-  return faces;
-}
-
 void Parser::close() { inputStream.close(); }

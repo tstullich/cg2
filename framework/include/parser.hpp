@@ -9,7 +9,7 @@
 #include <limits>
 #include <cmath>
 
-#include "face.hpp"
+#include "triangle.hpp"
 #include "point.hpp"
 
 class Point;
@@ -47,16 +47,6 @@ public:
    * out what else we need to do with the data
    */
   std::unique_ptr<std::vector<Point>> getPoints();
-
-  /**
-   * Parses the number of faces contained in the OFF file
-   * Currently keeping this in a vector until we can figure
-   * out what else we need to do with the data
-   *
-   * !!! This funtion needs to be called only after getVertices
-   *     is called. Otherwise we get unexpected behavior !!!
-   */
-  std::unique_ptr<std::vector<Face>> getFaces();
 
   // Not sure if we need this but I am keeping this stubeed for now
   std::vector<int> getEdges();

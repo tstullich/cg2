@@ -19,6 +19,7 @@ struct Node;
  */
 class Point {
 public:
+  Point() : x(0.0), y(0.0), z(0.0), dist(0.0), normal(glm::vec3(0.0, 0.0, 0.0)) {}
   Point(float x, float y, float z);
   Point(glm::vec3 v);
 

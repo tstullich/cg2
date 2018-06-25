@@ -7,4 +7,4 @@ SET(CMAKE_CXX_STANDARD 14)
 SET(GCC_COVERAGE_COMPILE_FLAGS "-Wall -03 -ldl")
 
 INCLUDE_DIRECTORIES(${CG2_SOURCE_DIR}/framework/include)
-ADD_LIBRARY(framework point.cpp kdtree.cpp parser.cpp)
+ADD_LIBRARY(framework marching_cubes.cpp point.cpp kdtree.cpp parser.cpp)
