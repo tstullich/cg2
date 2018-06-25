@@ -152,7 +152,8 @@ private slots:
   //void setShading(bool value);
   void flipNormals();
 
-  void setDrawSamples(bool value);
+  void setDrawPositiveSamples(bool value);
+  void setDrawNegativeSamples(bool value);
   void setDrawConstraints(bool value);
   void setGridSubdivision(int value);
   void setBoundingBoxFactor(double value);
@@ -232,7 +233,8 @@ private:
   int gridM = 10;
   int gridN = 10;
   float gridR = 0.5;
-  bool drawImplicitGrid = false;
+  bool drawPositiveSamples = false;
+  bool drawNegativeSamples = false;
   int gridSubdivision = 10;
   float implicitRadius = 0.02;
   int kMLS = 1;

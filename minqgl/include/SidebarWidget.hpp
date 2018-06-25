@@ -42,7 +42,8 @@ private:
   QGroupBox *shadingBox;
   QPushButton *flipNormalsButton;
 
-  QCheckBox *drawSamplesBox;
+  QCheckBox *drawPositiveSamplesBox;
+  QCheckBox *drawNegativeSamplesBox;
   QCheckBox *drawConstraintsBox;
   QSpinBox *gridSubdivisionBox;
   QDoubleSpinBox *boundingBoxFactorBox;

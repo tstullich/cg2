@@ -244,16 +244,19 @@ void QGLViewerWidget::drawImplicitGridPoints() {
         if(p->f == std::numeric_limits<float>::max()){
           continue;
           glColor3f(0.1, 0.1, 0.1);
+          glVertex3f(p->x, p->y, p->z);
         } else {
-          if(p->f > 0.0) {
+          if(p->f > 0.0 && drawPositiveSamples) {
             glColor3f(0.0, 0.0, 1.0);
+            glVertex3f(p->x, p->y, p->z);
           } else if(p->f == 0.0) {
             glColor3f(1.0, 0.0, 0.0);
-          } else if(p->f < 0.0) {
+            glVertex3f(p->x, p->y, p->z);
+          } else if(p->f < 0.0 && drawNegativeSamples) {
             glColor3f(1.0, 1.0, 0.0);
+            glVertex3f(p->x, p->y, p->z);
           }
         }
-        glVertex3f(p->x, p->y, p->z);
       }
     }
   }
@@ -691,7 +694,7 @@ void QGLViewerWidget::drawScene() {
   if (drawGrid) {
     drawRegularGrid();
   }
-  if (drawImplicitGrid) {
+  if (drawPositiveSamples || drawNegativeSamples) {
     drawImplicitGridPoints();
   }
   if (flag_drawSurfaceBTPS) {
@@ -1234,9 +1237,15 @@ void QGLViewerWidget::flipNormals() {
   std::cout << "Calling flipNormals()" << std::endl;
 }
 
-void QGLViewerWidget::setDrawSamples(bool value) {
+void QGLViewerWidget::setDrawPositiveSamples(bool value) {
   std::cout << "Changing drawSamples value to " << value << std::endl;
-  this->drawImplicitGrid = value;
+  this->drawPositiveSamples = value;
+  updateGL();
+}
+
+void QGLViewerWidget::setDrawNegativeSamples(bool value) {
+  std::cout << "Changing drawSamples value to " << value << std::endl;
+  this->drawNegativeSamples = value;
   updateGL();
 }
 

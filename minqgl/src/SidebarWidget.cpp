@@ -24,7 +24,8 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
   // Grid Section
   auto gridBox = new QGroupBox("Grid");
   auto gridBoxLayout = new QVBoxLayout;
-  gridBoxLayout->addWidget(drawSamplesBox);
+  gridBoxLayout->addWidget(drawPositiveSamplesBox);
+  gridBoxLayout->addWidget(drawNegativeSamplesBox);
   gridBoxLayout->addWidget(drawConstraintsBox);
 
   auto gridSubdivisionLayout = new QHBoxLayout;
@@ -95,9 +96,13 @@ void SidebarWidget::initDrawPointsBox(QWidget *parent) {
 }
 
 void SidebarWidget::initGridBox(QWidget *parent) {
-  drawSamplesBox = new QCheckBox("Draw samples", this);
-  //drawSamplesBox->setCheckState(Qt::Checked);
-  connect(drawSamplesBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawSamples(bool)));
+  drawPositiveSamplesBox = new QCheckBox("Draw positive samples", this);
+  //drawPositiveSamplesBox->setCheckState(Qt::Checked);
+  connect(drawPositiveSamplesBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawPositiveSamples(bool)));
+
+  drawNegativeSamplesBox = new QCheckBox("Draw negative samples", this);
+  //drawNegativeSamplesBox->setCheckState(Qt::Checked);
+  connect(drawNegativeSamplesBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawNegativeSamples(bool)));
 
   drawConstraintsBox = new QCheckBox("Draw constraints", this);
   connect(drawConstraintsBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawConstraints(bool)));
