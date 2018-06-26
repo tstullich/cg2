@@ -34,6 +34,7 @@
 
 // --------------------
 #include "kdtree.hpp"
+#include "marching_cubes.hpp"
 #include "parser.hpp"
 #include "point.hpp"
 #include "surfaces.hpp"
@@ -244,6 +245,7 @@ private:
   bool flag_drawSurfaceBTPS = false;
   bool flag_drawSelectedPoints = true;
   bool flag_drawTree = false;
+  bool flag_drawMarchingCubes = false;
   bool lastPointOk;
   bool performLinearSearch = false;
   bool selectOnRelease = false;

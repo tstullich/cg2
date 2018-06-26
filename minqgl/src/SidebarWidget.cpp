@@ -2,7 +2,7 @@
 
 const QString SidebarWidget::CURRENT_VALUE_LABEL = "Current Value: ";
 
-SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
+SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
   setWindowTitle("Settings");
   setAllowedAreas(Qt::RightDockWidgetArea);
 
@@ -76,7 +76,6 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
   layout->addWidget(gridBox);
   layout->addWidget(drawMCBox);
   layout->setSizeConstraint(QLayout::SetFixedSize);
-  std::cout << "Stuff" << std::endl;
 
   container->setLayout(layout);
   setWidget(container);
@@ -85,11 +84,13 @@ SidebarWidget::SidebarWidget(QWidget* parent) : QDockWidget(parent) {
 void SidebarWidget::initDrawPointsBox(QWidget *parent) {
   drawPointsBox = new QCheckBox("Draw Points", this);
   drawPointsBox->setCheckState(Qt::Checked);
-  connect(drawPointsBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawPoints(bool)));
+  connect(drawPointsBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setDrawPoints(bool)));
 
   drawNormalsBox = new QCheckBox("Draw Normals", this);
   drawNormalsBox->setCheckState(Qt::Checked);
-  connect(drawNormalsBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawNormals(bool)));
+  connect(drawNormalsBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setDrawNormals(bool)));
 
   flipNormalsButton = new QPushButton("Flip Normals", this);
   connect(flipNormalsButton, SIGNAL(clicked()), parent, SLOT(flipNormals()));
@@ -97,46 +98,55 @@ void SidebarWidget::initDrawPointsBox(QWidget *parent) {
 
 void SidebarWidget::initGridBox(QWidget *parent) {
   drawPositiveSamplesBox = new QCheckBox("Draw positive samples", this);
-  //drawPositiveSamplesBox->setCheckState(Qt::Checked);
-  connect(drawPositiveSamplesBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawPositiveSamples(bool)));
+  // drawPositiveSamplesBox->setCheckState(Qt::Checked);
+  connect(drawPositiveSamplesBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setDrawPositiveSamples(bool)));
 
   drawNegativeSamplesBox = new QCheckBox("Draw negative samples", this);
-  //drawNegativeSamplesBox->setCheckState(Qt::Checked);
-  connect(drawNegativeSamplesBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawNegativeSamples(bool)));
+  // drawNegativeSamplesBox->setCheckState(Qt::Checked);
+  connect(drawNegativeSamplesBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setDrawNegativeSamples(bool)));
 
   drawConstraintsBox = new QCheckBox("Draw constraints", this);
-  connect(drawConstraintsBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawConstraints(bool)));
+  connect(drawConstraintsBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setDrawConstraints(bool)));
 
   gridSubdivisionBox = new QSpinBox(this);
   gridSubdivisionBox->setRange(1, 1000);
   gridSubdivisionBox->setValue(10);
-  connect(gridSubdivisionBox, SIGNAL(valueChanged(int)), parent, SLOT(setGridSubdivision(int)));
+  connect(gridSubdivisionBox, SIGNAL(valueChanged(int)), parent,
+          SLOT(setGridSubdivision(int)));
 
   boundingBoxFactorBox = new QDoubleSpinBox(this);
   boundingBoxFactorBox->setRange(0.0, 10.0);
   boundingBoxFactorBox->setSingleStep(0.1);
   boundingBoxFactorBox->setValue(0.5);
-  connect(boundingBoxFactorBox, SIGNAL(valueChanged(double)), parent, SLOT(setBoundingBoxFactor(double)));
+  connect(boundingBoxFactorBox, SIGNAL(valueChanged(double)), parent,
+          SLOT(setBoundingBoxFactor(double)));
 
   epsilonBox = new QDoubleSpinBox(this);
   epsilonBox->setRange(0.0, 10.0);
   epsilonBox->setSingleStep(0.1);
   epsilonBox->setValue(0.5);
-  connect(epsilonBox, SIGNAL(valueChanged(double)), parent, SLOT(setEpsilon(double)));
+  connect(epsilonBox, SIGNAL(valueChanged(double)), parent,
+          SLOT(setEpsilon(double)));
 
   radiusBox = new QDoubleSpinBox(this);
   radiusBox->setRange(0.0, 1000.0);
   radiusBox->setSingleStep(0.02);
   radiusBox->setValue(0.02);
-  connect(radiusBox, SIGNAL(valueChanged(double)), parent, SLOT(setRadius(double)));
+  connect(radiusBox, SIGNAL(valueChanged(double)), parent,
+          SLOT(setRadius(double)));
 
   computeSamplesButton = new QPushButton("Compute Samples", this);
-  connect(computeSamplesButton, SIGNAL(clicked()), parent, SLOT(computeSamples()));
+  connect(computeSamplesButton, SIGNAL(clicked()), parent,
+          SLOT(computeSamples()));
 }
 
 void SidebarWidget::initMarchingCubesBox(QWidget *parent) {
   drawMCMeshBox = new QCheckBox("Draw MC mesh", this);
-  connect(drawMCMeshBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawMCMesh(bool)));
+  connect(drawMCMeshBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setDrawMCMesh(bool)));
 
   computeMCButton = new QPushButton("Compute MC", this);
   connect(computeMCButton, SIGNAL(clicked()), parent, SLOT(computeMC()));

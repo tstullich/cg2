@@ -11,7 +11,8 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/QR>
 
-#include <kdtree.hpp>
+#include "kdtree.hpp"
+#include "marching_cubes.hpp"
 
 using namespace Eigen;
 
@@ -31,8 +32,9 @@ class ImplicitSurface {
     void computeImplicitGridPoints();
 
     float computeMLS(const Point &p);
-    float evaluteImplicitFunction(const Point &p);
+    float evaluateImplicitFunction(const Point &p);
     void computeImplicitFunction();
+    void computeMarchingCubes();
 
   private:
     void createAdditionalPoints();

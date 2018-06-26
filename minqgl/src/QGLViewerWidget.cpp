@@ -86,10 +86,10 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   pointList = kdtree->getPoints();
 
   // causes linker error - no idear why
-  //surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, gridR);
+  // surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, gridR);
 
-  implicitSurface = std::make_shared<ImplicitSurface>(kdtree, this->gridSubdivision,
-      this->implicitRadius);
+  implicitSurface = std::make_shared<ImplicitSurface>(
+      kdtree, this->gridSubdivision, this->implicitRadius);
 
   setScenePos(kdtree->getCenter(), 1.0);
   /* setScenePos(kdtree->getCenterOfGravity(), 1.0); */
@@ -105,7 +105,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 
 void QGLViewerWidget::animateLight() {
   unsigned frameCounter = 25;
-  while(true) {
+  while (true) {
     if (flag_animate) {
       lightPos[0] = sin(double(frameCounter) * M_PI / 100) + 0.5f;
       lightPos[1] = cos(double(frameCounter) * M_PI / 100) + 0.5f;
@@ -221,14 +221,14 @@ bool QGLViewerWidget::drawSelectedPointSet() {
 }
 
 void QGLViewerWidget::drawImplicitGridPoints() {
-  if ( this->implicitSurface == nullptr) {
+  if (this->implicitSurface == nullptr) {
     return;
   }
 
-  std::vector<std::vector<std::vector<std::shared_ptr<Point>>>> implicitGridPoints =
-    this->implicitSurface->getImplicitGridPoints();
+  std::vector<std::vector<std::vector<std::shared_ptr<Point>>>>
+      implicitGridPoints = this->implicitSurface->getImplicitGridPoints();
 
-  if(implicitGridPoints.size() == 0) {
+  if (implicitGridPoints.size() == 0) {
     return;
   }
 
@@ -237,22 +237,22 @@ void QGLViewerWidget::drawImplicitGridPoints() {
   glPointSize(5.0f);
   glBegin(GL_POINTS);
 
-  for(unsigned int i = 0; i < implicitGridPoints.size(); i++) {
-    for(unsigned int j = 0; j < implicitGridPoints[0].size(); j++) {
-      for(unsigned int k = 0; k < implicitGridPoints[0][0].size(); k++) {
+  for (unsigned int i = 0; i < implicitGridPoints.size(); i++) {
+    for (unsigned int j = 0; j < implicitGridPoints[0].size(); j++) {
+      for (unsigned int k = 0; k < implicitGridPoints[0][0].size(); k++) {
         std::shared_ptr<Point> p = implicitGridPoints[i][j][k];
-        if(p->f == std::numeric_limits<float>::max()){
+        if (p->f == std::numeric_limits<float>::max()) {
           continue;
           glColor3f(0.1, 0.1, 0.1);
           glVertex3f(p->x, p->y, p->z);
         } else {
-          if(p->f > 0.0 && drawPositiveSamples) {
+          if (p->f > 0.0 && drawPositiveSamples) {
             glColor3f(0.0, 0.0, 1.0);
             glVertex3f(p->x, p->y, p->z);
-          } else if(p->f == 0.0) {
+          } else if (p->f == 0.0) {
             glColor3f(1.0, 0.0, 0.0);
             glVertex3f(p->x, p->y, p->z);
-          } else if(p->f < 0.0 && drawNegativeSamples) {
+          } else if (p->f < 0.0 && drawNegativeSamples) {
             glColor3f(1.0, 1.0, 0.0);
             glVertex3f(p->x, p->y, p->z);
           }
@@ -485,7 +485,8 @@ void QGLViewerWidget::drawKDTree() {
   glEnd();
 }
 
-glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2, const Point &v3) {
+glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2,
+                                          const Point &v3) {
   // Get the cross product of u - v
   glm::vec3 u(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z);
   glm::vec3 v(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z);
@@ -494,8 +495,7 @@ glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2, cons
   auto normalZ = (u.x * v.y) - (u.y * v.x);
 
   // Normalize the cross product
-  float d =
-      sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+  float d = sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
 
   return glm::vec3(normalX / d, normalY / d, normalZ / d);
 }
@@ -511,7 +511,9 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
 
   glm::vec3 vertToCam = glm::normalize(camPos - vertPos);
   glm::vec3 vertToLight = lightPos - vertPos;
-  float len = sqrt(vertToLight[0] * vertToLight[0] + vertToLight[1] * vertToLight[1] + vertToLight[2] * vertToLight[2]);
+  float len =
+      sqrt(vertToLight[0] * vertToLight[0] + vertToLight[1] * vertToLight[1] +
+           vertToLight[2] * vertToLight[2]);
   float attenuation = 1.0f / (1.0f + 0.1f * len + 0.01f * len * len);
 
   glm::vec3 N(glm::normalize(normal));
@@ -523,14 +525,17 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
     R = glm::normalize((2.0f * (N * NL)) - L);
   }
 
-  glm::vec3 diffuse = attenuation * diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
+  glm::vec3 diffuse =
+      attenuation * diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
 
-  glm::vec3 specular = attenuation * specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 50.0f);
+  glm::vec3 specular = attenuation * specularColor *
+                       glm::pow(glm::max(glm::dot(R, E), 0.0f), 50.0f);
 
   return ambientColor + diffuse + specular;
 }
 
-bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2) {
+bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0,
+                          glm::vec3 p1, glm::vec3 p2) {
   glm::vec3 v01(p1 - p0);
   glm::vec3 v02(p2 - p0);
   glm::vec3 h(glm::cross(rayDir, v02));
@@ -539,7 +544,7 @@ bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0, glm:
     return false;
   }
 
-  double a_inv = 1/a;
+  double a_inv = 1 / a;
   glm::vec3 s(rayPos - p0);
   double u = a_inv * glm::dot(h, s);
   if (u <= 0.0 || u >= 1.0) {
@@ -548,7 +553,7 @@ bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0, glm:
 
   glm::vec3 q(glm::cross(s, v01));
   double v = a_inv * glm::dot(q, rayDir);
-  if (v <= 0.0 || u+v >= 1.0) {
+  if (v <= 0.0 || u + v >= 1.0) {
     return false;
   }
 
@@ -556,13 +561,12 @@ bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0, glm:
   if (t > 0.00001) {
     return true;
   } else {
-    return false;;
+    return false;
+    ;
   }
 }
 
-
-glm::vec3 QGLViewerWidget::gourad(const Point &v1,
-                                  const glm::vec3 &normal,
+glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal,
                                   std::vector<quadPrimitiv> surface) {
   // shadow test
   glm::vec3 rayPos(v1.x, v1.y, v1.z);
@@ -599,9 +603,12 @@ void QGLViewerWidget::drawSurface(std::vector<quadPrimitiv> surfaceFaces) {
     auto p2 = t0.p2;
     auto p3 = t1.p0;
 
-    glm::vec3 normal_t0_p0 = (glm::length(p0->normal) == 0)? t0.norm : p0->normal;
-    glm::vec3 normal_t0_p2 = (glm::length(p2->normal) == 0)? t0.norm : p2->normal;
-    glm::vec3 normal_t0_p3 = (glm::length(p3->normal) == 0)? t0.norm : p3->normal;
+    glm::vec3 normal_t0_p0 =
+        (glm::length(p0->normal) == 0) ? t0.norm : p0->normal;
+    glm::vec3 normal_t0_p2 =
+        (glm::length(p2->normal) == 0) ? t0.norm : p2->normal;
+    glm::vec3 normal_t0_p3 =
+        (glm::length(p3->normal) == 0) ? t0.norm : p3->normal;
 
     auto col4 = gourad(*p0, normal_t0_p0);
     glColor3f(col4[0], col4[1], col4[2]);
@@ -615,9 +622,12 @@ void QGLViewerWidget::drawSurface(std::vector<quadPrimitiv> surfaceFaces) {
     glColor3f(col6[0], col6[1], col6[2]);
     glVertex3f(p2->x, p2->y, p2->z);
 
-    glm::vec3 normal_t1_p0 = (glm::length(p0->normal) == 0)? t1.norm : p0->normal;
-    glm::vec3 normal_t1_p1 = (glm::length(p1->normal) == 0)? t1.norm : p1->normal;
-    glm::vec3 normal_t1_p3 = (glm::length(p3->normal) == 0)? t1.norm : p3->normal;
+    glm::vec3 normal_t1_p0 =
+        (glm::length(p0->normal) == 0) ? t1.norm : p0->normal;
+    glm::vec3 normal_t1_p1 =
+        (glm::length(p1->normal) == 0) ? t1.norm : p1->normal;
+    glm::vec3 normal_t1_p3 =
+        (glm::length(p3->normal) == 0) ? t1.norm : p3->normal;
 
     // Second triangle
     auto col1 = gourad(*p0, normal_t1_p0);
@@ -635,16 +645,15 @@ void QGLViewerWidget::drawSurface(std::vector<quadPrimitiv> surfaceFaces) {
   glEnd();
 
   // Draw light source for debugging
-  float distToLight = glm::length(lightPos-computeCamPos());
+  float distToLight = glm::length(lightPos - computeCamPos());
   distToLight *= distToLight * 0.5f;
-  glPointSize(32.0f/distToLight);
+  glPointSize(32.0f / distToLight);
   glBegin(GL_POINTS);
   glEnable(GL_POINT_SMOOTH);
   glColor3f(1.0f, 1.0f, 0.0f);
   glVertex3f(lightPos[0], lightPos[1], lightPos[2]);
   glEnd();
 }
-
 
 void QGLViewerWidget::drawControlMesh() {
   if (surfaces == nullptr) {
@@ -1292,7 +1301,9 @@ void QGLViewerWidget::setDrawMCMesh(bool value) {
 }
 
 void QGLViewerWidget::computeMC() {
-  std::cout << "Calling computeMC()" << std::endl;
+  if (implicitSurface != nullptr) {
+    this->implicitSurface->computeMarchingCubes();
+  }
 }
 
 void QGLViewerWidget::computeEMC() {

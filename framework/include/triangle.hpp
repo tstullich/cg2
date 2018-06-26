@@ -22,29 +22,29 @@ public:
    * we might need to find another solution to
    * adding new vertices
    */
-  void add(const Point &vertex) { triangles.push_back(vertex); }
+  void add(const Point &vertex) { vertices.push_back(vertex); }
 
   /**
    * Returns the number of vertices in the current
    * vector
    */
-  int numVertices() { return triangles.size(); }
+  int numVertices() { return vertices.size(); }
 
   /**
    * An overloaded operator to allow direct indexng
    * of face indices. Does no bounds-checking so that
    * might be useful later
    */
-  Point &operator[](int idx) { return triangles[idx]; }
+  Point &operator[](int idx) { return vertices[idx]; }
 
   /**
    * An overloaded operator to allow direct indexng
    * of face indices. Does no bounds-checking so that
    * might be useful later
    */
-  const Point &operator[](int idx) const { return triangles[idx]; }
+  const Point &operator[](int idx) const { return vertices[idx]; }
 
 private:
-  std::vector<Point> triangles;
+  std::vector<Point> vertices;
 };
 #endif // TRIANGLES_HPP

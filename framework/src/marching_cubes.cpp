@@ -14,31 +14,30 @@ Point MarchingCubes::vertexInterp(double isolevel, const Point &p1,
   Point p(0.0, 0.0, 0.0);
 
   if (std::abs(isolevel - valp1) < 0.00001) {
-    return (p1);
+    return p1;
   }
   if (std::abs(isolevel - valp2) < 0.00001) {
-    return (p2);
+    return p2;
   }
   if (std::abs(valp1 - valp2) < 0.00001) {
-    return (p1);
+    return p1;
   }
   mu = (isolevel - valp1) / (valp2 - valp1);
   p.x = p1.x + mu * (p2.x - p1.x);
   p.y = p1.y + mu * (p2.y - p1.y);
   p.z = p1.z + mu * (p2.z - p1.z);
 
-  return (p);
+  return p;
 }
 
 /*
    Given a grid cell and an isolevel, calculate the triangular
    facets required to represent the isosurface through the cell.
-   Return the number of triangular facets, the array "triangles"
-   will be loaded up with the vertices at most 5 triangular facets.
-        0 will be returned if the grid cell is either totally above
+   Return the triangular facets which are at most 5.
+   0 facetes will be returned if the grid cell is either totally above
    of totally below the isolevel.
 */
-std::vector<Triangle> MarchingCubes::polygonise(GridCell grid,
+std::vector<Triangle> MarchingCubes::polygonise(const GridCell &grid,
                                                 double isolevel) {
   int i, ntriang;
   int cubeindex;
@@ -361,6 +360,7 @@ std::vector<Triangle> MarchingCubes::polygonise(GridCell grid,
 
   /* Cube is entirely in/out of the surface */
   if (edgeTable[cubeindex] == 0) {
+    std::cout << "Cube outside entirely" << std::endl;
     return std::vector<Triangle>();
   }
 
@@ -417,7 +417,9 @@ std::vector<Triangle> MarchingCubes::polygonise(GridCell grid,
   /* Create the triangle */
   ntriang = 0;
   auto triangles = std::vector<Triangle>();
-  for (i = 0; triTable[cubeindex][i] != -1; i += 3) {
+  for (uint64_t i = 0; triTable[cubeindex][i] != -1; i += 3) {
+    // TODO Check how this is organized structurally. Might be able to simplify
+    // this
     triangles[ntriang][0] = vertlist[triTable[cubeindex][i]];
     triangles[ntriang][1] = vertlist[triTable[cubeindex][i + 1]];
     triangles[ntriang][2] = vertlist[triTable[cubeindex][i + 2]];
