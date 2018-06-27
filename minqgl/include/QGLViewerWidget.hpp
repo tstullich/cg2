@@ -196,8 +196,6 @@ private:
                    const glm::vec3 &normal,
                    std::vector<quadPrimitiv> surface);
 
-  glm::vec3 center;
-
   glm::mat4 computeModelViewInv();
 
   glm::vec3 computeCamPos();
@@ -216,6 +214,9 @@ private:
 
   typedef std::map<QString, QAction *> ActionMap;
   ActionMap namesToActions;
+
+  glm::vec3 center = glm::vec3(0.0, 0.0, 0.0);
+  glm::vec3 cloudSize = glm::vec3(0.0, 0.0, 0.0);
 
   float radius;
   // virtual trackball: map 2D screen point to unit sphere

@@ -91,6 +91,8 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   implicitSurface = std::make_shared<ImplicitSurface>(
       kdtree, this->gridSubdivision, this->implicitRadius);
 
+  Borders b = this->kdtree->getRootnode()->borders;
+  this->cloudSize = glm::vec3(b.xMax-b.xMin, b.yMax-b.yMin, b.zMax-b.zMin);
   setScenePos(kdtree->getCenter(), 1.0);
   /* setScenePos(kdtree->getCenterOfGravity(), 1.0); */
   /* setScenePos(glm::vec3(0.5f, 0.5f, 0.35f), 1.0f); */
@@ -107,8 +109,8 @@ void QGLViewerWidget::animateLight() {
   unsigned frameCounter = 25;
   while (true) {
     if (flag_animate) {
-      lightPos[0] = sin(double(frameCounter) * M_PI / 100) + 0.5f;
-      lightPos[1] = cos(double(frameCounter) * M_PI / 100) + 0.5f;
+      lightPos[0] = cloudSize[0] * sin(double(frameCounter) * M_PI / 100) + center[0];
+      lightPos[1] = cloudSize[1] * cos(double(frameCounter) * M_PI / 100) + center[1];
       frameCounter = (frameCounter + 1) % 200;
       update();
     }
@@ -510,11 +512,7 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   glm::vec3 camPos = computeCamPos();
 
   glm::vec3 vertToCam = glm::normalize(camPos - vertPos);
-  glm::vec3 vertToLight = lightPos - vertPos;
-  float len =
-      sqrt(vertToLight[0] * vertToLight[0] + vertToLight[1] * vertToLight[1] +
-           vertToLight[2] * vertToLight[2]);
-  float attenuation = 1.0f / (1.0f + 0.1f * len + 0.01f * len * len);
+  glm::vec3 vertToLight = glm::normalize(lightPos - vertPos);
 
   glm::vec3 N(glm::normalize(normal));
   glm::vec3 L(glm::normalize(vertToLight));
@@ -525,11 +523,10 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
     R = glm::normalize((2.0f * (N * NL)) - L);
   }
 
-  glm::vec3 diffuse =
-      attenuation * diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
+  glm::vec3 diffuse = diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
 
-  glm::vec3 specular = attenuation * specularColor *
-                       glm::pow(glm::max(glm::dot(R, E), 0.0f), 50.0f);
+  glm::vec3 specular =
+      specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 50.0f);
 
   return ambientColor + diffuse + specular;
 }
@@ -579,7 +576,7 @@ void QGLViewerWidget::drawTriangleMesh(std::vector<Triangle> mesh) {
     auto p1 = mesh[i][1];
     auto p2 = mesh[i][2];
 
-    auto normal = triangleNormal(p0, p1, p2);
+    auto normal = triangleNormal(p0, p2, p1);
 
     auto col0 = gourad(p0, normal);
     glColor3f(col0[0], col0[1], col0[2]);

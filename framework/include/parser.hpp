@@ -14,7 +14,7 @@
 
 class Point;
 
-enum filetypeOFF { OFF, NOFF };
+enum filetypeOFF { OFF, NOFF, NNOFF };
 
 // limits of a particular cell are saved here
 struct Borders {

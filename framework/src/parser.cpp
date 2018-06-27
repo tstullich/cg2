@@ -11,6 +11,8 @@ bool Parser::open(const std::string &fileName) {
       mode = OFF;
     } else if (off == "NOFF") {
       mode = NOFF;
+    } else if (off == "NNOFF") {
+      mode = NNOFF;
     } else {
       std::cout << "OFF file does not start with 'OFF' declaration. Invalid "
                    "file format"
@@ -38,17 +40,30 @@ std::unique_ptr<std::vector<Point>> Parser::getPoints() {
   auto points = std::make_unique<std::vector<Point>>(numPoints, Point(0, 0, 0));
   float x, y, z, n0, n1, n2;
   for (int i = 0; i < numPoints; i++) {
-    if (mode == OFF) {
-      inputStream >> x >> y >> z;
-      points->at(i).x = x;
-      points->at(i).y = y;
-      points->at(i).z = z;
-    } else if (mode == NOFF) {
-      inputStream >> x >> y >> z >> n0 >> n1 >> n2;
-      points->at(i).x = x;
-      points->at(i).y = y;
-      points->at(i).z = z;
-      points->at(i).normal = glm::vec3(n0, n1, n2);
+    switch(mode) {
+      case OFF:
+        inputStream >> x >> y >> z;
+        points->at(i).x = x;
+        points->at(i).y = y;
+        points->at(i).z = z;
+        break;
+      case NOFF:
+        inputStream >> x >> y >> z >> n0 >> n1 >> n2;
+        points->at(i).x = x;
+        points->at(i).y = y;
+        points->at(i).z = z;
+        points->at(i).normal = glm::vec3(n0, n1, n2);
+        break;
+      case NNOFF:
+        inputStream >> x >> y >> z >> n0 >> n1 >> n2;
+        points->at(i).x = x;
+        points->at(i).y = y;
+        points->at(i).z = z;
+        points->at(i).normal = -glm::vec3(n0, n1, n2);
+        break;
+      default:
+        std::cout << "parser error" << std::endl;
+        return nullptr;
     }
 
     outerBox.xMin = std::min(outerBox.xMin, x);
