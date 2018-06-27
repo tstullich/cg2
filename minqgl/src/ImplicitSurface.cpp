@@ -30,6 +30,10 @@ ImplicitSurface::getImplicitGridPoints() {
   return implicitGridPoints;
 }
 
+std::vector<Triangle> ImplicitSurface::getMarchingCubesMesh() {
+  return marchingCubesMesh;
+}
+
 void ImplicitSurface::computeImplicitGridPoints() {
   this->implicitGridPoints.clear();
 
@@ -320,50 +324,46 @@ void ImplicitSurface::createAdditionalPoints() {
 
 void ImplicitSurface::computeMarchingCubes() {
   computeImplicitFunction();
+
+  // Clear mesh if marching cubes has been performed already
+  if (!marchingCubesMesh.empty()) {
+    marchingCubesMesh.clear();
+  }
+
   // Iterate through and build grid cells to compute intersections
-  auto triangles = std::vector<Triangle>();
   for (uint z = 0; z < gridSubdivision; z++) {
     for (uint y = 0; y < gridSubdivision; y++) {
       for (uint x = 0; x < gridSubdivision; x++) {
         GridCell gridCell;
         // Set points of cube
         gridCell.p[0] = *this->implicitGridPoints[x][y][z + 1];
-        gridCell.val[0] = evaluateImplicitFunction(gridCell.p[0]);
-        std::cout << "Eval: " << gridCell.val[0] << std::endl;
+        gridCell.val[0] = computeMLS(gridCell.p[0]);
 
         gridCell.p[1] = *this->implicitGridPoints[x + 1][y][z + 1];
-        gridCell.val[1] = evaluateImplicitFunction(gridCell.p[1]);
-        std::cout << "Eval: " << gridCell.val[1] << std::endl;
+        gridCell.val[1] = computeMLS(gridCell.p[1]);
 
         gridCell.p[2] = *this->implicitGridPoints[x + 1][y][z];
-        gridCell.val[2] = evaluateImplicitFunction(gridCell.p[2]);
-        std::cout << "Eval: " << gridCell.val[2] << std::endl;
+        gridCell.val[2] = computeMLS(gridCell.p[2]);
 
         gridCell.p[3] = *this->implicitGridPoints[x][y][z];
-        gridCell.val[3] = evaluateImplicitFunction(gridCell.p[3]);
-        std::cout << "Eval: " << gridCell.val[3] << std::endl;
+        gridCell.val[3] = computeMLS(gridCell.p[3]);
 
         gridCell.p[4] = *this->implicitGridPoints[x][y + 1][z + 1];
-        gridCell.val[4] = evaluateImplicitFunction(gridCell.p[4]);
-        std::cout << "Eval: " << gridCell.val[4] << std::endl;
+        gridCell.val[4] = computeMLS(gridCell.p[4]);
 
         gridCell.p[5] = *this->implicitGridPoints[x + 1][y + 1][z + 1];
-        gridCell.val[5] = evaluateImplicitFunction(gridCell.p[5]);
-        std::cout << "Eval: " << gridCell.val[5] << std::endl;
+        gridCell.val[5] = computeMLS(gridCell.p[5]);
 
         gridCell.p[6] = *this->implicitGridPoints[x + 1][y + 1][z];
-        gridCell.val[6] = evaluateImplicitFunction(gridCell.p[6]);
-        std::cout << "Eval: " << gridCell.val[6] << std::endl;
+        gridCell.val[6] = computeMLS(gridCell.p[6]);
 
         gridCell.p[7] = *this->implicitGridPoints[x][y + 1][z];
-        gridCell.val[7] = evaluateImplicitFunction(gridCell.p[7]);
-        std::cout << "Eval: " << gridCell.val[7] << std::endl;
+        gridCell.val[7] = computeMLS(gridCell.p[7]);
 
-        // TODO Change values to actually be correct
-        auto t = MarchingCubes::polygonise(gridCell, 0.0);
-        triangles.insert(triangles.end(), t.begin(), t.end());
+        auto partialMesh = MarchingCubes::polygonise(gridCell, 0.0);
+        marchingCubesMesh.insert(marchingCubesMesh.end(), partialMesh.begin(),
+                                 partialMesh.end());
       }
     }
   }
-  std::cout << "Triangles: " << triangles.size() << std::endl;
 }

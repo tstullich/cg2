@@ -506,7 +506,7 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   glm::vec3 diffuseColor(1.0f, 0.0f, 0.0f);
   glm::vec3 specularColor(1.0f, 1.0f, 1.0f);
 
-  // camara positions
+  // camera positions
   glm::vec3 camPos = computeCamPos();
 
   glm::vec3 vertToCam = glm::normalize(camPos - vertPos);
@@ -566,134 +566,56 @@ bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0,
   }
 }
 
-glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal,
-                                  std::vector<quadPrimitiv> surface) {
-  // shadow test
-  glm::vec3 rayPos(v1.x, v1.y, v1.z);
-  glm::vec3 rayDir(glm::normalize(lightPos - rayPos));
-  for (int i = 0; i < surface.size(); ++i) {
-    struct trianglePrimitiv t0 = surface[i].t0;
-    glm::vec3 p00 = t0.p0->toVec3();
-    glm::vec3 p01 = t0.p1->toVec3();
-    glm::vec3 p02 = t0.p2->toVec3();
-    struct trianglePrimitiv t1 = surface[i].t1;
-    glm::vec3 p10 = t1.p0->toVec3();
-    glm::vec3 p11 = t1.p1->toVec3();
-    glm::vec3 p12 = t1.p2->toVec3();
-    if (intersectRayTriangle(rayPos, rayDir, p00, p01, p02) ||
-        intersectRayTriangle(rayPos, rayDir, p10, p11, p12)) {
-      return glm::vec3(0.1f, 0.0f, 0.0f);
-    }
+void QGLViewerWidget::drawTriangleMesh(std::vector<Triangle> mesh) {
+  // No mesh to draw. Just return
+  if (mesh.empty()) {
+    return;
   }
 
-  return gourad(v1, normal);
-}
-
-void QGLViewerWidget::drawSurface(std::vector<quadPrimitiv> surfaceFaces) {
   glBegin(GL_TRIANGLES);
-  for (uint i = 0; i < surfaceFaces.size(); i++) {
-    struct trianglePrimitiv t0 = surfaceFaces[i].t0;
-    struct trianglePrimitiv t1 = surfaceFaces[i].t1;
+  glPointSize(10.0f);
+  for (uint i = 0; i < mesh.size(); i++) {
+    auto p0 = mesh[i][0];
+    auto p1 = mesh[i][1];
+    auto p2 = mesh[i][2];
 
-    assert(t0.p0 == t1.p1);
-    assert(t0.p1 == t1.p0);
+    auto normal = triangleNormal(p0, p1, p2);
 
-    auto p0 = t1.p1;
-    auto p1 = t1.p2;
-    auto p2 = t0.p2;
-    auto p3 = t1.p0;
+    auto col0 = gourad(p0, normal);
+    glColor3f(col0[0], col0[1], col0[2]);
+    glVertex3f(p0.x, p0.y, p0.z);
 
-    glm::vec3 normal_t0_p0 =
-        (glm::length(p0->normal) == 0) ? t0.norm : p0->normal;
-    glm::vec3 normal_t0_p2 =
-        (glm::length(p2->normal) == 0) ? t0.norm : p2->normal;
-    glm::vec3 normal_t0_p3 =
-        (glm::length(p3->normal) == 0) ? t0.norm : p3->normal;
-
-    auto col4 = gourad(*p0, normal_t0_p0);
-    glColor3f(col4[0], col4[1], col4[2]);
-    glVertex3f(p0->x, p0->y, p0->z);
-
-    auto col5 = gourad(*p3, normal_t0_p3);
-    glColor3f(col5[0], col5[1], col5[2]);
-    glVertex3f(p3->x, p3->y, p3->z);
-
-    auto col6 = gourad(*p2, normal_t0_p2);
-    glColor3f(col6[0], col6[1], col6[2]);
-    glVertex3f(p2->x, p2->y, p2->z);
-
-    glm::vec3 normal_t1_p0 =
-        (glm::length(p0->normal) == 0) ? t1.norm : p0->normal;
-    glm::vec3 normal_t1_p1 =
-        (glm::length(p1->normal) == 0) ? t1.norm : p1->normal;
-    glm::vec3 normal_t1_p3 =
-        (glm::length(p3->normal) == 0) ? t1.norm : p3->normal;
-
-    // Second triangle
-    auto col1 = gourad(*p0, normal_t1_p0);
+    auto col1 = gourad(p1, normal);
     glColor3f(col1[0], col1[1], col1[2]);
-    glVertex3f(p0->x, p0->y, p0->z);
+    glVertex3f(p1.x, p1.y, p1.z);
 
-    auto col2 = gourad(*p1, normal_t1_p1);
+    auto col2 = gourad(p2, normal);
     glColor3f(col2[0], col2[1], col2[2]);
-    glVertex3f(p1->x, p1->y, p1->z);
-
-    auto col3 = gourad(*p3, normal_t1_p3);
-    glColor3f(col3[0], col3[1], col3[2]);
-    glVertex3f(p3->x, p3->y, p3->z);
+    glVertex3f(p2.x, p2.y, p2.z);
   }
   glEnd();
 
-  // Draw light source for debugging
   float distToLight = glm::length(lightPos - computeCamPos());
   distToLight *= distToLight * 0.5f;
-  glPointSize(32.0f / distToLight);
   glBegin(GL_POINTS);
+  glPointSize(32.0f / distToLight);
   glEnable(GL_POINT_SMOOTH);
   glColor3f(1.0f, 1.0f, 0.0f);
   glVertex3f(lightPos[0], lightPos[1], lightPos[2]);
   glEnd();
 }
 
-void QGLViewerWidget::drawControlMesh() {
-  if (surfaces == nullptr) {
+void QGLViewerWidget::drawMarchingCubesMesh() {
+  if (implicitSurface == nullptr) {
     return;
   }
 
-  // Grab our vertices to shade
-  auto surfaceFaces = surfaces->getControlFaces();
-
-  drawSurface(surfaceFaces);
-}
-
-void QGLViewerWidget::drawSurfaceBTPS() {
-  if (surfaces == nullptr) {
-    return;
-  }
-
-  // Grab our vertices to shade
-  auto surfaceFaces = surfaces->getSurfaceFacesBTPS();
-
-  drawSurface(surfaceFaces);
-}
-
-void QGLViewerWidget::drawSurfaceMLS() {
-  if (surfaces == nullptr) {
-    return;
-  }
-
-  // Grab our vertices to shade
-  auto surfaceFaces = surfaces->getSurfaceFacesMLS();
-
-  drawSurface(surfaceFaces);
+  drawTriangleMesh(implicitSurface->getMarchingCubesMesh());
 }
 
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
-  if (flag_drawControlMesh) {
-    drawControlMesh();
-  }
   if (drawPoints) {
     drawPointSet();
   }
@@ -706,14 +628,11 @@ void QGLViewerWidget::drawScene() {
   if (drawPositiveSamples || drawNegativeSamples) {
     drawImplicitGridPoints();
   }
-  if (flag_drawSurfaceBTPS) {
-    drawSurfaceBTPS();
-  }
-  if (flag_drawSurfaceMLS) {
-    drawSurfaceMLS();
-  }
   if (flag_drawTree) {
     drawKDTree();
+  }
+  if (flag_drawMarchingCubes) {
+    drawMarchingCubesMesh();
   }
 
   // Draw a coordinate system
@@ -1298,9 +1217,13 @@ void QGLViewerWidget::computeSamples() {
 
 void QGLViewerWidget::setDrawMCMesh(bool value) {
   std::cout << "Changing setDrawMCMesh value to " << value << std::endl;
+  this->flag_drawMarchingCubes = value;
+  updateGL();
 }
 
 void QGLViewerWidget::computeMC() {
+  // TODO This does not properly stop if samples haven't been calculated yet
+  // Find another way to check
   if (implicitSurface != nullptr) {
     this->implicitSurface->computeMarchingCubes();
   }

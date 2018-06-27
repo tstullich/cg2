@@ -94,9 +94,7 @@ protected:
   void drawRegularGrid();
   void drawKDTree();
   void drawSurface(std::vector<quadPrimitiv> surfaceFaces);
-  void drawControlMesh();
-  void drawSurfaceBTPS();
-  void drawSurfaceMLS();
+  void drawMarchingCubesMesh();
 
   void drawImplicitGridPoints();
 
@@ -161,6 +159,7 @@ private slots:
   void setEpsilon(double value);
   void setRadius(double value);
   void computeSamples();
+  void drawTriangleMesh(std::vector<Triangle> mesh);
 
   void setDrawMCMesh(bool value);
   void computeMC();
@@ -240,9 +239,6 @@ private:
   float implicitRadius = 0.02;
   int kMLS = 1;
   int kBTPS = 1;
-  bool flag_drawControlMesh = false;
-  bool flag_drawSurfaceMLS = false;
-  bool flag_drawSurfaceBTPS = false;
   bool flag_drawSelectedPoints = true;
   bool flag_drawTree = false;
   bool flag_drawMarchingCubes = false;

@@ -13,6 +13,7 @@
 
 #include "kdtree.hpp"
 #include "marching_cubes.hpp"
+#include "triangle.hpp"
 
 using namespace Eigen;
 
@@ -28,6 +29,7 @@ class ImplicitSurface {
     PointPointerList getPositivePoints();
     PointPointerList getNegativePoints();
     std::vector<std::vector<std::vector<std::shared_ptr<Point>>>> getImplicitGridPoints();
+    std::vector<Triangle> getMarchingCubesMesh();
 
     void computeImplicitGridPoints();
 
@@ -53,6 +55,7 @@ class ImplicitSurface {
 
     std::vector<std::vector<std::vector<std::shared_ptr<Point>>>> implicitGridPoints;
     std::vector<VectorXf> implicitFunction;
+    std::vector<Triangle> marchingCubesMesh;
 
     unsigned int gridSubdivision;
     float radius;

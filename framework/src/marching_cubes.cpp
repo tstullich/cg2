@@ -360,7 +360,6 @@ std::vector<Triangle> MarchingCubes::polygonise(const GridCell &grid,
 
   /* Cube is entirely in/out of the surface */
   if (edgeTable[cubeindex] == 0) {
-    std::cout << "Cube outside entirely" << std::endl;
     return std::vector<Triangle>();
   }
 
@@ -415,15 +414,12 @@ std::vector<Triangle> MarchingCubes::polygonise(const GridCell &grid,
   }
 
   /* Create the triangle */
-  ntriang = 0;
   auto triangles = std::vector<Triangle>();
   for (uint64_t i = 0; triTable[cubeindex][i] != -1; i += 3) {
-    // TODO Check how this is organized structurally. Might be able to simplify
-    // this
-    triangles[ntriang][0] = vertlist[triTable[cubeindex][i]];
-    triangles[ntriang][1] = vertlist[triTable[cubeindex][i + 1]];
-    triangles[ntriang][2] = vertlist[triTable[cubeindex][i + 2]];
-    ntriang++;
+    auto vertex0 = vertlist[triTable[cubeindex][i]];
+    auto vertex1 = vertlist[triTable[cubeindex][i + 1]];
+    auto vertex2 = vertlist[triTable[cubeindex][i + 2]];
+    triangles.push_back(Triangle(vertex0, vertex1, vertex2));
   }
 
   return triangles;

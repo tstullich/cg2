@@ -15,6 +15,12 @@
  */
 class Triangle {
 public:
+  Triangle(const Point &v0, const Point &v1, const Point &v2)  {
+    vertices.push_back(v0);
+    vertices.push_back(v1);
+    vertices.push_back(v2);
+  }
+
   /**
    * This lets you add a vertex index to the
    * Face object. The element will be added to
@@ -46,5 +52,6 @@ public:
 
 private:
   std::vector<Point> vertices;
+  Point normal;
 };
 #endif // TRIANGLES_HPP
