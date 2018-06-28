@@ -52,6 +52,5 @@ public:
 
 private:
   std::vector<Point> vertices;
-  Point normal;
 };
 #endif // TRIANGLES_HPP

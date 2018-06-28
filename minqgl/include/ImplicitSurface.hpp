@@ -3,9 +3,10 @@
 
 #include <cmath>
 #include <iostream>
-#include <memory>
-#include <vector>
 #include <map>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>

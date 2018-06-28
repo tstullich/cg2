@@ -331,6 +331,8 @@ void ImplicitSurface::computeMarchingCubes() {
   }
 
   // Iterate through and build grid cells to compute intersections
+  std::mutex meshMutex;
+#pragma omp parallel for collapse(3)
   for (uint z = 0; z < gridSubdivision; z++) {
     for (uint y = 0; y < gridSubdivision; y++) {
       for (uint x = 0; x < gridSubdivision; x++) {
@@ -361,8 +363,13 @@ void ImplicitSurface::computeMarchingCubes() {
         gridCell.val[7] = computeMLS(gridCell.p[7]);
 
         auto partialMesh = MarchingCubes::polygonise(gridCell, 0.0);
-        marchingCubesMesh.insert(marchingCubesMesh.end(), partialMesh.begin(),
-                                 partialMesh.end());
+        if (!partialMesh.empty()) {
+          // Only lock resource for insertion if we actually have
+          // some triangles to be added
+          std::lock_guard<std::mutex> lock(meshMutex);
+          marchingCubesMesh.insert(marchingCubesMesh.end(), partialMesh.begin(),
+                                   partialMesh.end());
+        }
       }
     }
   }
