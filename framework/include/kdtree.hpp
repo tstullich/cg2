@@ -44,6 +44,8 @@ class KDTree {
 public:
   KDTree(std::unique_ptr<PointList> plist, Borders outerBox);
 
+  float getDiagonal();
+
   glm::vec3 getCenter();
 
   glm::vec3 getCenterOfGravity();
@@ -61,6 +63,9 @@ public:
 
   PointPointerList collectKNearestSimple(const Point &p, int knearest);
   PointPointerList collectKNearest(const Point &p, int knearest);
+
+  float distToClosestPoint(const Point &p);
+  float distToSurface(const Point &p, glm::vec3 rayPos, glm::vec3 rayDir);
 
   std::shared_ptr<PointList> getPoints();
   std::shared_ptr<Node> getRootnode();
@@ -157,6 +162,7 @@ private:
   // 5 was the suggested size on wikipedia but we may be able to change this
   const int partitionSize = 5;
 
+  float diagonal;
   glm::vec3 center;
   glm::vec3 centerOfGravity;
 };

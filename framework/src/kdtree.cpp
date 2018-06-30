@@ -112,6 +112,57 @@ PointPointerList KDTree::collectKNearest(const Point &p, int knearest) {
   return pl;
 }
 
+float KDTree::distToClosestPoint(const Point &p) {
+  PointPointerList pl;
+  if (rootnode->plist.size() <= 1) {
+    PointPointerList ppl(rootnode->plist);
+    pl = ppl;
+  } else {
+    PriorityQueue pq;
+    NodeList nl;
+    recursiveKNearestSearch(p, 1, rootnode, nl, pq);
+    unsigned int pq_size = pq.size();
+    for (unsigned int i = 0; i < pq_size; i++) {
+      pl.emplace_back(std::move(pq.top()));
+      pq.pop();
+    }
+  }
+  assert(pl.size() == 1);
+  return glm::length(p.toVec3() - pl.front()->toVec3());
+
+}
+
+float KDTree::distToSurface(const Point &p, glm::vec3 rayPos, glm::vec3 rayDir) {
+  // if close enough, compute exact distance
+  PointPointerList pl;
+  if (rootnode->plist.size() <= 3) {
+    PointPointerList ppl(rootnode->plist);
+    pl = ppl;
+  } else {
+    PriorityQueue pq;
+    NodeList nl;
+    recursiveKNearestSearch(p, 3, rootnode, nl, pq);
+    unsigned int pq_size = pq.size();
+    for (unsigned int i = 0; i < pq_size; i++) {
+      pl.emplace_back(std::move(pq.top()));
+      pq.pop();
+    }
+  }
+  assert(pl.size() == 3);
+
+  /* glm::vec3 N = glm::normalize(glm::cross((pl[2]->toVec3()-pl[0]->toVec3()), (pl[1]->toVec3()-pl[0]->toVec3()))); */
+  /* float t = glm::dot((rayPos-pl[0]->toVec3()), N) / glm::dot(rayDir, N); */
+  /* glm::vec3 plainPoint = rayPos + t * rayDir; */
+
+  glm::vec3 plainPoint(0.0, 0.0, 0.0);
+  plainPoint[0] += pl[0]->toVec3()[0] + pl[1]->toVec3()[0] + pl[2]->toVec3()[0];
+  plainPoint[1] += pl[0]->toVec3()[1] + pl[1]->toVec3()[1] + pl[2]->toVec3()[1];
+  plainPoint[2] += pl[0]->toVec3()[2] + pl[1]->toVec3()[2] + pl[2]->toVec3()[2];
+  plainPoint /= 3.0;
+
+  return glm::length(p.toVec3() - plainPoint);
+}
+
 void KDTree::recursiveKNearestSearch(const Point &p, int k,
                                      std::shared_ptr<Node> &n, NodeList &nl,
                                      PriorityQueue &pq) {
@@ -123,17 +174,19 @@ void KDTree::recursiveKNearestSearch(const Point &p, int k,
     } else {
       if ((n->split.axis == 0 && p.x < n->split.value) ||
           (n->split.axis == 1 && p.y < n->split.value) ||
-          (n->split.axis == 2 && p.z < n->split.value))
+          (n->split.axis == 2 && p.z < n->split.value)) {
         recursiveKNearestSearch(p, k, n->nlist[0], nl, pq);
-      else
+      } else {
         recursiveKNearestSearch(p, k, n->nlist[1], nl, pq);
+      }
     }
   } else {
     if (std::find(nl.begin(), nl.end(), n) != nl.end()) {
-      if (n->parent != nullptr)
+      if (n->parent != nullptr) {
         recursiveKNearestSearch(p, k, n->parent, nl, pq);
-      else
+      } else {
         return;
+      }
     } else {
       if (p.distNode(*n) < pq.top()->dist) {
         if (n->nlist.empty()) {
@@ -148,10 +201,11 @@ void KDTree::recursiveKNearestSearch(const Point &p, int k,
           if (child1_exists && child2_exists) {
             nl.push_back(n);
             recursiveKNearestSearch(p, k, n, nl, pq);
-          } else if (!child1_exists)
+          } else if (!child1_exists) {
             recursiveKNearestSearch(p, k, n->nlist[0], nl, pq);
-          else if (!child2_exists)
+          } else if (!child2_exists) {
             recursiveKNearestSearch(p, k, n->nlist[1], nl, pq);
+          }
         }
       } else {
         nl.push_back(n);
@@ -204,6 +258,7 @@ bool KDTree::buildTree(Borders &outerBox) {
   float y = outerBox.yMin + (outerBox.yMax - outerBox.yMin) / 2.0;
   float z = outerBox.zMin + (outerBox.zMax - outerBox.zMin) / 2.0;
   center = glm::vec3(x, y, z);
+  diagonal = glm::length(glm::vec3(outerBox.xMax, outerBox.yMax, outerBox.zMax) - glm::vec3(outerBox.xMin, outerBox.yMin, outerBox.zMin));
 
   centerOfGravity = glm::vec3(0.0f, 0.0f, 0.0f);
   for (unsigned int i = 0; i < plist->size(); i++) {
@@ -218,6 +273,8 @@ bool KDTree::buildTree(Borders &outerBox) {
             << outerBox.xMax << "]"
             << " y = [" << outerBox.yMin << ", " << outerBox.yMax << "]"
             << " z = [" << outerBox.zMin << ", " << outerBox.zMax << "]"
+            << " center = " << center[0] << ", " << center[1] << ", " << center[2]
+            << " diagonal = " << diagonal
             << std::endl;
   recursiveTreeExtend(0, rootnode);
   std::cout << "KDTree built successful!" << std::endl;
@@ -389,6 +446,10 @@ void KDTree::swapPoints(const std::vector<std::shared_ptr<Point>> &pointList,
   auto tempPoint = *pointList[leftIndex];
   *pointList[leftIndex] = *pointList[rightIndex];
   *pointList[rightIndex] = tempPoint;
+}
+
+float KDTree::getDiagonal() {
+  return this->diagonal;
 }
 
 glm::vec3 KDTree::getCenter() {

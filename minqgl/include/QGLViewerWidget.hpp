@@ -13,6 +13,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <chrono>
@@ -22,6 +23,7 @@
 #include <QElapsedTimer>
 #include <QFileDialog>
 #include <QMainWindow>
+#include <QDesktopWidget>
 
 #ifndef __APPLE__
 #include <GL/glut.h>
@@ -40,6 +42,26 @@
 #include "surfaces.hpp"
 #include "ImplicitSurface.hpp"
 // --------------------
+
+enum RayMode {MARCHING, SPHERE};
+
+struct Intersection {
+  glm::vec3 point;
+  glm::vec3 color;
+};
+
+struct rayCastingFrustum {
+  glm::vec3 near0;
+  glm::vec3 near1;
+  glm::vec3 near2;
+  glm::vec3 near3;
+  glm::vec3 far0;
+  glm::vec3 far1;
+  glm::vec3 far2;
+  glm::vec3 far3;
+  glm::vec3 ray0;
+  glm::vec3 ray1;
+};
 
 //== FORWARD DECLARATIONS =====================================================
 
@@ -94,6 +116,9 @@ protected:
   void drawRegularGrid();
   void drawKDTree();
   void drawSurface(std::vector<quadPrimitiv> surfaceFaces);
+
+  void drawIntersections();
+
   void drawMarchingCubesMesh();
 
   void drawImplicitGridPoints();
@@ -111,6 +136,10 @@ protected:
 
   // list of data points
   std::shared_ptr<PointList> pointList;
+
+  // list of intersection points
+  std::vector<struct Intersection> intersections;
+  struct rayCastingFrustum frustum;
 
   // list of selected data points
   PointPointerList selectedPointList;
@@ -164,6 +193,11 @@ private slots:
   void setDrawMCMesh(bool value);
   void computeMC();
   void computeEMC();
+
+  bool rayMarching(glm::vec3 rayPos, glm::vec3 rayDir, float *dist);
+  bool sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir, float *dist);
+  void clearRayCasting();
+  void raycasting();
 
 private:
   void init();
@@ -229,6 +263,9 @@ private:
   int currentSliderValue = 0;
 
   bool drawPoints = true;
+  bool flag_shootRays = false;
+  bool flag_drawIntersections = false;
+  RayMode rayMode = SPHERE;
   bool flag_drawPointSetNormals = true;
   bool drawGrid = false;
   int gridM = 10;

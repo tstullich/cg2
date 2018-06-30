@@ -93,12 +93,17 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 
   Borders b = this->kdtree->getRootnode()->borders;
   this->cloudSize = glm::vec3(b.xMax-b.xMin, b.yMax-b.yMin, b.zMax-b.zMin);
-  setScenePos(kdtree->getCenter(), 1.0);
+
+  float maxSize = std::max(cloudSize[0], cloudSize[1]);
+  maxSize = std::max(maxSize, cloudSize[1]);
+  float newRadius = (maxSize > 1.0)? maxSize*0.7 : 1.0;
+  setScenePos(kdtree->getCenter(), newRadius);
   /* setScenePos(kdtree->getCenterOfGravity(), 1.0); */
   /* setScenePos(glm::vec3(0.5f, 0.5f, 0.35f), 1.0f); */
 
   selectedPointIndex = 0;
   selectedPointList.clear();
+  clearRayCasting();
 
   updateGL();
 
@@ -563,6 +568,246 @@ bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0,
   }
 }
 
+bool QGLViewerWidget::rayMarching(glm::vec3 rayPos, glm::vec3 rayDir, float *dist) {
+  if (this->implicitSurface == nullptr) {
+    return false;
+  }
+
+  rayDir = glm::normalize(rayDir);
+  assert(glm::length(rayDir) != 0.0);
+
+  // evaluation at ray origin
+  Point p(rayPos[0], rayPos[1], rayPos[2]);
+  float lastVal = this->implicitSurface->computeMLS(p);
+  float maxDist = *dist;
+  float stepSize = 0.01*kdtree->getDiagonal();
+  for (*dist = stepSize; (*dist)+stepSize < maxDist; (*dist)+=stepSize) {
+    float x = rayPos[0] + (*dist)*rayDir[0];
+    float y = rayPos[1] + (*dist)*rayDir[1];
+    float z = rayPos[2] + (*dist)*rayDir[2];
+    Point p(x, y, z);
+    float currVal = this->implicitSurface->computeMLS(p);
+    // check for sign change
+    if ((lastVal > 0.0 && currVal <= 0.0) || (lastVal < 0.0 && currVal >= 0.0)) {
+      return true;
+    }
+    lastVal = currVal;
+  }
+
+  return false;
+}
+
+bool QGLViewerWidget::sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir, float *dist) {
+  if (this->implicitSurface == nullptr) {
+    return false;
+  }
+
+  rayDir = glm::normalize(rayDir);
+  assert(glm::length(rayDir) != 0.0);
+
+  // evaluation at ray origin
+  Point p(rayPos[0], rayPos[1], rayPos[2]);
+  float lastDist = std::numeric_limits<float>::max();
+  float currDist = this->kdtree->distToSurface(p, rayPos, rayDir);
+  float totalDist = 0.0;
+  while(currDist < lastDist) {
+    lastDist = currDist;
+    // make sphere raius step
+    p.x += lastDist*rayDir[0];
+    p.y += lastDist*rayDir[1];
+    p.z += lastDist*rayDir[2];
+    totalDist += lastDist;
+    // calculate new sphere radius
+    currDist = this->kdtree->distToSurface(p, rayPos, rayDir);
+    // if it converges, we hit the surface
+    if (currDist < 0.01) {
+      *dist = totalDist;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void QGLViewerWidget::clearRayCasting() {
+  intersections.clear();
+  frustum.near0 = glm::vec3(0.0, 0.0, 0.0);
+  frustum.near1 = glm::vec3(0.0, 0.0, 0.0);
+  frustum.near2 = glm::vec3(0.0, 0.0, 0.0);
+  frustum.near3 = glm::vec3(0.0, 0.0, 0.0);
+  frustum.far0 = glm::vec3(0.0, 0.0, 0.0);
+  frustum.far1 = glm::vec3(0.0, 0.0, 0.0);
+  frustum.far2 = glm::vec3(0.0, 0.0, 0.0);
+  frustum.far3 = glm::vec3(0.0, 0.0, 0.0);
+  frustum.ray0 = glm::vec3(0.0, 0.0, 0.0);
+  frustum.ray1 = glm::vec3(0.0, 0.0, 0.0);
+}
+
+void QGLViewerWidget::raycasting() {
+  std::cout << "raycasting() start!" << std::endl;
+  flag_shootRays = false;
+  flag_animate = true;
+
+  clearRayCasting();
+
+  glm::mat4 modelView_inv = computeModelViewInv();
+
+  // collect information
+  glm::vec4 tmp = (modelView_inv * vec4(0, 0, 0, 1));
+  glm::vec3 camPos;  // camera position
+  camPos[0] = tmp[0] / tmp[3];
+  camPos[1] = tmp[1] / tmp[3];
+  camPos[2] = tmp[2] / tmp[3];
+  glm::vec3 camUp;  // camera up direction
+  camUp[0] = modelviewMatrix[1];
+  camUp[1] = modelviewMatrix[5];
+  camUp[2] = modelviewMatrix[9];
+  float zNear = zNearFactor * 1.0;
+  /* float zFar = (rayMode == MARCHING)? 1.5 : zFarFactor * 1.0; */
+  float zFar = 1.5*kdtree->getDiagonal();
+
+  // viewing direction
+  glm::vec3 camView;
+  camView[0] = -modelviewMatrix[2];
+  camView[1] = -modelviewMatrix[6];
+  camView[2] = -modelviewMatrix[10];
+  camView = glm::normalize(camView);
+
+  // calc vector span for view plane
+  glm::vec3 h = glm::cross(camView, camUp);
+  h = glm::normalize(h);
+  glm::vec3 v = glm::cross(h, camView);
+  v = glm::normalize(v);
+  double rad = fovy() * M_PI / 180.0f;
+  float vLength = std::tan(rad / 2.0f) * zNear;
+  float hLength = vLength * ((double)width() / height());
+  v = v * vLength;
+  h = h * hLength;
+
+  unsigned sphereDrawOff = 2;
+  for (unsigned m = 0; m <= height(); m+=1) {
+    if (rayMode == SPHERE) {
+      if (!(m+sphereDrawOff < height()/2.0 || m-sphereDrawOff > height()/2.0)) {
+        std::cout << "line" << m << std::endl;
+      }
+    }
+    for (unsigned n = 0; n <= width(); n+=1) {
+      // ray position and direction
+      double N = n - (width() / 2.0f);
+      double M = -1.0f * (m - height() / 2.0f);
+      float viewN = N / (width() / 2.0f);
+      float viewM = M / (height() / 2.0f);
+      glm::vec3 rayPos = camPos + (camView * zNear) + (h * viewN) + (v * viewM);
+      glm::vec3 rayDir = glm::normalize(rayPos - camPos);
+
+      // fill in frustum information
+      frustum.ray0 = rayPos;
+      frustum.ray1 = rayPos + zFar * rayDir;
+      if (m == 0 && n == 0) {
+        frustum.near0 = rayPos;
+        frustum.far0 = rayPos + zFar * rayDir;
+      } else if (m == 0 && n == width()) {
+        frustum.near1 = rayPos;
+        frustum.far1 = rayPos + zFar * rayDir;
+      } else if (n == 0) {
+        frustum.near3 = rayPos;
+        frustum.far3 = rayPos + zFar * rayDir;
+      } else if (n == width()) {
+        frustum.near2 = rayPos;
+        frustum.far2 = rayPos + zFar * rayDir;
+      }
+
+      if (rayMode == SPHERE) {
+        if (m+sphereDrawOff < height()/2.0 || m-sphereDrawOff > height()/2.0) {
+          continue;
+        }
+      }
+
+      // ray casting starts hear
+      float dist = zFar;
+      bool hit = false;
+      switch(rayMode) {
+        case MARCHING:
+          hit = rayMarching(rayPos, rayDir, &dist);
+          break;
+        case SPHERE:
+          hit = sphereTracing(rayPos, rayDir, &dist);
+          break;
+        default:
+          return;
+      }
+      if (hit) {
+        struct Intersection newIntersection;
+        // test screen
+        newIntersection.point = glm::vec3(rayPos[0]+ dist*rayDir[0],
+                                          rayPos[1]+ dist*rayDir[1],
+                                          rayPos[2]+ dist*rayDir[2]);
+        newIntersection.color = glm::vec3(1.0, 1.0, 1.0);
+        intersections.push_back(newIntersection);
+      }
+    }
+  }
+
+  std::cout << "raycasting() finish!" << std::endl;
+  flag_animate = false;
+
+  return;
+}
+
+void drawVec3(glm::vec3 v) {
+  glVertex3f(v[0], v[1], v[2]);
+}
+
+void QGLViewerWidget::drawIntersections() {
+  glDisable(GL_LIGHTING);
+  glBegin(GL_LINE_LOOP);
+  // draw frustum
+  glColor3f(0.0, 1.0, 0.0);
+  // near plane
+  drawVec3(frustum.near0);
+  drawVec3(frustum.near1);
+  drawVec3(frustum.near2);
+  drawVec3(frustum.near3);
+  drawVec3(frustum.near0);
+  // far plane
+  drawVec3(frustum.far0);
+  drawVec3(frustum.far1);
+  drawVec3(frustum.far2);
+  drawVec3(frustum.far3);
+  drawVec3(frustum.far0);
+  glEnd();
+  glBegin(GL_LINES);
+  glColor3f(0.0, 1.0, 0.0);
+  // lines between near and far
+  drawVec3(frustum.near0);
+  drawVec3(frustum.far0);
+  drawVec3(frustum.near1);
+  drawVec3(frustum.far1);
+  drawVec3(frustum.near2);
+  drawVec3(frustum.far2);
+  drawVec3(frustum.near3);
+  drawVec3(frustum.far3);
+
+  // draw ray
+  drawVec3(frustum.ray0);
+  drawVec3(frustum.ray1);
+  glEnd();
+
+  if (intersections.size() == 0) {
+    return;
+  }
+
+  glDisable(GL_LIGHTING);
+  glEnable(GL_POINT_SMOOTH);
+  glPointSize(1.0f);
+  glBegin(GL_POINTS);
+  for (struct Intersection i : this->intersections) {
+    glColor3f(i.color[0], i.color[1], i.color[2]);
+    glVertex3f(i.point[0], i.point[1], i.point[2]);
+  }
+  glEnd();
+}
+
 void QGLViewerWidget::drawTriangleMesh(std::vector<Triangle> mesh) {
   // No mesh to draw. Just return
   if (mesh.empty()) {
@@ -630,6 +875,16 @@ void QGLViewerWidget::drawScene() {
   }
   if (flag_drawMarchingCubes) {
     drawMarchingCubesMesh();
+  }
+  if (flag_shootRays) {
+    if (rayMode == MARCHING) {
+      threads.push_back(std::thread(&QGLViewerWidget::raycasting, this));
+    } else {
+      raycasting();
+    }
+  }
+  if (flag_drawIntersections) {
+    drawIntersections();
   }
 
   // Draw a coordinate system
@@ -916,7 +1171,7 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       break;
 
     case Key_C:
-      setScenePos(kdtree->getCenter(), 1.0);
+      setScenePos(center, 1.0);
       break;
 
     case Key_J:
@@ -925,6 +1180,27 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
 
     case Key_K:
       if (drawLevelsOfTree < 8) drawLevelsOfTree++;
+      break;
+
+    case Key_M:
+      if (rayMode == MARCHING) {
+        rayMode = SPHERE;
+        std::cout << "ray casting mode: sphere tracing" << std::endl;
+      } else {
+        rayMode = MARCHING;
+        std::cout << "ray casting mode: ray marching" << std::endl;
+      }
+      break;
+
+    case Key_R:
+      flag_drawIntersections = (flag_drawIntersections)? false : true;
+      std::cout << "flag_drawIntersections = " << flag_drawIntersections << std::endl;
+      break;
+
+    case Key_S:
+      flag_drawIntersections = true;
+      flag_shootRays = (flag_shootRays)? false : true;
+      std::cout << "flag_shootRays = " << flag_shootRays << std::endl;
       break;
 
     case Key_T:

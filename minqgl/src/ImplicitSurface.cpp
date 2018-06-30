@@ -333,9 +333,9 @@ void ImplicitSurface::computeMarchingCubes() {
   // Iterate through and build grid cells to compute intersections
   std::mutex meshMutex;
 #pragma omp parallel for collapse(3)
-  for (uint z = 0; z < gridSubdivision; z++) {
-    for (uint y = 0; y < gridSubdivision; y++) {
-      for (uint x = 0; x < gridSubdivision; x++) {
+  for (glm::uint z = 0; z < gridSubdivision; z++) {
+    for (glm::uint y = 0; y < gridSubdivision; y++) {
+      for (glm::uint x = 0; x < gridSubdivision; x++) {
         GridCell gridCell;
         // Set points of cube
         gridCell.p[0] = *this->implicitGridPoints[x][y][z + 1];
