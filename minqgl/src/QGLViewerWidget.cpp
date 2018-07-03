@@ -612,6 +612,8 @@ bool QGLViewerWidget::sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir, float *d
     return false;
   }
 
+  float threshold = 0.001;
+
   rayDir = glm::normalize(rayDir);
   assert(glm::length(rayDir) != 0.0);
 
@@ -621,7 +623,7 @@ bool QGLViewerWidget::sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir, float *d
   float currDist = this->kdtree->distToSurface(p, rayPos, rayDir);
   float totalDist = 0.0;
   while(currDist < lastDist) {
-    lastDist = currDist;
+    lastDist = currDist - (0.1 * threshold);
     // make sphere raius step
     p.x += lastDist*rayDir[0];
     p.y += lastDist*rayDir[1];
@@ -630,7 +632,7 @@ bool QGLViewerWidget::sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir, float *d
     // calculate new sphere radius
     currDist = this->kdtree->distToSurface(p, rayPos, rayDir);
     // if it converges, we hit the surface
-    if (currDist < 0.01) {
+    if (currDist < threshold) {
       *dist = totalDist;
       return true;
     }
@@ -887,7 +889,7 @@ void QGLViewerWidget::drawScene() {
     drawMarchingCubesMesh();
   }
   if (flag_shootRays) {
-    if (rayMode == MARCHING) {
+    if (rayMode == MARCHING || true) {
       threads.push_back(std::thread(&QGLViewerWidget::raycasting, this));
     } else {
       raycasting();

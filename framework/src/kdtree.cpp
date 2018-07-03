@@ -132,6 +132,23 @@ float KDTree::distToClosestPoint(const Point &p) {
 
 }
 
+glm::vec3 computeNormal(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3) {
+  return glm::normalize(glm::cross((v2 - v1), (v3 - v1)));
+}
+
+bool pointInsideTriangle(glm::vec3 p, glm::vec3 v1, glm::vec3 v2, glm::vec3 v3) {
+  glm::vec3 N1 = computeNormal(p, v1, v2);
+  glm::vec3 N2 = computeNormal(p, v2, v3);
+  glm::vec3 N3 = computeNormal(p, v3, v1);
+
+  // check if normals are orientated the same way
+  if ((glm::length(N1 + N2) > 1) && (glm::length(N1 + N3) > 1)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 float KDTree::distToSurface(const Point &p, glm::vec3 rayPos, glm::vec3 rayDir) {
   // if close enough, compute exact distance
   PointPointerList pl;
@@ -140,8 +157,7 @@ float KDTree::distToSurface(const Point &p, glm::vec3 rayPos, glm::vec3 rayDir) 
     pl = ppl;
   } else {
     PriorityQueue pq;
-    NodeList nl;
-    recursiveKNearestSearch(p, 3, rootnode, nl, pq);
+    iterativKNearestSearch(p, 3, pq);
     unsigned int pq_size = pq.size();
     for (unsigned int i = 0; i < pq_size; i++) {
       pl.emplace_back(std::move(pq.top()));
@@ -150,17 +166,101 @@ float KDTree::distToSurface(const Point &p, glm::vec3 rayPos, glm::vec3 rayDir) 
   }
   assert(pl.size() == 3);
 
-  /* glm::vec3 N = glm::normalize(glm::cross((pl[2]->toVec3()-pl[0]->toVec3()), (pl[1]->toVec3()-pl[0]->toVec3()))); */
-  /* float t = glm::dot((rayPos-pl[0]->toVec3()), N) / glm::dot(rayDir, N); */
-  /* glm::vec3 plainPoint = rayPos + t * rayDir; */
+  // project p onto plain
+  glm::vec3 N = computeNormal(pl[0]->toVec3(), pl[1]->toVec3(), pl[2]->toVec3());
+  glm::vec3 V = p.toVec3() - pl[0]->toVec3();
+  float dist = glm::dot(V, N);
+  glm::vec3 plainPoint = p.toVec3() - dist * N;
 
-  glm::vec3 plainPoint(0.0, 0.0, 0.0);
-  plainPoint[0] += pl[0]->toVec3()[0] + pl[1]->toVec3()[0] + pl[2]->toVec3()[0];
-  plainPoint[1] += pl[0]->toVec3()[1] + pl[1]->toVec3()[1] + pl[2]->toVec3()[1];
-  plainPoint[2] += pl[0]->toVec3()[2] + pl[1]->toVec3()[2] + pl[2]->toVec3()[2];
-  plainPoint /= 3.0;
+  // check if projected point is inside triangle
+  bool inside = pointInsideTriangle(plainPoint,
+                                    pl[0]->toVec3(),
+                                    pl[1]->toVec3(),
+                                    pl[2]->toVec3());
 
-  return glm::length(p.toVec3() - plainPoint);
+  if (inside) { // projected point inside triangle, so return dist to it
+    return glm::length(p.toVec3() - plainPoint);
+  } else {  // project point not inside triangle, so return min dist to points
+    float minDist = std::numeric_limits<float>::max();
+    for (unsigned i = 0; i < 3; ++i) {
+      float tmp = glm::length(pl[i]->toVec3() - p.toVec3());
+      minDist = (tmp < minDist)? tmp : minDist;
+    }
+    return minDist;
+  }
+}
+
+void KDTree::iterativKNearestSearch(const Point &p, int k, PriorityQueue &pq) {
+  std::shared_ptr<Node> n = this->rootnode;
+
+  // to blacklist nodes we use a bool-vector
+  unsigned maxNumOfNodes = pow(2, maxDepth+1) - 1;
+  std::vector<bool> nodeBlackList(maxNumOfNodes);
+  for (unsigned i = 0; i < maxNumOfNodes; ++i) {
+    nodeBlackList[i] = false;
+  }
+
+  // this is used to keep track of the current node index
+  unsigned currIndex = 0;
+
+  if (pq.empty()) {
+    while (!(n->nlist.empty()) && !(n->nlist[1]->plist.size() < k)) {
+      // descending
+      if ((n->split.axis == 0 && p.x < n->split.value) ||
+          (n->split.axis == 1 && p.y < n->split.value) ||
+          (n->split.axis == 2 && p.z < n->split.value)) {
+        n = n->nlist[0];
+        currIndex = (currIndex * 2) + 1;
+      } else {
+        n = n->nlist[1];
+        currIndex = (currIndex * 2) + 2;
+      }
+    }
+    // hit rock bottom
+    add(k, p, pq, n->plist);
+    nodeBlackList[currIndex] = true;
+  }
+
+  // ascent and check rest of tree
+  while (true) {
+    if (nodeBlackList[currIndex] == true) {
+      if (n->parent != nullptr) {
+        // ascending
+        n = n->parent;
+        currIndex = ceil((float)currIndex / 2.0) - 1;
+        continue;
+      } else {
+        // hit ceiling
+        break;
+      }
+    } else {
+      if (p.distNode(*n) < pq.top()->dist) {
+        if (n->nlist.empty()) {
+          add(k, p, pq, n->plist);
+          nodeBlackList[currIndex] = true;
+          continue;
+        } else {
+          bool child1_exists = nodeBlackList[(currIndex * 2) + 1];
+          bool child2_exists = nodeBlackList[(currIndex * 2) + 2];
+          if (child1_exists && child2_exists) {
+            nodeBlackList[currIndex] = true;
+            continue;
+          } else if (!child1_exists) {
+            n = n->nlist[0];
+            currIndex = (currIndex * 2) + 1;
+            continue;
+          } else if (!child2_exists) {
+            n = n->nlist[1];
+            currIndex = (currIndex * 2) + 2;
+            continue;
+          }
+        }
+      } else {
+        nodeBlackList[currIndex] = true;
+        continue;
+      }
+    }
+  }
 }
 
 void KDTree::recursiveKNearestSearch(const Point &p, int k,

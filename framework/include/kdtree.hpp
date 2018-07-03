@@ -72,6 +72,7 @@ public:
   static const int getK() { return kDimension; }
 
   void recursiveLeafSearch(const Point &p, float radius, const Node &n, PointPointerList &plist);
+  void iterativKNearestSearch(const Point &p, int k, PriorityQueue &pq);
   void recursiveKNearestSearch(const Point &p, int k, std::shared_ptr<Node> &n,
       NodeList &nl, PriorityQueue &pq);
 
