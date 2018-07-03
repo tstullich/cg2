@@ -196,8 +196,8 @@ float Surfaces::computeMLS(float x, float y) {
   A *= 0;
   b *= 0;
 
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < n; ++j) {
+  for (unsigned i = 0; i < n; ++i) {
+    for (unsigned j = 0; j < n; ++j) {
       A(i, j) = 0.0;
     }
     b(i) = 0.0;
@@ -444,7 +444,7 @@ glm::vec3 Surfaces::triangleNormal(std::shared_ptr<Point> v1,
 }
 
 void Surfaces::computeNormalsMLS(int k) {
-  for (int i = 0; i < surfaceFacesMLS.size(); ++i) {
+  for (unsigned i = 0; i < surfaceFacesMLS.size(); ++i) {
     struct trianglePrimitiv t0 = surfaceFacesMLS[i].t0;
     struct trianglePrimitiv t1 = surfaceFacesMLS[i].t1;
 
@@ -517,7 +517,7 @@ void Surfaces::computeNormalsMLS(int k) {
 }
 
 void Surfaces::computeNormalsBTPS(int k) {
-  for (int i = 0; i < surfaceFacesBTPS.size(); ++i) {
+  for (unsigned i = 0; i < surfaceFacesBTPS.size(); ++i) {
     struct trianglePrimitiv t0 = surfaceFacesBTPS[i].t0;
     struct trianglePrimitiv t1 = surfaceFacesBTPS[i].t1;
 
@@ -590,7 +590,7 @@ void Surfaces::computeNormalsBTPS(int k) {
 }
 
 void Surfaces::computeControlFaceNormals() {
-  for (int i = 0; i < controlFaces.size(); ++i) {
+  for (unsigned i = 0; i < controlFaces.size(); ++i) {
     struct trianglePrimitiv t0 = controlFaces[i].t0;
     struct trianglePrimitiv t1 = controlFaces[i].t1;
 

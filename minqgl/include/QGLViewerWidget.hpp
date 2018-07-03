@@ -253,6 +253,7 @@ private:
   glm::vec3 cloudSize = glm::vec3(0.0, 0.0, 0.0);
 
   float radius;
+  float defaultRadius;
   // virtual trackball: map 2D screen point to unit sphere
   bool mapToSphere(const QPoint &point, glm::vec3 &result);
 

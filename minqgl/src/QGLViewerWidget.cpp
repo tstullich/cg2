@@ -93,11 +93,9 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 
   Borders b = this->kdtree->getRootnode()->borders;
   this->cloudSize = glm::vec3(b.xMax-b.xMin, b.yMax-b.yMin, b.zMax-b.zMin);
-
-  float maxSize = std::max(cloudSize[0], cloudSize[1]);
-  maxSize = std::max(maxSize, cloudSize[1]);
-  float newRadius = (maxSize > 1.0)? maxSize*0.7 : 1.0;
-  setScenePos(kdtree->getCenter(), newRadius);
+  float maxSize = std::max(std::max(cloudSize[0], cloudSize[1]), cloudSize[2]);
+  defaultRadius = maxSize*0.5;
+  setScenePos(kdtree->getCenter(), defaultRadius);
   /* setScenePos(kdtree->getCenterOfGravity(), 1.0); */
   /* setScenePos(glm::vec3(0.5f, 0.5f, 0.35f), 1.0f); */
 
@@ -116,6 +114,7 @@ void QGLViewerWidget::animateLight() {
     if (flag_animate) {
       lightPos[0] = cloudSize[0] * sin(double(frameCounter) * M_PI / 100) + center[0];
       lightPos[1] = cloudSize[1] * cos(double(frameCounter) * M_PI / 100) + center[1];
+      lightPos[2] = center[2] + 0.75 * cloudSize[2];
       frameCounter = (frameCounter + 1) % 200;
       update();
     }
@@ -313,6 +312,14 @@ void QGLViewerWidget::setDefaultLight(void) {
 
 //----------------------------------------------------------------------------
 void QGLViewerWidget::initializeGL() {
+  const unsigned char *version = glGetString(GL_VERSION);
+  const unsigned char *vendor = glGetString(GL_VENDOR);
+  const unsigned char *renderer = glGetString(GL_RENDERER);
+  const unsigned char *glsl = glGetString(GL_SHADING_LANGUAGE_VERSION);
+  std::cout << "using OpenGL " << version << " | "
+                               << vendor << " | "
+                               << renderer << " | "
+                               << "GLSL " << glsl << std::endl;
   // OpenGL state
   glClearColor(0.0, 0.0, 0.0, 0.0);
   assert(glGetError() == GL_NO_ERROR);
@@ -403,6 +410,7 @@ void drawBox(struct Borders borders) {
   double z_1 = borders.zMax;
 
   glBegin(GL_LINE_LOOP);
+  glColor3f(0.0, 1.0, 0.0);
   glVertex3f(x_0, y_0, z_0);
   glVertex3f(x_0, y_0, z_1);
   glVertex3f(x_0, y_1, z_1);
@@ -410,6 +418,7 @@ void drawBox(struct Borders borders) {
   glEnd();
 
   glBegin(GL_LINE_LOOP);
+  glColor3f(0.0, 1.0, 0.0);
   glVertex3f(x_1, y_0, z_0);
   glVertex3f(x_1, y_0, z_1);
   glVertex3f(x_1, y_1, z_1);
@@ -417,6 +426,7 @@ void drawBox(struct Borders borders) {
   glEnd();
 
   glBegin(GL_LINES);
+  glColor3f(0.0, 1.0, 0.0);
   glVertex3f(x_0, y_0, z_0);
   glVertex3f(x_1, y_0, z_0);
 
@@ -685,13 +695,13 @@ void QGLViewerWidget::raycasting() {
   h = h * hLength;
 
   unsigned sphereDrawOff = 2;
-  for (unsigned m = 0; m <= height(); m+=1) {
+  for (int m = 0; m <= height(); m+=1) {
     if (rayMode == SPHERE) {
       if (!(m+sphereDrawOff < height()/2.0 || m-sphereDrawOff > height()/2.0)) {
         std::cout << "line" << m << std::endl;
       }
     }
-    for (unsigned n = 0; n <= width(); n+=1) {
+    for (int n = 0; n <= width(); n+=1) {
       // ray position and direction
       double N = n - (width() / 2.0f);
       double M = -1.0f * (m - height() / 2.0f);
@@ -1171,7 +1181,7 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       break;
 
     case Key_C:
-      setScenePos(center, 1.0);
+      setScenePos(center, defaultRadius);
       break;
 
     case Key_J:

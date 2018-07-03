@@ -81,8 +81,8 @@ float ImplicitSurface::computeMLS(const Point &p) {
 
   MatrixXf A(n, n);
   VectorXf ao(n), ap(n), an(n), b(n);
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < n; ++j) {
+  for (unsigned i = 0; i < n; ++i) {
+    for (unsigned j = 0; j < n; ++j) {
       A(i, j) = 0.0;
     }
     b(i) = 0.0;
@@ -154,7 +154,7 @@ float ImplicitSurface::evaluateImplicitFunction(const Point &p) {
   int n = this->implicitFunction[0].size();
   float v = std::numeric_limits<float>::max();
 
-  for (int i = 0; i < this->implicitFunction.size(); ++i) {
+  for (unsigned i = 0; i < this->implicitFunction.size(); ++i) {
     VectorXf c(n);
     if (this->basisPolynomDegree == 0) {
       c << 1.0;
@@ -220,8 +220,8 @@ bool ImplicitSurface::computeCoefficients(const Point &p,
   // init matrix and vectors w/ 0.0
   MatrixXf A(n, n);
   VectorXf ao(n), ap(n), an(n), b(n);
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < n; ++j) {
+  for (unsigned i = 0; i < n; ++i) {
+    for (unsigned j = 0; j < n; ++j) {
       A(i, j) = 0.0;
     }
     b(i) = 0.0;
