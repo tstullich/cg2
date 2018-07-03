@@ -17,10 +17,14 @@ void ImplicitSurface::setRadius(float r) {
   computeImplicitGridPoints();
 }
 
-PointPointerList ImplicitSurface::getOriginalPoints() { return this->points; }
+PointPointerList ImplicitSurface::getOriginalPoints() {
+  return this->points;
+}
+
 PointPointerList ImplicitSurface::getPositivePoints() {
   return this->positivePoints;
 }
+
 PointPointerList ImplicitSurface::getNegativePoints() {
   return this->negativePoints;
 }
@@ -73,8 +77,7 @@ float ImplicitSurface::computeMLS(const Point &p) {
   else if (this->basisPolynomDegree == 2)
     n = 10;
 
-  // TODO maybe change
-  if (collectedPoints.size() < 3 * n) {
+  if (collectedPoints.size() < n) {
     // std::cerr << "No points in radius " << this->radius << std::endl;
     return std::numeric_limits<float>::max();
   }
@@ -151,18 +154,24 @@ float ImplicitSurface::computeMLS(const Point &p) {
 }
 
 float ImplicitSurface::evaluateImplicitFunction(const Point &p) {
+  if (this->implicitFunction.size() == 0) {
+    std::cout << "evaluateImplicitFunction() error 1" << std::endl;
+    return std::numeric_limits<float>::max();
+  }
+
   int n = this->implicitFunction[0].size();
   float v = std::numeric_limits<float>::max();
 
   for (unsigned i = 0; i < this->implicitFunction.size(); ++i) {
     VectorXf c(n);
-    if (this->basisPolynomDegree == 0) {
-      c << 1.0;
-    } else if (this->basisPolynomDegree == 1) {
+    if (n == 4) {
       c << 1.0, p.x, p.y, p.z;
-    } else if (this->basisPolynomDegree == 2) {
+    } else if (n == 10) {
       c << 1.0, p.x, p.y, p.z, p.x * p.y, p.x * p.z, p.y * p.z, pow(p.x, 2.0),
           pow(p.y, 2.0), pow(p.z, 2.0);
+    } else {
+      std::cout << "evaluateImplicitFunction() error 2" << std::endl;
+      return std::numeric_limits<float>::max();
     }
 
     float tmp = c.dot(implicitFunction[i]);
@@ -188,19 +197,17 @@ void ImplicitSurface::computeImplicitFunction() {
         y = outerBox.yMin + (j * yDelta);
         z = outerBox.zMin + (k * zDelta);
         Point p(x, y, z);
-        VectorXf c;
-        if (computeCoefficients(p, c)) {
-          implicitFunction.push_back(c);
-        }
+        computeCoefficients(p);
       }
     }
   }
 }
 
-bool ImplicitSurface::computeCoefficients(const Point &p,
-                                          VectorXf &coefficients) {
-  // determin basis dimension based on poly degree
+bool ImplicitSurface::computeCoefficients(const Point &p) {
+  PointPointerList collectedPoints = kdtree->collectInRadius(p, this->radius);
+
   unsigned int n = 1;
+
   if (this->basisPolynomDegree == 0)
     n = 1;
   else if (this->basisPolynomDegree == 1)
@@ -208,16 +215,11 @@ bool ImplicitSurface::computeCoefficients(const Point &p,
   else if (this->basisPolynomDegree == 2)
     n = 10;
 
-  // collect points for MLS
-  PointPointerList collectedPoints = kdtree->collectKNearest(p, n);
-  if (points.size() == 0) {
-    return false;
+  if (collectedPoints.size() < n) {
+    // std::cerr << "No points in radius " << this->radius << std::endl;
+    return std::numeric_limits<float>::max();
   }
 
-  // compute radius based on greatest distance in point set
-  float r = glm::length(p.toVec3() - points.front()->toVec3());
-
-  // init matrix and vectors w/ 0.0
   MatrixXf A(n, n);
   VectorXf ao(n), ap(n), an(n), b(n);
   for (unsigned i = 0; i < n; ++i) {
@@ -233,9 +235,9 @@ bool ImplicitSurface::computeCoefficients(const Point &p,
     std::shared_ptr<Point> pp_i = po_i->positivePoint;
     std::shared_ptr<Point> np_i = po_i->negativePoint;
 
-    float distance_po = p.distPoint(*po_i) / r;
-    float distance_pp = p.distPoint(*pp_i) / r;
-    float distance_np = p.distPoint(*np_i) / r;
+    float distance_po = p.distPoint(*po_i) / radius;
+    float distance_pp = p.distPoint(*pp_i) / radius;
+    float distance_np = p.distPoint(*np_i) / radius;
     float theta_po = pow(1.0 - distance_po, 4.0) * (4.0 * distance_po + 1);
     float theta_pp = pow(1.0 - distance_pp, 4.0) * (4.0 * distance_pp + 1);
     float theta_np = pow(1.0 - distance_np, 4.0) * (4.0 * distance_np + 1);
@@ -274,7 +276,10 @@ bool ImplicitSurface::computeCoefficients(const Point &p,
   }
 
   MatrixXf A_inv = A.inverse();
-  coefficients = A_inv * b;
+  VectorXf X = A_inv * b;
+
+  // insert coefficients into function
+  this->implicitFunction.push_back(X);
 
   return true;
 }
@@ -323,8 +328,6 @@ void ImplicitSurface::createAdditionalPoints() {
 }
 
 void ImplicitSurface::computeMarchingCubes() {
-  computeImplicitFunction();
-
   // Clear mesh if marching cubes has been performed already
   if (!marchingCubesMesh.empty()) {
     marchingCubesMesh.clear();

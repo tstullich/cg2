@@ -43,7 +43,7 @@ class ImplicitSurface {
     void createAdditionalPoints();
 
 
-    bool computeCoefficients(const Point &p, VectorXf &coefficients);
+    bool computeCoefficients(const Point &p);
 
     std::shared_ptr<KDTree> kdtree;
 
@@ -61,8 +61,7 @@ class ImplicitSurface {
     unsigned int gridSubdivision;
     float radius;
 
-    //TODO maybe trigger by gui
-    unsigned int basisPolynomDegree = 0;
+    unsigned int basisPolynomDegree = 1;
 };
 
 #endif // IMPLICITSURFACE_HPP

@@ -803,7 +803,7 @@ void QGLViewerWidget::drawIntersections() {
   drawVec3(frustum.ray1);
   glEnd();
 
-  if (intersections.size() == 0) {
+  if (this->intersections.size() == 0) {
     return;
   }
 
