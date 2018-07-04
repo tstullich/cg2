@@ -121,8 +121,6 @@ protected:
 
   void drawMarchingCubesMesh();
 
-  void drawImplicitGridPoints();
-
   // draw the scene: will be called by the paintGL() method.
   virtual void drawScene();
 
@@ -171,28 +169,28 @@ private slots:
     }
   }
 
-  void setDrawMode(int value);
-  void setPerformLinearSearch(bool value);
   void updateTreeState(int value);
-
-  void setDrawPoints(bool value);
-  void setDrawNormals(bool value);
-  //void setShading(bool value);
-  void flipNormals();
-
-  void setDrawPositiveSamples(bool value);
-  void setDrawNegativeSamples(bool value);
-  void setDrawConstraints(bool value);
-  void setGridSubdivision(int value);
-  void setBoundingBoxFactor(double value);
-  void setEpsilon(double value);
-  void setRadius(double value);
-  void computeSamples();
   void drawTriangleMesh(std::vector<Triangle> mesh);
 
-  void setDrawMCMesh(bool value);
-  void computeMC();
-  void computeEMC();
+  void setDrawMesh(bool value);
+  void setMeshAlpha(double value);
+
+  void setDrawUnweightedNormals(bool value);
+  void setDrawWeightedNormals(bool value);
+
+  void setDrawGraphLaplace(bool value);
+  void setStepSize(double value);
+  void graphLaplaceMove();
+  void graphLaplaceReset();
+
+  void setDrawCotanLaplace(bool value);
+  void setExplicitStep(double value);
+  void cotanLaplaceExplicitStep();
+  void setImplicitStep(double value);
+  void cotanLaplaceImplicitStep();
+  void setBasisFunctions(int value);
+  void setManifoldHarmonics(bool value);
+  void cotanLaplaceReset();
 
   bool rayMarching(glm::vec3 rayPos, glm::vec3 rayDir, float *dist);
   bool sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir, float *dist);
@@ -263,7 +261,6 @@ private:
   int drawMode = 0;
   int currentSliderValue = 0;
 
-  bool drawPoints = true;
   bool flag_shootRays = false;
   bool flag_drawIntersections = false;
   RayMode rayMode = SPHERE;
@@ -272,15 +269,12 @@ private:
   int gridM = 10;
   int gridN = 10;
   float gridR = 0.5;
-  bool drawPositiveSamples = false;
-  bool drawNegativeSamples = false;
   int gridSubdivision = 10;
   float implicitRadius = 0.02;
   int kMLS = 1;
   int kBTPS = 1;
   bool flag_drawSelectedPoints = true;
   bool flag_drawTree = false;
-  bool flag_drawMarchingCubes = false;
   bool lastPointOk;
   bool performLinearSearch = false;
   bool selectOnRelease = false;

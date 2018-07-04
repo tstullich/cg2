@@ -21,9 +21,10 @@ public:
   SidebarWidget(QWidget *parent = 0);
 
 private:
-  void initDrawPointsBox(QWidget *parent);
-  void initGridBox(QWidget *parent);
-  void initMarchingCubesBox(QWidget *parent);
+  void initMeshBox(QWidget *parent);
+  void initNormalCalculationBox(QWidget *parent);
+  void initGraphLaplaceBox(QWidget *parent);
+  void initCotanLaplaceBox(QWidget *parent);
 
   const int HYPER_PLANE_DEFAULT_MIN = 0;
   const int HYPER_PLANE_DEFAULT_MAX = 8;
@@ -37,23 +38,25 @@ private:
 
   static const QString CURRENT_VALUE_LABEL;
 
-  QCheckBox *drawPointsBox;
-  QCheckBox *drawNormalsBox;
-  QGroupBox *shadingBox;
-  QPushButton *flipNormalsButton;
+  QCheckBox *drawMeshBox;
+  QDoubleSpinBox *meshAlphaBox;
 
-  QCheckBox *drawPositiveSamplesBox;
-  QCheckBox *drawNegativeSamplesBox;
-  QCheckBox *drawConstraintsBox;
-  QSpinBox *gridSubdivisionBox;
-  QDoubleSpinBox *boundingBoxFactorBox;
-  QDoubleSpinBox *epsilonBox;
-  QDoubleSpinBox *radiusBox;
-  QPushButton *computeSamplesButton;
+  QCheckBox *drawUnweightedNormalsBox;
+  QCheckBox *drawWeightedNormalsBox;
 
-  QCheckBox *drawMCMeshBox;
-  QPushButton *computeMCButton;
-  QPushButton *computeEMCButton;
+  QCheckBox *drawGraphLaplaceBox;
+  QDoubleSpinBox *stepSizeBox;
+  QPushButton *graphLaplaceMoveButton;
+  QPushButton *graphLaplaceResetButton;
+
+  QCheckBox *drawCotanLaplaceBox;
+  QDoubleSpinBox *explicitStepBox;
+  QPushButton *explicitStepButton;
+  QDoubleSpinBox *implicitStepBox;
+  QPushButton *implicitStepButton;
+  QSpinBox *basisFunctionsBox;
+  QCheckBox *manifoldHarmonicsBox;
+  QPushButton *cotanLaplaceResetButton;
 
   QVBoxLayout *layout;
   QWidget *container;

@@ -92,9 +92,10 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
       kdtree, this->gridSubdivision, this->implicitRadius);
 
   Borders b = this->kdtree->getRootnode()->borders;
-  this->cloudSize = glm::vec3(b.xMax-b.xMin, b.yMax-b.yMin, b.zMax-b.zMin);
+  this->cloudSize =
+      glm::vec3(b.xMax - b.xMin, b.yMax - b.yMin, b.zMax - b.zMin);
   float maxSize = std::max(std::max(cloudSize[0], cloudSize[1]), cloudSize[2]);
-  defaultRadius = maxSize*0.5;
+  defaultRadius = maxSize * 0.5;
   setScenePos(kdtree->getCenter(), defaultRadius);
   /* setScenePos(kdtree->getCenterOfGravity(), 1.0); */
   /* setScenePos(glm::vec3(0.5f, 0.5f, 0.35f), 1.0f); */
@@ -112,8 +113,10 @@ void QGLViewerWidget::animateLight() {
   unsigned frameCounter = 25;
   while (true) {
     if (flag_animate) {
-      lightPos[0] = cloudSize[0] * sin(double(frameCounter) * M_PI / 100) + center[0];
-      lightPos[1] = cloudSize[1] * cos(double(frameCounter) * M_PI / 100) + center[1];
+      lightPos[0] =
+          cloudSize[0] * sin(double(frameCounter) * M_PI / 100) + center[0];
+      lightPos[1] =
+          cloudSize[1] * cos(double(frameCounter) * M_PI / 100) + center[1];
       lightPos[2] = center[2] + 0.75 * cloudSize[2];
       frameCounter = (frameCounter + 1) % 200;
       update();
@@ -226,52 +229,6 @@ bool QGLViewerWidget::drawSelectedPointSet() {
   return true;
 }
 
-void QGLViewerWidget::drawImplicitGridPoints() {
-  if (this->implicitSurface == nullptr) {
-    return;
-  }
-
-  std::vector<std::vector<std::vector<std::shared_ptr<Point>>>>
-      implicitGridPoints = this->implicitSurface->getImplicitGridPoints();
-
-  if (implicitGridPoints.size() == 0) {
-    return;
-  }
-
-  glDisable(GL_LIGHTING);
-  glEnable(GL_POINT_SMOOTH);
-  glPointSize(5.0f);
-  glBegin(GL_POINTS);
-
-  for (unsigned int i = 0; i < implicitGridPoints.size(); i++) {
-    for (unsigned int j = 0; j < implicitGridPoints[0].size(); j++) {
-      for (unsigned int k = 0; k < implicitGridPoints[0][0].size(); k++) {
-        std::shared_ptr<Point> p = implicitGridPoints[i][j][k];
-        if (p->f == std::numeric_limits<float>::max()) {
-          continue;
-          glColor3f(0.1, 0.1, 0.1);
-          glVertex3f(p->x, p->y, p->z);
-        } else {
-          if (p->f > 0.0 && drawPositiveSamples) {
-            glColor3f(0.0, 0.0, 1.0);
-            glVertex3f(p->x, p->y, p->z);
-          } else if (p->f == 0.0) {
-            glColor3f(1.0, 0.0, 0.0);
-            glVertex3f(p->x, p->y, p->z);
-          } else if (p->f < 0.0 && drawNegativeSamples) {
-            glColor3f(1.0, 1.0, 0.0);
-            glVertex3f(p->x, p->y, p->z);
-          }
-        }
-      }
-    }
-  }
-
-  glEnd();
-}
-
-//----------------------------------------------------------------------------
-
 void QGLViewerWidget::setDefaultMaterial(void) {
   GLfloat mat_a[] = {0.1, 0.1, 0.1, 1.0};
   GLfloat mat_d[] = {0.7, 0.7, 0.5, 1.0};
@@ -316,10 +273,9 @@ void QGLViewerWidget::initializeGL() {
   const unsigned char *vendor = glGetString(GL_VENDOR);
   const unsigned char *renderer = glGetString(GL_RENDERER);
   const unsigned char *glsl = glGetString(GL_SHADING_LANGUAGE_VERSION);
-  std::cout << "using OpenGL " << version << " | "
-                               << vendor << " | "
-                               << renderer << " | "
-                               << "GLSL " << glsl << std::endl;
+  std::cout << "using OpenGL " << version << " | " << vendor << " | "
+            << renderer << " | "
+            << "GLSL " << glsl << std::endl;
   // OpenGL state
   glClearColor(0.0, 0.0, 0.0, 0.0);
   assert(glGetError() == GL_NO_ERROR);
@@ -578,7 +534,8 @@ bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0,
   }
 }
 
-bool QGLViewerWidget::rayMarching(glm::vec3 rayPos, glm::vec3 rayDir, float *dist) {
+bool QGLViewerWidget::rayMarching(glm::vec3 rayPos, glm::vec3 rayDir,
+                                  float *dist) {
   if (this->implicitSurface == nullptr) {
     return false;
   }
@@ -590,15 +547,16 @@ bool QGLViewerWidget::rayMarching(glm::vec3 rayPos, glm::vec3 rayDir, float *dis
   Point p(rayPos[0], rayPos[1], rayPos[2]);
   float lastVal = this->implicitSurface->computeMLS(p);
   float maxDist = *dist;
-  float stepSize = 0.01*kdtree->getDiagonal();
-  for (*dist = stepSize; (*dist)+stepSize < maxDist; (*dist)+=stepSize) {
-    float x = rayPos[0] + (*dist)*rayDir[0];
-    float y = rayPos[1] + (*dist)*rayDir[1];
-    float z = rayPos[2] + (*dist)*rayDir[2];
+  float stepSize = 0.01 * kdtree->getDiagonal();
+  for (*dist = stepSize; (*dist) + stepSize < maxDist; (*dist) += stepSize) {
+    float x = rayPos[0] + (*dist) * rayDir[0];
+    float y = rayPos[1] + (*dist) * rayDir[1];
+    float z = rayPos[2] + (*dist) * rayDir[2];
     Point p(x, y, z);
     float currVal = this->implicitSurface->computeMLS(p);
     // check for sign change
-    if ((lastVal > 0.0 && currVal <= 0.0) || (lastVal < 0.0 && currVal >= 0.0)) {
+    if ((lastVal > 0.0 && currVal <= 0.0) ||
+        (lastVal < 0.0 && currVal >= 0.0)) {
       return true;
     }
     lastVal = currVal;
@@ -607,7 +565,8 @@ bool QGLViewerWidget::rayMarching(glm::vec3 rayPos, glm::vec3 rayDir, float *dis
   return false;
 }
 
-bool QGLViewerWidget::sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir, float *dist) {
+bool QGLViewerWidget::sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir,
+                                    float *dist) {
   if (this->implicitSurface == nullptr) {
     return false;
   }
@@ -622,12 +581,12 @@ bool QGLViewerWidget::sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir, float *d
   float lastDist = std::numeric_limits<float>::max();
   float currDist = this->kdtree->distToSurface(p, rayPos, rayDir);
   float totalDist = 0.0;
-  while(currDist < lastDist) {
+  while (currDist < lastDist) {
     lastDist = currDist - (0.1 * threshold);
     // make sphere raius step
-    p.x += lastDist*rayDir[0];
-    p.y += lastDist*rayDir[1];
-    p.z += lastDist*rayDir[2];
+    p.x += lastDist * rayDir[0];
+    p.y += lastDist * rayDir[1];
+    p.z += lastDist * rayDir[2];
     totalDist += lastDist;
     // calculate new sphere radius
     currDist = this->kdtree->distToSurface(p, rayPos, rayDir);
@@ -676,7 +635,7 @@ void QGLViewerWidget::raycasting() {
   camUp[2] = modelviewMatrix[9];
   float zNear = zNearFactor * 1.0;
   /* float zFar = (rayMode == MARCHING)? 1.5 : zFarFactor * 1.0; */
-  float zFar = 1.5*kdtree->getDiagonal();
+  float zFar = 1.5 * kdtree->getDiagonal();
 
   // viewing direction
   glm::vec3 camView;
@@ -697,13 +656,14 @@ void QGLViewerWidget::raycasting() {
   h = h * hLength;
 
   unsigned sphereDrawOff = 2;
-  for (int m = 0; m <= height(); m+=1) {
+  for (int m = 0; m <= height(); m += 1) {
     if (rayMode == SPHERE) {
-      if (!(m+sphereDrawOff < height()/2.0 || m-sphereDrawOff > height()/2.0)) {
+      if (!(m + sphereDrawOff < height() / 2.0 ||
+            m - sphereDrawOff > height() / 2.0)) {
         std::cout << "line" << m << std::endl;
       }
     }
-    for (int n = 0; n <= width(); n+=1) {
+    for (int n = 0; n <= width(); n += 1) {
       // ray position and direction
       double N = n - (width() / 2.0f);
       double M = -1.0f * (m - height() / 2.0f);
@@ -730,7 +690,8 @@ void QGLViewerWidget::raycasting() {
       }
 
       if (rayMode == SPHERE) {
-        if (m+sphereDrawOff < height()/2.0 || m-sphereDrawOff > height()/2.0) {
+        if (m + sphereDrawOff < height() / 2.0 ||
+            m - sphereDrawOff > height() / 2.0) {
           continue;
         }
       }
@@ -738,7 +699,7 @@ void QGLViewerWidget::raycasting() {
       // ray casting starts hear
       float dist = zFar;
       bool hit = false;
-      switch(rayMode) {
+      switch (rayMode) {
         case MARCHING:
           hit = rayMarching(rayPos, rayDir, &dist);
           break;
@@ -751,9 +712,9 @@ void QGLViewerWidget::raycasting() {
       if (hit) {
         struct Intersection newIntersection;
         // test screen
-        newIntersection.point = glm::vec3(rayPos[0]+ dist*rayDir[0],
-                                          rayPos[1]+ dist*rayDir[1],
-                                          rayPos[2]+ dist*rayDir[2]);
+        newIntersection.point = glm::vec3(rayPos[0] + dist * rayDir[0],
+                                          rayPos[1] + dist * rayDir[1],
+                                          rayPos[2] + dist * rayDir[2]);
         newIntersection.color = glm::vec3(1.0, 1.0, 1.0);
         intersections.push_back(newIntersection);
       }
@@ -766,9 +727,7 @@ void QGLViewerWidget::raycasting() {
   return;
 }
 
-void drawVec3(glm::vec3 v) {
-  glVertex3f(v[0], v[1], v[2]);
-}
+void drawVec3(glm::vec3 v) { glVertex3f(v[0], v[1], v[2]); }
 
 void QGLViewerWidget::drawIntersections() {
   glDisable(GL_LIGHTING);
@@ -870,23 +829,14 @@ void QGLViewerWidget::drawMarchingCubesMesh() {
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
-  if (drawPoints) {
-    drawPointSet();
-  }
   if (flag_drawPointSetNormals) {
     drawPointSetNormals();
   }
   if (drawGrid) {
     drawRegularGrid();
   }
-  if (drawPositiveSamples || drawNegativeSamples) {
-    drawImplicitGridPoints();
-  }
   if (flag_drawTree) {
     drawKDTree();
-  }
-  if (flag_drawMarchingCubes) {
-    drawMarchingCubesMesh();
   }
   if (flag_shootRays) {
     if (rayMode == MARCHING || true) {
@@ -1205,13 +1155,14 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       break;
 
     case Key_R:
-      flag_drawIntersections = (flag_drawIntersections)? false : true;
-      std::cout << "flag_drawIntersections = " << flag_drawIntersections << std::endl;
+      flag_drawIntersections = (flag_drawIntersections) ? false : true;
+      std::cout << "flag_drawIntersections = " << flag_drawIntersections
+                << std::endl;
       break;
 
     case Key_S:
       flag_drawIntersections = true;
-      flag_shootRays = (flag_shootRays)? false : true;
+      flag_shootRays = (flag_shootRays) ? false : true;
       std::cout << "flag_shootRays = " << flag_shootRays << std::endl;
       break;
 
@@ -1373,12 +1324,6 @@ QAction *QGLViewerWidget::findAction(const char *name) {
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::setDrawMode(int value) { drawMode = value; }
-
-void QGLViewerWidget::setPerformLinearSearch(bool value) {
-  performLinearSearch = value;
-}
-
 void QGLViewerWidget::updateTreeState(int value) {
   if (pointList == nullptr || pointList->size() == 0) {
     std::cout << "No OFF file loaded. Won't draw. Please load a file before "
@@ -1433,93 +1378,70 @@ void QGLViewerWidget::updateTreeState(int value) {
   updateGL();
 }
 
-void QGLViewerWidget::setDrawPoints(bool value) {
-  drawPoints = value;
-  paintGL();
-  updateGL();
+void QGLViewerWidget::setDrawMesh(bool value) {
+  std::cout << "Setting draw mesh value " << value << std::endl;
 }
 
-void QGLViewerWidget::setDrawNormals(bool value) {
-  std::cout << "Changing drawNormals value to " << value << std::endl;
-  flag_drawPointSetNormals = value;
-  paintGL();
-  updateGL();
+void QGLViewerWidget::setMeshAlpha(double value) {
+  std::cout << "Setting mesh alpha " << value << std::endl;
 }
 
-void QGLViewerWidget::flipNormals() {
-  std::cout << "Calling flipNormals()" << std::endl;
+void QGLViewerWidget::setDrawUnweightedNormals(bool value) {
+  std::cout << "Setting draw unweighted normals " << value << std::endl;
 }
 
-void QGLViewerWidget::setDrawPositiveSamples(bool value) {
-  std::cout << "Changing drawSamples value to " << value << std::endl;
-  this->drawPositiveSamples = value;
-  updateGL();
+void QGLViewerWidget::setDrawWeightedNormals(bool value) {
+  std::cout << "Setting draw weighted normals " << value << std::endl;
 }
 
-void QGLViewerWidget::setDrawNegativeSamples(bool value) {
-  std::cout << "Changing drawSamples value to " << value << std::endl;
-  this->drawNegativeSamples = value;
-  updateGL();
+void QGLViewerWidget::setDrawGraphLaplace(bool value) {
+  std::cout << "Setting draw graph laplace " << value << std::endl;
 }
 
-void QGLViewerWidget::setDrawConstraints(bool value) {
-  std::cout << "Changing drawConstraints value to " << value << std::endl;
+void QGLViewerWidget::setStepSize(double value) {
+  std::cout << "Setting step size " << value << std::endl;
 }
 
-void QGLViewerWidget::setGridSubdivision(int value) {
-  std::cout << "Changing grid dimension value to " << value << std::endl;
-  this->gridSubdivision = value;
-  if (implicitSurface != nullptr) {
-    this->implicitSurface->setGrid(value);
-  }
-  updateGL();
+void QGLViewerWidget::graphLaplaceMove() {
+  std::cout << "Calling graph laplace move" << std::endl;
 }
 
-void QGLViewerWidget::setBoundingBoxFactor(double value) {
-  std::cout << "Changing boundingBoxFactor to " << value << std::endl;
+void QGLViewerWidget::graphLaplaceReset() {
+  std::cout << "Calling graph laplace reset" << std::endl;
 }
 
-void QGLViewerWidget::setEpsilon(double value) {
-  std::cout << "Changing epsilon to " << value << std::endl;
+void QGLViewerWidget::setDrawCotanLaplace(bool value) {
+  std::cout << "Setting draw cotan laplace " << value << std::endl;
 }
 
-void QGLViewerWidget::setRadius(double value) {
-  std::cout << "Changing radius to " << value << std::endl;
-  this->implicitRadius = value;
-  if (implicitSurface != nullptr) {
-    this->implicitSurface->setRadius(this->implicitRadius);
-  }
-  updateGL();
+void QGLViewerWidget::setExplicitStep(double value) {
+  std::cout << "Setting explicit step " << value << std::endl;
 }
 
-void QGLViewerWidget::computeSamples() {
-  std::cout << "Calling computeSamples" << std::endl;
-  if (implicitSurface != nullptr) {
-    this->implicitSurface->computeImplicitGridPoints();
-  }
-  updateGL();
+void QGLViewerWidget::cotanLaplaceExplicitStep() {
+  std::cout << "Calling cotan laplace explicit step" << std::endl;
 }
 
-void QGLViewerWidget::setDrawMCMesh(bool value) {
-  std::cout << "Changing setDrawMCMesh value to " << value << std::endl;
-  this->flag_drawMarchingCubes = value;
-  updateGL();
+void QGLViewerWidget::setImplicitStep(double value) {
+  std::cout << "Setting implicit step " << value << std::endl;
 }
 
-void QGLViewerWidget::computeMC() {
-  // TODO This does not properly stop if samples haven't been calculated yet
-  // Find another way to check
-  if (implicitSurface != nullptr) {
-    this->implicitSurface->computeMarchingCubes();
-  }
+void QGLViewerWidget::cotanLaplaceImplicitStep() {
+  std::cout << "Calling cotan laplace implicit step" << std::endl;
 }
 
-void QGLViewerWidget::computeEMC() {
-  std::cout << "Calling computeEMC()" << std::endl;
+void QGLViewerWidget::setBasisFunctions(int value) {
+  std::cout << "Setting basis functions " << value << std::endl;
+}
+
+void QGLViewerWidget::setManifoldHarmonics(bool value) {
+  std::cout << "Setting manifold harmonics " << value << std::endl;
+}
+
+void QGLViewerWidget::cotanLaplaceReset() {
+  std::cout << "Calling cotan laplace reset" << std::endl;
 }
 
 void QGLViewerWidget::slotSnapshot(void) {
   // empty....
 }
-
-//=============================================================================

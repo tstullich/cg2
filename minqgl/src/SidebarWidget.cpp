@@ -9,148 +9,175 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
   container = new QWidget();
   layout = new QVBoxLayout();
 
-  initDrawPointsBox(parent);
-  initGridBox(parent);
-  initMarchingCubesBox(parent);
+  initMeshBox(parent);
+  initNormalCalculationBox(parent);
+  initGraphLaplaceBox(parent);
+  initCotanLaplaceBox(parent);
 
-  // Points Section
-  auto pointsBox = new QGroupBox("Points");
-  auto pointsLayout = new QVBoxLayout;
-  pointsLayout->addWidget(drawPointsBox);
-  pointsLayout->addWidget(drawNormalsBox);
-  pointsLayout->addWidget(flipNormalsButton);
-  pointsBox->setLayout(pointsLayout);
+  // Mesh Section
+  auto meshBox = new QGroupBox("Initial Mesh");
+  auto meshLayout = new QVBoxLayout;
+  meshLayout->addWidget(drawMeshBox);
 
-  // Grid Section
-  auto gridBox = new QGroupBox("Grid");
-  auto gridBoxLayout = new QVBoxLayout;
-  gridBoxLayout->addWidget(drawPositiveSamplesBox);
-  gridBoxLayout->addWidget(drawNegativeSamplesBox);
-  gridBoxLayout->addWidget(drawConstraintsBox);
+  auto meshAlphaLayout = new QHBoxLayout;
+  meshAlphaLayout->addWidget(new QLabel("Alpha:"));
+  meshAlphaLayout->addWidget(meshAlphaBox);
+  auto meshAlphaWrapper = new QWidget;
+  meshAlphaWrapper->setLayout(meshAlphaLayout);
+  meshLayout->addWidget(meshAlphaWrapper);
+  meshBox->setLayout(meshLayout);
 
-  auto gridSubdivisionLayout = new QHBoxLayout;
-  gridSubdivisionLayout->addWidget(new QLabel("Grid subdivision:"));
-  gridSubdivisionLayout->addWidget(gridSubdivisionBox);
+  // Normal Calculation Section
+  auto normalBox = new QGroupBox("Normal Calculation");
+  auto normalBoxLayout = new QVBoxLayout;
+  normalBoxLayout->addWidget(drawUnweightedNormalsBox);
+  normalBoxLayout->addWidget(drawWeightedNormalsBox);
+  normalBox->setLayout(normalBoxLayout);
 
-  auto gridSubdivisionWrapper = new QWidget;
-  gridSubdivisionWrapper->setLayout(gridSubdivisionLayout);
+  // Graph Laplace Section
+  auto graphLaplaceBox = new QGroupBox("Graph Laplace");
+  auto graphLaplaceLayout = new QVBoxLayout;
+  graphLaplaceLayout->addWidget(drawGraphLaplaceBox);
 
-  auto boundingBoxFactorLayout = new QHBoxLayout;
-  boundingBoxFactorLayout->addWidget(new QLabel("Bounding box factor:"));
-  boundingBoxFactorLayout->addWidget(boundingBoxFactorBox);
+  auto stepSizeLayout = new QHBoxLayout;
+  stepSizeLayout->addWidget(new QLabel("Step Size:"));
+  stepSizeLayout->addWidget(stepSizeBox);
+  auto stepSizeWrapper = new QWidget;
+  stepSizeWrapper->setLayout(stepSizeLayout);
+  graphLaplaceLayout->addWidget(stepSizeWrapper);
 
-  auto boundingBoxFactorWrapper = new QWidget;
-  boundingBoxFactorWrapper->setLayout(boundingBoxFactorLayout);
+  graphLaplaceLayout->addWidget(graphLaplaceMoveButton);
+  graphLaplaceLayout->addWidget(graphLaplaceResetButton);
+  graphLaplaceBox->setLayout(graphLaplaceLayout);
 
-  auto epsilonLayout = new QHBoxLayout;
-  epsilonLayout->addWidget(new QLabel("Epsilon:"));
-  epsilonLayout->addWidget(epsilonBox);
+  // Cotan Laplace Section
+  auto cotanLaplaceBox = new QGroupBox("Cotan Laplace");
+  auto cotanLaplaceLayout = new QVBoxLayout;
+  cotanLaplaceLayout->addWidget(drawCotanLaplaceBox);
 
-  auto epsilonWrapper = new QWidget;
-  epsilonWrapper->setLayout(epsilonLayout);
+  auto explicitLayout = new QHBoxLayout;
+  explicitLayout->addWidget(new QLabel("Explicit h:"));
+  explicitLayout->addWidget(explicitStepBox);
+  auto explicitStepWrapper = new QWidget;
+  explicitStepWrapper->setLayout(explicitLayout);
+  cotanLaplaceLayout->addWidget(explicitStepWrapper);
 
-  auto radiusBoxLayout = new QHBoxLayout;
-  radiusBoxLayout->addWidget(new QLabel("Radius:"));
-  radiusBoxLayout->addWidget(radiusBox);
+  cotanLaplaceLayout->addWidget(explicitStepButton);
 
-  auto radiusWrapper = new QWidget;
-  radiusWrapper->setLayout(radiusBoxLayout);
+  auto implicitLayout = new QHBoxLayout;
+  implicitLayout->addWidget(new QLabel("Implicit h:"));
+  implicitLayout->addWidget(implicitStepBox);
+  auto implicitStepWrapper = new QWidget;
+  implicitStepWrapper->setLayout(implicitLayout);
+  cotanLaplaceLayout->addWidget(implicitStepWrapper);
 
-  gridBoxLayout->addWidget(gridSubdivisionWrapper);
-  gridBoxLayout->addWidget(boundingBoxFactorWrapper);
-  gridBoxLayout->addWidget(epsilonWrapper);
-  gridBoxLayout->addWidget(radiusWrapper);
-  gridBoxLayout->addWidget(computeSamplesButton);
-  gridBox->setLayout(gridBoxLayout);
+  cotanLaplaceLayout->addWidget(implicitStepButton);
 
-  // Marching Cubes Section
-  auto drawMCBox = new QGroupBox("Marching Cubes");
-  auto drawMCLayout = new QVBoxLayout;
-  drawMCLayout->addWidget(drawMCMeshBox);
-  drawMCLayout->addWidget(computeMCButton);
-  drawMCLayout->addWidget(computeEMCButton);
-  drawMCBox->setLayout(drawMCLayout);
+  auto basisFunctionsLayout = new QHBoxLayout;
+  basisFunctionsLayout->addWidget(new QLabel("Basis Functions:"));
+  basisFunctionsLayout->addWidget(basisFunctionsBox);
+  auto basisFunctionsWrapper = new QWidget;
+  basisFunctionsWrapper->setLayout(basisFunctionsLayout);
+  cotanLaplaceLayout->addWidget(basisFunctionsWrapper);
+
+  cotanLaplaceLayout->addWidget(basisFunctionsBox);
+  cotanLaplaceLayout->addWidget(manifoldHarmonicsBox);
+  cotanLaplaceLayout->addWidget(cotanLaplaceResetButton);
+  cotanLaplaceBox->setLayout(cotanLaplaceLayout);
 
   // Add all the widgets to the final layout
-  layout->addWidget(pointsBox);
-  layout->addWidget(gridBox);
-  layout->addWidget(drawMCBox);
+  layout->addWidget(meshBox);
+  layout->addWidget(normalBox);
+  layout->addWidget(graphLaplaceBox);
+  layout->addWidget(cotanLaplaceBox);
   layout->setSizeConstraint(QLayout::SetFixedSize);
 
   container->setLayout(layout);
   setWidget(container);
 }
 
-void SidebarWidget::initDrawPointsBox(QWidget *parent) {
-  drawPointsBox = new QCheckBox("Draw Points", this);
-  drawPointsBox->setCheckState(Qt::Checked);
-  connect(drawPointsBox, SIGNAL(toggled(bool)), parent,
-          SLOT(setDrawPoints(bool)));
+void SidebarWidget::initMeshBox(QWidget *parent) {
+  drawMeshBox = new QCheckBox("Draw Mesh", this);
+  drawMeshBox->setCheckState(Qt::Checked);
+  connect(drawMeshBox, SIGNAL(toggled(bool)), parent, SLOT(setDrawMesh(bool)));
 
-  drawNormalsBox = new QCheckBox("Draw Normals", this);
-  drawNormalsBox->setCheckState(Qt::Checked);
-  connect(drawNormalsBox, SIGNAL(toggled(bool)), parent,
-          SLOT(setDrawNormals(bool)));
-
-  flipNormalsButton = new QPushButton("Flip Normals", this);
-  connect(flipNormalsButton, SIGNAL(clicked()), parent, SLOT(flipNormals()));
+  meshAlphaBox = new QDoubleSpinBox(this);
+  meshAlphaBox->setRange(0.1, 1.0);
+  meshAlphaBox->setValue(0.5);
+  meshAlphaBox->setSingleStep(0.1);
+  connect(meshAlphaBox, SIGNAL(valueChanged(double)), parent,
+          SLOT(setMeshAlpha(double)));
 }
 
-void SidebarWidget::initGridBox(QWidget *parent) {
-  drawPositiveSamplesBox = new QCheckBox("Draw positive samples", this);
-  // drawPositiveSamplesBox->setCheckState(Qt::Checked);
-  connect(drawPositiveSamplesBox, SIGNAL(toggled(bool)), parent,
-          SLOT(setDrawPositiveSamples(bool)));
+void SidebarWidget::initNormalCalculationBox(QWidget *parent) {
+  drawUnweightedNormalsBox = new QCheckBox("Unweighted", this);
+  connect(drawUnweightedNormalsBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setDrawUnweightedNormals(bool)));
 
-  drawNegativeSamplesBox = new QCheckBox("Draw negative samples", this);
-  // drawNegativeSamplesBox->setCheckState(Qt::Checked);
-  connect(drawNegativeSamplesBox, SIGNAL(toggled(bool)), parent,
-          SLOT(setDrawNegativeSamples(bool)));
-
-  drawConstraintsBox = new QCheckBox("Draw constraints", this);
-  connect(drawConstraintsBox, SIGNAL(toggled(bool)), parent,
-          SLOT(setDrawConstraints(bool)));
-
-  gridSubdivisionBox = new QSpinBox(this);
-  gridSubdivisionBox->setRange(1, 1000);
-  gridSubdivisionBox->setValue(10);
-  connect(gridSubdivisionBox, SIGNAL(valueChanged(int)), parent,
-          SLOT(setGridSubdivision(int)));
-
-  boundingBoxFactorBox = new QDoubleSpinBox(this);
-  boundingBoxFactorBox->setRange(0.0, 10.0);
-  boundingBoxFactorBox->setSingleStep(0.1);
-  boundingBoxFactorBox->setValue(0.5);
-  connect(boundingBoxFactorBox, SIGNAL(valueChanged(double)), parent,
-          SLOT(setBoundingBoxFactor(double)));
-
-  epsilonBox = new QDoubleSpinBox(this);
-  epsilonBox->setRange(0.0, 10.0);
-  epsilonBox->setSingleStep(0.1);
-  epsilonBox->setValue(0.5);
-  connect(epsilonBox, SIGNAL(valueChanged(double)), parent,
-          SLOT(setEpsilon(double)));
-
-  radiusBox = new QDoubleSpinBox(this);
-  radiusBox->setRange(0.0, 1000.0);
-  radiusBox->setSingleStep(0.02);
-  radiusBox->setValue(0.02);
-  connect(radiusBox, SIGNAL(valueChanged(double)), parent,
-          SLOT(setRadius(double)));
-
-  computeSamplesButton = new QPushButton("Compute Samples", this);
-  connect(computeSamplesButton, SIGNAL(clicked()), parent,
-          SLOT(computeSamples()));
+  drawWeightedNormalsBox = new QCheckBox("Weighted", this);
+  connect(drawWeightedNormalsBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setDrawWeightedNormals(bool)));
 }
 
-void SidebarWidget::initMarchingCubesBox(QWidget *parent) {
-  drawMCMeshBox = new QCheckBox("Draw MC mesh", this);
-  connect(drawMCMeshBox, SIGNAL(toggled(bool)), parent,
-          SLOT(setDrawMCMesh(bool)));
+void SidebarWidget::initGraphLaplaceBox(QWidget *parent) {
+  drawGraphLaplaceBox = new QCheckBox("Render", this);
+  connect(drawGraphLaplaceBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setDrawGraphLaplace(bool)));
 
-  computeMCButton = new QPushButton("Compute MC", this);
-  connect(computeMCButton, SIGNAL(clicked()), parent, SLOT(computeMC()));
+  stepSizeBox = new QDoubleSpinBox(this);
+  stepSizeBox->setRange(0.0001, 5.0);
+  stepSizeBox->setValue(0.1);
+  stepSizeBox->setSingleStep(0.1);
+  connect(stepSizeBox, SIGNAL(valueChanged(double)), parent,
+          SLOT(setStepSize(double)));
 
-  computeEMCButton = new QPushButton("Compute EMC", this);
-  connect(computeEMCButton, SIGNAL(clicked()), parent, SLOT(computeEMC()));
+  graphLaplaceMoveButton = new QPushButton("Move", this);
+  connect(graphLaplaceMoveButton, SIGNAL(clicked()), parent,
+          SLOT(graphLaplaceMove()));
+
+  graphLaplaceResetButton = new QPushButton("Reset", this);
+  connect(graphLaplaceResetButton, SIGNAL(clicked()), parent,
+          SLOT(graphLaplaceReset()));
+}
+
+void SidebarWidget::initCotanLaplaceBox(QWidget *parent) {
+  drawCotanLaplaceBox = new QCheckBox("Render", this);
+  connect(drawCotanLaplaceBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setDrawCotanLaplace(bool)));
+
+  explicitStepBox = new QDoubleSpinBox(this);
+  explicitStepBox->setRange(0.001, 5.0);
+  explicitStepBox->setValue(0.01);
+  explicitStepBox->setSingleStep(0.01);
+  connect(explicitStepBox, SIGNAL(valueChanged(double)), parent,
+          SLOT(setExplicitStep(double)));
+
+  explicitStepButton = new QPushButton("Explicit Step", this);
+  connect(explicitStepButton, SIGNAL(clicked()), parent,
+          SLOT(cotanLaplaceExplicitStep()));
+
+  implicitStepBox = new QDoubleSpinBox(this);
+  implicitStepBox->setRange(0.001, 5.0);
+  implicitStepBox->setValue(0.01);
+  implicitStepBox->setSingleStep(0.01);
+  connect(implicitStepBox, SIGNAL(valueChanged(double)), parent,
+          SLOT(setImplicitStep(double)));
+
+  implicitStepButton = new QPushButton("Implicit Step", this);
+  connect(implicitStepButton, SIGNAL(clicked()), parent,
+          SLOT(cotanLaplaceImplicitStep()));
+
+  basisFunctionsBox = new QSpinBox(this);
+  basisFunctionsBox->setRange(2, 20);
+  basisFunctionsBox->setValue(10);
+  connect(basisFunctionsBox, SIGNAL(valueChanged(int)), parent,
+          SLOT(setBasisFunctions(int)));
+
+  manifoldHarmonicsBox = new QCheckBox("Manifold Harmonics", this);
+  connect(manifoldHarmonicsBox, SIGNAL(toggled(bool)), parent,
+          SLOT(setManifoldHarmonics(bool)));
+
+  cotanLaplaceResetButton = new QPushButton("Reset", this);
+  connect(cotanLaplaceResetButton, SIGNAL(clicked()), parent,
+          SLOT(cotanLaplaceReset()));
 }
