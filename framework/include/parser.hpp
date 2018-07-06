@@ -4,17 +4,16 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <limits>
 #include <cmath>
 
-#include "triangle.hpp"
+#include "face.hpp"
 #include "point.hpp"
 
 class Point;
-
-enum filetypeOFF { OFF, NOFF, NNOFF };
 
 // limits of a particular cell are saved here
 struct Borders {
@@ -41,15 +40,18 @@ public:
    */
   bool open(const std::string &fileName);
 
-  /**
-   * Parses the number of vertices contained in the OFF file
-   * Currently keeping this in a vector until we can figure
-   * out what else we need to do with the data
+  /*
+   * Parses the given file and stores the resulting face
+   * and vertex vectors internally, which can then be
+   * retrieved through getter methods
    */
-  std::unique_ptr<std::vector<Point>> getPoints();
+  void parse();
 
-  // Not sure if we need this but I am keeping this stubeed for now
-  std::vector<int> getEdges();
+  // Retrieves the parsed vertices
+  std::unique_ptr<std::vector<Point>> getVertices();
+
+  // Retrieves the faces from parser.
+  std::unique_ptr<std::vector<Face>> getFaces();
 
   /**
    * Closes the filestream that was opened
@@ -63,11 +65,9 @@ public:
 
 private:
   void clearOuterBox();
+  std::vector<Face> faces;
+  std::vector<Point> vertices;
 
   std::ifstream inputStream;
-  filetypeOFF mode;
-  int numPoints;
-  int numFaces;
-  int numEdges;
 };
 #endif // PARSER_HPP

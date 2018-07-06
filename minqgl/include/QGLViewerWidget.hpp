@@ -242,6 +242,9 @@ private:
 
   GLdouble zNearFactor = 0.01;
   GLdouble zFarFactor = 10000.0;
+
+  std::unique_ptr<std::vector<Face>> faces;
+  std::unique_ptr<std::vector<Point>> vertices;
 };
 
 //=============================================================================
