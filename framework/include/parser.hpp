@@ -48,10 +48,10 @@ public:
   void parse();
 
   // Retrieves the parsed vertices
-  std::unique_ptr<std::vector<Point>> getVertices();
+  std::vector<Point> getVertices();
 
   // Retrieves the faces from parser.
-  std::unique_ptr<std::vector<Face>> getFaces();
+  std::vector<Face> getFaces();
 
   /**
    * Closes the filestream that was opened

@@ -76,9 +76,9 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   // The new logic for parsing our OBJ data files
   p.parse();
   vertices = p.getVertices();
-  std::cout << "Vertices: " << vertices->size() << std::endl;
+  std::cout << "Vertices: " << vertices.size() << std::endl;
   faces = p.getFaces();
-  std::cout << "Faces: " << faces->size() << std::endl;
+  std::cout << "Faces: " << faces.size() << std::endl;
 
   updateGL();
 

@@ -38,26 +38,26 @@ void Parser::parse() {
       if (v0.find_first_of('/') != std::string::npos) {
         // If there is a slash '/' contained in our token we just want to value
         // before the slash, which should be the regular vertex index
-        auto vertIdx0 = std::stoul(v0.substr(0, v0.find_first_of('/')));
-        auto vertIdx1 = std::stoul(v1.substr(0, v1.find_first_of('/')));
-        auto vertIdx2 = std::stoul(v2.substr(0, v2.find_first_of('/')));
+        auto vertIdx0 = std::stoul(v0.substr(0, v0.find_first_of('/'))) - 1;
+        auto vertIdx1 = std::stoul(v1.substr(0, v1.find_first_of('/'))) - 1;
+        auto vertIdx2 = std::stoul(v2.substr(0, v2.find_first_of('/'))) - 1;
         faces.emplace_back(Face(vertIdx0, vertIdx1, vertIdx2));
       } else {
         // No slash so we can stuff the values in the vector without issues... hopefully
-        faces.emplace_back(Face(std::stoul(v0), std::stoul(v1), std::stoul(v2)));
+        faces.emplace_back(Face(std::stoul(v0) - 1, std::stoul(v1) - 1, std::stoul(v2) - 1));
       }
     }
   }
 }
 
 // Wraps our parsed faces into a unique pointer
-std::unique_ptr<std::vector<Face>> Parser::getFaces() {
-  return std::make_unique<std::vector<Face>>(faces);
+std::vector<Face> Parser::getFaces() {
+  return faces;
 }
 
 // Wraps our parsed vertices into a unique pointer
-std::unique_ptr<std::vector<Point>> Parser::getVertices() {
-  return std::make_unique<std::vector<Point>>(vertices);
+std::vector<Point> Parser::getVertices() {
+  return vertices;
 }
 
 void Parser::clearOuterBox() {
