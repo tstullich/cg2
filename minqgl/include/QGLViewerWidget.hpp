@@ -36,32 +36,10 @@
 
 // --------------------
 #include "kdtree.hpp"
-#include "marching_cubes.hpp"
 #include "parser.hpp"
 #include "point.hpp"
-#include "surfaces.hpp"
-#include "ImplicitSurface.hpp"
+#include "mesh.hpp"
 // --------------------
-
-enum RayMode {MARCHING, SPHERE};
-
-struct Intersection {
-  glm::vec3 point;
-  glm::vec3 color;
-};
-
-struct rayCastingFrustum {
-  glm::vec3 near0;
-  glm::vec3 near1;
-  glm::vec3 near2;
-  glm::vec3 near3;
-  glm::vec3 far0;
-  glm::vec3 far1;
-  glm::vec3 far2;
-  glm::vec3 far3;
-  glm::vec3 ray0;
-  glm::vec3 ray1;
-};
 
 //== FORWARD DECLARATIONS =====================================================
 
@@ -115,7 +93,6 @@ protected:
 
   void drawRegularGrid();
   void drawKDTree();
-  void drawSurface(std::vector<quadPrimitiv> surfaceFaces);
 
   void drawIntersections();
 
@@ -127,8 +104,6 @@ protected:
 
   // Qt mouse events
   virtual void mousePressEvent(QMouseEvent *);
-  int selectByMouse(std::shared_ptr<PointList> points, GLdouble mouseX,
-                    GLdouble mouseY);
   virtual void mouseReleaseEvent(QMouseEvent *);
   virtual void mouseMoveEvent(QMouseEvent *);
   virtual void wheelEvent(QWheelEvent *);
@@ -149,7 +124,7 @@ private slots:
     }
   }
 
-  void drawTriangleMesh(std::vector<Triangle> mesh);
+  void drawMesh();
 
   void setDrawMesh(bool value);
   void setMeshAlpha(double value);
@@ -198,10 +173,6 @@ private:
 
   glm::vec3 gourad(const Point &v1, const glm::vec3 &normal);
 
-  glm::vec3 gourad(const Point &v1,
-                   const glm::vec3 &normal,
-                   std::vector<quadPrimitiv> surface);
-
   glm::mat4 computeModelViewInv();
 
   glm::vec3 computeCamPos();
@@ -221,30 +192,29 @@ private:
   typedef std::map<QString, QAction *> ActionMap;
   ActionMap namesToActions;
 
-  glm::vec3 center = glm::vec3(0.0, 0.0, 0.0);
-
   float radius;
-  float defaultRadius;
+  float defaultRadius = 1.0;
+  glm::vec3 center = glm::vec3(0.0, 0.0, 0.0);
   // virtual trackball: map 2D screen point to unit sphere
   bool mapToSphere(const QPoint &point, glm::vec3 &result);
 
   glm::vec3 lastPoint3D;
 
   // Holds the current drawing mode set by our dropdown
-  int drawMode = 0;
-  int currentSliderValue = 0;
-
-  RayMode rayMode = SPHERE;
   bool lastPointOk;
-  bool selectOnRelease = false;
-  bool flag_animate = false;
+
+  // flag struct
+  struct Flags {
+    bool drawMesh = true;
+    bool animate = false;
+  }flags;
+
   std::vector<std::thread> threads;
 
   GLdouble zNearFactor = 0.01;
   GLdouble zFarFactor = 10000.0;
 
-  std::vector<Face> faces;
-  std::vector<Point> vertices;
+  std::shared_ptr<Mesh> mesh;
 };
 
 //=============================================================================

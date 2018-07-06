@@ -15,7 +15,7 @@
  */
 class Face {
 public:
-  Face(const uint &v0, const uint &v1, const uint &v2)  {
+  Face(const glm::uint &v0, const glm::uint &v1, const glm::uint &v2)  {
     vertices.push_back(v0);
     vertices.push_back(v1);
     vertices.push_back(v2);
@@ -28,7 +28,7 @@ public:
    * we might need to find another solution to
    * adding new vertices
    */
-  void add(const uint &vertex) { vertices.push_back(vertex); }
+  void add(const glm::uint &vertex) { vertices.push_back(vertex); }
 
   /**
    * Returns the number of vertices in the current
@@ -41,16 +41,16 @@ public:
    * of face indices. Does no bounds-checking so that
    * might be useful later
    */
-  uint &operator[](int idx) { return vertices[idx]; }
+  glm::uint &operator[](int idx) { return vertices[idx]; }
 
   /**
    * An overloaded operator to allow direct indexng
    * of face indices. Does no bounds-checking so that
    * might be useful later
    */
-  const uint &operator[](int idx) const { return vertices[idx]; }
+  const glm::uint &operator[](int idx) const { return vertices[idx]; }
 
 private:
-  std::vector<uint> vertices;
+  std::vector<glm::uint> vertices;
 };
 #endif // FACES_HPP

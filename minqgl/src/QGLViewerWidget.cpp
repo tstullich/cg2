@@ -75,10 +75,17 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 
   // The new logic for parsing our OBJ data files
   p.parse();
-  vertices = p.getVertices();
+  auto vertices = p.getVertices();
   std::cout << "Vertices: " << vertices.size() << std::endl;
-  faces = p.getFaces();
+  auto faces = p.getFaces();
   std::cout << "Faces: " << faces.size() << std::endl;
+
+  this->mesh = std::make_shared<Mesh>(vertices, faces);
+
+  // set mesh dependent parameters
+  this->defaultRadius = 1.5 * this->mesh->getBoundingRadius();
+  setScenePos(mesh->getCenter(), defaultRadius);
+  this->lightPos = glm::vec3(defaultRadius, defaultRadius, defaultRadius);
 
   updateGL();
 
@@ -88,7 +95,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 //void QGLViewerWidget::animateLight() {
 //  unsigned frameCounter = 25;
 //  while (true) {
-//    if (flag_animate) {
+//    if (flags.animate) {
 //      lightPos[0] =
 //          cloudSize[0] * sin(double(frameCounter) * M_PI / 100) + center[0];
 //      lightPos[1] =
@@ -315,17 +322,8 @@ void recursiveDrawKDTree(std::shared_ptr<Node> node, unsigned remainingLevels) {
 
 glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2,
                                           const Point &v3) {
-  // Get the cross product of u - v
-  glm::vec3 u(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z);
-  glm::vec3 v(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z);
-  auto normalX = (u.y * v.z) - (u.z * v.y);
-  auto normalY = (u.z * v.x) - (u.x * v.z);
-  auto normalZ = (u.x * v.y) - (u.y * v.x);
-
-  // Normalize the cross product
-  float d = sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
-
-  return glm::vec3(normalX / d, normalY / d, normalZ / d);
+  glm::vec3 N = glm::cross((v2.toVec3() - v1.toVec3()), (v3.toVec3() - v1.toVec3()));
+  return glm::normalize(N);
 }
 
 glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
@@ -390,20 +388,23 @@ bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0,
 
 void drawVec3(glm::vec3 v) { glVertex3f(v[0], v[1], v[2]); }
 
-void QGLViewerWidget::drawTriangleMesh(std::vector<Triangle> mesh) {
+void QGLViewerWidget::drawMesh() {
   // No mesh to draw. Just return
-  if (mesh.empty()) {
+  if (this->mesh == nullptr) {
     return;
   }
 
-  glBegin(GL_TRIANGLES);
-  glPointSize(10.0f);
-  for (uint i = 0; i < mesh.size(); i++) {
-    auto p0 = mesh[i][0];
-    auto p1 = mesh[i][1];
-    auto p2 = mesh[i][2];
+  std::vector<Point> vertices = mesh->getVertices();
+  std::vector<Face> faces = mesh->getFaces();
 
-    auto normal = triangleNormal(p0, p2, p1);
+  glBegin(GL_TRIANGLES);
+  for (Face f : faces) {
+    assert(f.numVertices() == 3);
+    Point p0 = vertices[f[0]];
+    Point p1 = vertices[f[1]];
+    Point p2 = vertices[f[2]];
+
+    auto normal = triangleNormal(p0, p1, p2);
 
     auto col0 = gourad(p0, normal);
     glColor3f(col0[0], col0[1], col0[2]);
@@ -419,12 +420,14 @@ void QGLViewerWidget::drawTriangleMesh(std::vector<Triangle> mesh) {
   }
   glEnd();
 
-  float distToLight = glm::length(lightPos - computeCamPos());
-  distToLight *= distToLight * 0.5f;
-  glBegin(GL_POINTS);
-  glPointSize(32.0f / distToLight);
+  /* // calc distance for perspectiv point size */
+  /* float distToLight = glm::length(lightPos - computeCamPos()); */
+  /* distToLight *= distToLight * 0.5f; */
+  /* glPointSize(32.0f / distToLight); */
+  glPointSize(10.0f);
   glEnable(GL_POINT_SMOOTH);
-  glColor3f(1.0f, 1.0f, 0.0f);
+  glBegin(GL_POINTS);
+  glColor3f(1.0f, 1.0f, 1.0f);
   glVertex3f(lightPos[0], lightPos[1], lightPos[2]);
   glEnd();
 }
@@ -432,37 +435,40 @@ void QGLViewerWidget::drawTriangleMesh(std::vector<Triangle> mesh) {
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
-  // Draw a coordinate system
-  glBegin(GL_LINES);
-  // x-axis
-  glColor3f(1, 0, 0);
-  glVertex3f(0, 0, 0);
-  glVertex3f(0.25, 0, 0);
-  // y-axis
-  glColor3f(0, 1, 0);
-  glVertex3f(0, 0, 0);
-  glVertex3f(0, 0.25, 0);
-  // z-axis
-  glColor3f(0, 0, 1);
-  glVertex3f(0, 0, 0);
-  glVertex3f(0, 0, 0.25);
-  glEnd();
+  if (flags.drawMesh) {
+    drawMesh();
+  }
+
+  if (!flags.drawMesh) {
+    // Draw a coordinate system
+    glBegin(GL_LINES);
+    // x-axis
+    glColor3f(1, 0, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0.25, 0, 0);
+    // y-axis
+    glColor3f(0, 1, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 0.25, 0);
+    // z-axis
+    glColor3f(0, 0, 1);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 0, 0.25);
+    glEnd();
+  }
 }
 
 //----------------------------------------------------------------------------
 void QGLViewerWidget::mousePressEvent(QMouseEvent *event) {
   // popup menu
   if (event->button() == RightButton && event->buttons() == RightButton) {
-    selectOnRelease = false;
   } else {
     lastPointOk = mapToSphere(lastPoint2D = event->pos(), lastPoint3D);
-    selectOnRelease = true;
   }
 }
 
 //----------------------------------------------------------------------------
 void QGLViewerWidget::mouseMoveEvent(QMouseEvent *event) {
-  selectOnRelease = false;
   QPoint newPoint2D = event->pos();
 
   // Left button: rotate around center
@@ -601,67 +607,9 @@ glm::vec3 QGLViewerWidget::computeCamPos() {
   return camPos;
 }
 
-int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points,
-                                   GLdouble mouseX, GLdouble mouseY) {
-  if (points == nullptr) {
-    return -1;
-  }
-
-  glm::mat4 modelView_inv = computeModelViewInv();
-
-  // collect information
-  glm::vec4 tmp = (modelView_inv * vec4(0, 0, 0, 1));
-  glm::vec3 camPos;  // camera position
-  camPos[0] = tmp[0] / tmp[3];
-  camPos[1] = tmp[1] / tmp[3];
-  camPos[2] = tmp[2] / tmp[3];
-  glm::vec3 camUp;  // camera up direction
-  camUp[0] = modelviewMatrix[1];
-  camUp[1] = modelviewMatrix[5];
-  camUp[2] = modelviewMatrix[9];
-  float zNear = zNearFactor * radius;
-
-  // viewing direction
-  glm::vec3 camView;
-  camView[0] = -modelviewMatrix[2];
-  camView[1] = -modelviewMatrix[6];
-  camView[2] = -modelviewMatrix[10];
-  camView = glm::normalize(camView);
-
-  // calc vector span for view plane
-  glm::vec3 h = glm::cross(camView, camUp);
-  h = glm::normalize(h);
-  glm::vec3 v = glm::cross(h, camView);
-  v = glm::normalize(v);
-  double rad = fovy() * M_PI / 180.0f;
-  float vLength = std::tan(rad / 2.0f) * zNear;
-  float hLength = vLength * ((double) width() / height());
-  v = v * vLength;
-  h = h * hLength;
-
-  // ray position and direction
-  mouseX -= width() / 2.0f;
-  mouseY = -1.0f * (mouseY - height() / 2.0f);
-  float viewX = mouseX / (width() / 2.0f);
-  float viewY = mouseY / (height() / 2.0f);
-  glm::vec3 rayPos = camPos + (camView * zNear) + (h * viewX) + (v * viewY);
-  glm::vec3 rayDir = glm::normalize(rayPos - camPos);
-
-  // ray picking starts hear
-  int selected_index = -1;
-  float dist_to_selected = zFarFactor * radius;  // initiate at zFar
-
-  return selected_index;
-}
-
 void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
-  if (selectOnRelease == true) {
-    // Implement something here later
-  }
-
   // finish up
   lastPointOk = false;
-  selectOnRelease = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -684,21 +632,11 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       break;
 
     case Key_A:
-      flag_animate = (flag_animate) ? false : true;
+      flags.animate = (flags.animate) ? false : true;
       break;
 
     case Key_C:
       setScenePos(center, defaultRadius);
-      break;
-
-    case Key_M:
-      if (rayMode == MARCHING) {
-        rayMode = SPHERE;
-        std::cout << "ray casting mode: sphere tracing" << std::endl;
-      } else {
-        rayMode = MARCHING;
-        std::cout << "ray casting mode: ray marching" << std::endl;
-      }
       break;
 
     case Key_H:
@@ -856,7 +794,8 @@ QAction *QGLViewerWidget::findAction(const char *name) {
 //----------------------------------------------------------------------------
 
 void QGLViewerWidget::setDrawMesh(bool value) {
-  std::cout << "Setting draw mesh value " << value << std::endl;
+  std::cout << "setting flags.drawMesh to " << value << std::endl;
+  flags.drawMesh = value;
 }
 
 void QGLViewerWidget::setMeshAlpha(double value) {
