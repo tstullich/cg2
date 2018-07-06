@@ -4,7 +4,8 @@ struct Borders;
 
 bool Parser::open(const std::string &fileName) {
   inputStream.open(fileName, std::fstream::in);
-  if (inputStream.is_open()) {
+  auto found = fileName.find("off");
+  if (inputStream.is_open() && found != std::string::npos) {
     std::string off;
     inputStream >> off;
     if (off == "OFF") {
@@ -23,6 +24,8 @@ bool Parser::open(const std::string &fileName) {
     inputStream >> numPoints;
     inputStream >> numFaces;
     inputStream >> numEdges;
+  } else if (inputStream.is_open() && fileName.find("obj") != std::string::npos) {
+    std::cout << "Opening an obj data file" << std::endl;
   }
 
   return inputStream.is_open();

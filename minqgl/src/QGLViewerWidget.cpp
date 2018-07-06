@@ -31,6 +31,7 @@
 // --------------------
 
 #include "QGLViewerWidget.hpp"
+
 #define GLM_ENABLE_EXPERIMENTAL 1
 
 #if !defined(M_PI)
@@ -42,24 +43,16 @@ const double TRACKBALL_RADIUS = 0.6;
 using namespace Qt;
 using namespace glm;
 
-//== IMPLEMENTATION ==========================================================
-
-//----------------------------------------------------------------------------
-
 QGLViewerWidget::QGLViewerWidget(QWidget *_parent) : QGLWidget(_parent) {
   assert(glGetError() == GL_NO_ERROR);
   init();
 }
 
-//----------------------------------------------------------------------------
-
 QGLViewerWidget::QGLViewerWidget(QGLFormat &_fmt, QWidget *_parent)
-    : QGLWidget(_fmt, _parent) {
+        : QGLWidget(_fmt, _parent) {
   assert(glGetError() == GL_NO_ERROR);
   init();
 }
-
-//----------------------------------------------------------------------------
 
 void QGLViewerWidget::init() {
   // qt stuff
@@ -68,10 +61,8 @@ void QGLViewerWidget::init() {
   setAcceptDrops(true);
   setCursor(PointingHandCursor);
   assert(glGetError() == GL_NO_ERROR);
-  threads.push_back(std::thread(&QGLViewerWidget::animateLight, this));
+  //threads.push_back(std::thread(&QGLViewerWidget::animateLight, this));
 }
-
-//----------------------------------------------------------------------------
 
 QGLViewerWidget::~QGLViewerWidget() {}
 
@@ -82,152 +73,46 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
     return false;
   }
 
-  kdtree = std::make_shared<KDTree>(p.getPoints(), p.outerBox);
-  pointList = kdtree->getPoints();
-
-  // causes linker error - no idear why
-  // surfaces = std::make_shared<Surfaces>(kdtree, gridM, gridN, gridR);
-
-  implicitSurface = std::make_shared<ImplicitSurface>(
-      kdtree, this->gridSubdivision, this->implicitRadius);
-
-  Borders b = this->kdtree->getRootnode()->borders;
-  this->cloudSize =
-      glm::vec3(b.xMax - b.xMin, b.yMax - b.yMin, b.zMax - b.zMin);
-  float maxSize = std::max(std::max(cloudSize[0], cloudSize[1]), cloudSize[2]);
-  defaultRadius = maxSize * 0.5;
-  setScenePos(kdtree->getCenter(), defaultRadius);
-  /* setScenePos(kdtree->getCenterOfGravity(), 1.0); */
-  /* setScenePos(glm::vec3(0.5f, 0.5f, 0.35f), 1.0f); */
-
-  selectedPointIndex = 0;
-  selectedPointList.clear();
-  clearRayCasting();
-
   updateGL();
 
   return true;
 }
 
-void QGLViewerWidget::animateLight() {
-  unsigned frameCounter = 25;
-  while (true) {
-    if (flag_animate) {
-      lightPos[0] =
-          cloudSize[0] * sin(double(frameCounter) * M_PI / 100) + center[0];
-      lightPos[1] =
-          cloudSize[1] * cos(double(frameCounter) * M_PI / 100) + center[1];
-      lightPos[2] = center[2] + 0.75 * cloudSize[2];
-      frameCounter = (frameCounter + 1) % 200;
-      update();
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
-}
+//void QGLViewerWidget::animateLight() {
+//  unsigned frameCounter = 25;
+//  while (true) {
+//    if (flag_animate) {
+//      lightPos[0] =
+//          cloudSize[0] * sin(double(frameCounter) * M_PI / 100) + center[0];
+//      lightPos[1] =
+//          cloudSize[1] * cos(double(frameCounter) * M_PI / 100) + center[1];
+//      lightPos[2] = center[2] + 0.75 * cloudSize[2];
+//      frameCounter = (frameCounter + 1) % 200;
+//      update();
+//    }
+//    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//  }
+//}
 
-bool QGLViewerWidget::drawPointSetNormals() {
-  if (pointList == nullptr || pointList->size() == 0) {
-    return false;
-  }
+//bool QGLViewerWidget::drawPointSetNormals() {
+//glDisable(GL_LIGHTING);
+//glBegin(GL_LINES);
+//glColor3f(0.75f, 0.75f, 0.75f);
+//for (unsigned int i = 0; i < pointList->size(); i++) {
+//  Point p = (*pointList)[i];
+//  if (p.type == originalPoint) {
+//    if (glm::length(p.normal) == 0) {
+//    }
+//    glVertex3f(p.x, p.y, p.z);
+//    glVertex3f(p.x + lengthScalar * p.normal[0],
+//               p.y + lengthScalar * p.normal[1],
+//               p.z + lengthScalar * p.normal[2]);
+//  }
+//}
+//glEnd();
 
-  Borders outerBox = this->kdtree->getRootnode()->borders;
-  Point p1(outerBox.xMin, outerBox.yMin, outerBox.zMin);
-  Point p2(outerBox.xMax, outerBox.yMax, outerBox.zMax);
-  double lengthScalar = 0.03 * p1.distPoint(p2);
-
-  glDisable(GL_LIGHTING);
-  glBegin(GL_LINES);
-  glColor3f(0.75f, 0.75f, 0.75f);
-  for (unsigned int i = 0; i < pointList->size(); i++) {
-    Point p = (*pointList)[i];
-    if (p.type == originalPoint) {
-      if (glm::length(p.normal) == 0) {
-      }
-      glVertex3f(p.x, p.y, p.z);
-      glVertex3f(p.x + lengthScalar * p.normal[0],
-                 p.y + lengthScalar * p.normal[1],
-                 p.z + lengthScalar * p.normal[2]);
-    }
-  }
-  glEnd();
-
-  return true;
-}
-
-bool QGLViewerWidget::drawPointSet() {
-  if (pointList == nullptr || pointList->size() == 0) {
-    return false;
-  }
-
-  glDisable(GL_LIGHTING);
-
-  glEnable(GL_POINT_SMOOTH);
-  glPointSize(3.0f);
-  glBegin(GL_POINTS);
-
-  glColor3f(1.0f, 0.0f, 0.0f);
-  for (std::shared_ptr<Point> p : this->implicitSurface->getOriginalPoints()) {
-    glVertex3f(p->x, p->y, p->z);
-  }
-
-  glColor3f(0.0f, 1.0f, 0.0f);
-  for (std::shared_ptr<Point> p : this->implicitSurface->getPositivePoints()) {
-    glVertex3f(p->x, p->y, p->z);
-  }
-
-  glColor3f(0.0f, 0.0f, 1.0f);
-  for (std::shared_ptr<Point> p : this->implicitSurface->getNegativePoints()) {
-    glVertex3f(p->x, p->y, p->z);
-  }
-
-  glEnd();
-
-  return true;
-}
-
-bool QGLViewerWidget::drawSelectedPointSet() {
-  if (selectedPointList.size() == 0) {
-    if (selectedPointIndex >= 0 && drawMode != 0) {
-      // At least draw the selected point, otherwise
-      // the selected point won't show in linear search mode
-      glEnable(GL_POINT_SMOOTH);
-      glPointSize(12.0f);
-      glBegin(GL_POINTS);
-      glColor3f(255, 0, 255);
-      auto p = (*pointList)[selectedPointIndex];
-      glVertex3f(p.x, p.y, p.z);
-      glEnd();
-    }
-    return false;
-  }
-
-  glDisable(GL_LIGHTING);
-
-  glEnable(GL_POINT_SMOOTH);
-  glPointSize(10.0f);
-  glBegin(GL_POINTS);
-  glColor3f(0, 255, 0);
-  auto selectedPoint = (*pointList)[selectedPointIndex];
-  for (unsigned int i = 0; i < selectedPointList.size(); i++) {
-    std::shared_ptr<Point> p = selectedPointList[i];
-    if ((selectedPoint.x != p->x) || (selectedPoint.y != p->y) ||
-        (selectedPoint.z != p->z)) {
-      glVertex3f(p->x, p->y, p->z);
-    }
-  }
-  glEnd();
-
-  glEnable(GL_POINT_SMOOTH);
-  glPointSize(12.0f);
-  glBegin(GL_POINTS);
-  glColor3f(255, 0, 255);
-  // The selected point should always be at the end of the list
-  auto p = (*pointList)[selectedPointIndex];
-  glVertex3f(p.x, p.y, p.z);
-  glEnd();
-
-  return true;
-}
+//  return true;
+//}
 
 void QGLViewerWidget::setDefaultMaterial(void) {
   GLfloat mat_a[] = {0.1, 0.1, 0.1, 1.0};
@@ -330,33 +215,6 @@ void QGLViewerWidget::paintGL() {
 
 //----------------------------------------------------------------------------
 
-void QGLViewerWidget::drawRegularGrid() {
-  if (kdtree == nullptr) {
-    return;
-  }
-
-  Borders borders = kdtree->getRootnode()->borders;
-  float xMin = borders.xMin;
-  float xMax = borders.xMax;
-  float yMin = borders.yMin;
-  float yMax = borders.yMax;
-  float mDelta = double(yMax - yMin) / gridM;
-  float nDelta = double(xMax - xMin) / gridN;
-
-  // draw grid lines
-  glBegin(GL_LINES);
-  glColor3f(0, 1, 0);
-  for (int m = 0; m <= gridM; ++m) {
-    glVertex3f(xMin, yMin + (m * mDelta), 0);
-    glVertex3f(xMax, yMin + (m * mDelta), 0);
-  }
-  for (int n = 0; n <= gridN; ++n) {
-    glVertex3f(xMin + (n * nDelta), yMin, 0);
-    glVertex3f(xMin + (n * nDelta), yMax, 0);
-  }
-  glEnd();
-}
-
 void drawBox(struct Borders borders) {
   double x_0 = borders.xMin;
   double x_1 = borders.xMax;
@@ -448,16 +306,6 @@ void recursiveDrawKDTree(std::shared_ptr<Node> node, unsigned remainingLevels) {
   }
 }
 
-void QGLViewerWidget::drawKDTree() {
-  if (kdtree == nullptr) return;
-
-  drawBox(kdtree->getRootnode()->borders);
-
-  glBegin(GL_QUADS);
-  recursiveDrawKDTree(kdtree->getRootnode(), drawLevelsOfTree);
-  glEnd();
-}
-
 glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2,
                                           const Point &v3) {
   // Get the cross product of u - v
@@ -497,7 +345,7 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   glm::vec3 diffuse = diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
 
   glm::vec3 specular =
-      specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 50.0f);
+          specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 50.0f);
 
   return ambientColor + diffuse + specular;
 }
@@ -529,255 +377,11 @@ bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0,
   if (t > 0.00001) {
     return true;
   } else {
-    return false;
-    ;
+    return false;;
   }
-}
-
-bool QGLViewerWidget::rayMarching(glm::vec3 rayPos, glm::vec3 rayDir,
-                                  float *dist) {
-  if (this->implicitSurface == nullptr) {
-    return false;
-  }
-
-  rayDir = glm::normalize(rayDir);
-  assert(glm::length(rayDir) != 0.0);
-
-  // evaluation at ray origin
-  Point p(rayPos[0], rayPos[1], rayPos[2]);
-  float lastVal = this->implicitSurface->computeMLS(p);
-  float maxDist = *dist;
-  float stepSize = 0.01 * kdtree->getDiagonal();
-  for (*dist = stepSize; (*dist) + stepSize < maxDist; (*dist) += stepSize) {
-    float x = rayPos[0] + (*dist) * rayDir[0];
-    float y = rayPos[1] + (*dist) * rayDir[1];
-    float z = rayPos[2] + (*dist) * rayDir[2];
-    Point p(x, y, z);
-    float currVal = this->implicitSurface->computeMLS(p);
-    // check for sign change
-    if ((lastVal > 0.0 && currVal <= 0.0) ||
-        (lastVal < 0.0 && currVal >= 0.0)) {
-      return true;
-    }
-    lastVal = currVal;
-  }
-
-  return false;
-}
-
-bool QGLViewerWidget::sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir,
-                                    float *dist) {
-  if (this->implicitSurface == nullptr) {
-    return false;
-  }
-
-  float threshold = 0.001;
-
-  rayDir = glm::normalize(rayDir);
-  assert(glm::length(rayDir) != 0.0);
-
-  // evaluation at ray origin
-  Point p(rayPos[0], rayPos[1], rayPos[2]);
-  float lastDist = std::numeric_limits<float>::max();
-  float currDist = this->kdtree->distToSurface(p, rayPos, rayDir);
-  float totalDist = 0.0;
-  while (currDist < lastDist) {
-    lastDist = currDist - (0.1 * threshold);
-    // make sphere raius step
-    p.x += lastDist * rayDir[0];
-    p.y += lastDist * rayDir[1];
-    p.z += lastDist * rayDir[2];
-    totalDist += lastDist;
-    // calculate new sphere radius
-    currDist = this->kdtree->distToSurface(p, rayPos, rayDir);
-    // if it converges, we hit the surface
-    if (currDist < threshold) {
-      *dist = totalDist;
-      return true;
-    }
-  }
-
-  return false;
-}
-
-void QGLViewerWidget::clearRayCasting() {
-  intersections.clear();
-  frustum.near0 = glm::vec3(0.0, 0.0, 0.0);
-  frustum.near1 = glm::vec3(0.0, 0.0, 0.0);
-  frustum.near2 = glm::vec3(0.0, 0.0, 0.0);
-  frustum.near3 = glm::vec3(0.0, 0.0, 0.0);
-  frustum.far0 = glm::vec3(0.0, 0.0, 0.0);
-  frustum.far1 = glm::vec3(0.0, 0.0, 0.0);
-  frustum.far2 = glm::vec3(0.0, 0.0, 0.0);
-  frustum.far3 = glm::vec3(0.0, 0.0, 0.0);
-  frustum.ray0 = glm::vec3(0.0, 0.0, 0.0);
-  frustum.ray1 = glm::vec3(0.0, 0.0, 0.0);
-}
-
-void QGLViewerWidget::raycasting() {
-  std::cout << "raycasting() start!" << std::endl;
-  flag_shootRays = false;
-  flag_animate = true;
-
-  clearRayCasting();
-
-  glm::mat4 modelView_inv = computeModelViewInv();
-
-  // collect information
-  glm::vec4 tmp = (modelView_inv * vec4(0, 0, 0, 1));
-  glm::vec3 camPos;  // camera position
-  camPos[0] = tmp[0] / tmp[3];
-  camPos[1] = tmp[1] / tmp[3];
-  camPos[2] = tmp[2] / tmp[3];
-  glm::vec3 camUp;  // camera up direction
-  camUp[0] = modelviewMatrix[1];
-  camUp[1] = modelviewMatrix[5];
-  camUp[2] = modelviewMatrix[9];
-  float zNear = zNearFactor * 1.0;
-  /* float zFar = (rayMode == MARCHING)? 1.5 : zFarFactor * 1.0; */
-  float zFar = 1.5 * kdtree->getDiagonal();
-
-  // viewing direction
-  glm::vec3 camView;
-  camView[0] = -modelviewMatrix[2];
-  camView[1] = -modelviewMatrix[6];
-  camView[2] = -modelviewMatrix[10];
-  camView = glm::normalize(camView);
-
-  // calc vector span for view plane
-  glm::vec3 h = glm::cross(camView, camUp);
-  h = glm::normalize(h);
-  glm::vec3 v = glm::cross(h, camView);
-  v = glm::normalize(v);
-  double rad = fovy() * M_PI / 180.0f;
-  float vLength = std::tan(rad / 2.0f) * zNear;
-  float hLength = vLength * ((double)width() / height());
-  v = v * vLength;
-  h = h * hLength;
-
-  unsigned sphereDrawOff = 2;
-  for (int m = 0; m <= height(); m += 1) {
-    if (rayMode == SPHERE) {
-      if (!(m + sphereDrawOff < height() / 2.0 ||
-            m - sphereDrawOff > height() / 2.0)) {
-        std::cout << "line" << m << std::endl;
-      }
-    }
-    for (int n = 0; n <= width(); n += 1) {
-      // ray position and direction
-      double N = n - (width() / 2.0f);
-      double M = -1.0f * (m - height() / 2.0f);
-      float viewN = N / (width() / 2.0f);
-      float viewM = M / (height() / 2.0f);
-      glm::vec3 rayPos = camPos + (camView * zNear) + (h * viewN) + (v * viewM);
-      glm::vec3 rayDir = glm::normalize(rayPos - camPos);
-
-      // fill in frustum information
-      frustum.ray0 = rayPos;
-      frustum.ray1 = rayPos + zFar * rayDir;
-      if (m == 0 && n == 0) {
-        frustum.near0 = rayPos;
-        frustum.far0 = rayPos + zFar * rayDir;
-      } else if (m == 0 && n == width()) {
-        frustum.near1 = rayPos;
-        frustum.far1 = rayPos + zFar * rayDir;
-      } else if (n == 0) {
-        frustum.near3 = rayPos;
-        frustum.far3 = rayPos + zFar * rayDir;
-      } else if (n == width()) {
-        frustum.near2 = rayPos;
-        frustum.far2 = rayPos + zFar * rayDir;
-      }
-
-      if (rayMode == SPHERE) {
-        if (m + sphereDrawOff < height() / 2.0 ||
-            m - sphereDrawOff > height() / 2.0) {
-          continue;
-        }
-      }
-
-      // ray casting starts hear
-      float dist = zFar;
-      bool hit = false;
-      switch (rayMode) {
-        case MARCHING:
-          hit = rayMarching(rayPos, rayDir, &dist);
-          break;
-        case SPHERE:
-          hit = sphereTracing(rayPos, rayDir, &dist);
-          break;
-        default:
-          return;
-      }
-      if (hit) {
-        struct Intersection newIntersection;
-        // test screen
-        newIntersection.point = glm::vec3(rayPos[0] + dist * rayDir[0],
-                                          rayPos[1] + dist * rayDir[1],
-                                          rayPos[2] + dist * rayDir[2]);
-        newIntersection.color = glm::vec3(1.0, 1.0, 1.0);
-        intersections.push_back(newIntersection);
-      }
-    }
-  }
-
-  std::cout << "raycasting() finish!" << std::endl;
-  flag_animate = false;
-
-  return;
 }
 
 void drawVec3(glm::vec3 v) { glVertex3f(v[0], v[1], v[2]); }
-
-void QGLViewerWidget::drawIntersections() {
-  glDisable(GL_LIGHTING);
-  glBegin(GL_LINE_LOOP);
-  // draw frustum
-  glColor3f(0.0, 1.0, 0.0);
-  // near plane
-  drawVec3(frustum.near0);
-  drawVec3(frustum.near1);
-  drawVec3(frustum.near2);
-  drawVec3(frustum.near3);
-  drawVec3(frustum.near0);
-  // far plane
-  drawVec3(frustum.far0);
-  drawVec3(frustum.far1);
-  drawVec3(frustum.far2);
-  drawVec3(frustum.far3);
-  drawVec3(frustum.far0);
-  glEnd();
-  glBegin(GL_LINES);
-  glColor3f(0.0, 1.0, 0.0);
-  // lines between near and far
-  drawVec3(frustum.near0);
-  drawVec3(frustum.far0);
-  drawVec3(frustum.near1);
-  drawVec3(frustum.far1);
-  drawVec3(frustum.near2);
-  drawVec3(frustum.far2);
-  drawVec3(frustum.near3);
-  drawVec3(frustum.far3);
-
-  // draw ray
-  drawVec3(frustum.ray0);
-  drawVec3(frustum.ray1);
-  glEnd();
-
-  if (this->intersections.size() == 0) {
-    return;
-  }
-
-  glDisable(GL_LIGHTING);
-  glEnable(GL_POINT_SMOOTH);
-  glPointSize(1.0f);
-  glBegin(GL_POINTS);
-  for (struct Intersection i : this->intersections) {
-    glColor3f(i.color[0], i.color[1], i.color[2]);
-    glVertex3f(i.point[0], i.point[1], i.point[2]);
-  }
-  glEnd();
-}
 
 void QGLViewerWidget::drawTriangleMesh(std::vector<Triangle> mesh) {
   // No mesh to draw. Just return
@@ -818,54 +422,24 @@ void QGLViewerWidget::drawTriangleMesh(std::vector<Triangle> mesh) {
   glEnd();
 }
 
-void QGLViewerWidget::drawMarchingCubesMesh() {
-  if (implicitSurface == nullptr) {
-    return;
-  }
-
-  drawTriangleMesh(implicitSurface->getMarchingCubesMesh());
-}
-
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
-  if (flag_drawPointSetNormals) {
-    drawPointSetNormals();
-  }
-  if (drawGrid) {
-    drawRegularGrid();
-  }
-  if (flag_drawTree) {
-    drawKDTree();
-  }
-  if (flag_shootRays) {
-    if (rayMode == MARCHING || true) {
-      threads.push_back(std::thread(&QGLViewerWidget::raycasting, this));
-    } else {
-      raycasting();
-    }
-  }
-  if (flag_drawIntersections) {
-    drawIntersections();
-  }
-
   // Draw a coordinate system
-  if (!drawGrid && kdtree == nullptr) {
-    glBegin(GL_LINES);
-    // x-axis
-    glColor3f(1, 0, 0);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0.25, 0, 0);
-    // y-axis
-    glColor3f(0, 1, 0);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 0.25, 0);
-    // z-axis
-    glColor3f(0, 0, 1);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 0, 0.25);
-    glEnd();
-  }
+  glBegin(GL_LINES);
+  // x-axis
+  glColor3f(1, 0, 0);
+  glVertex3f(0, 0, 0);
+  glVertex3f(0.25, 0, 0);
+  // y-axis
+  glColor3f(0, 1, 0);
+  glVertex3f(0, 0, 0);
+  glVertex3f(0, 0.25, 0);
+  // z-axis
+  glColor3f(0, 0, 1);
+  glVertex3f(0, 0, 0);
+  glVertex3f(0, 0, 0.25);
+  glEnd();
 }
 
 //----------------------------------------------------------------------------
@@ -911,10 +485,10 @@ void QGLViewerWidget::mouseMoveEvent(QMouseEvent *event) {
               event->modifiers() == AltModifier)) {
     // move in x,y direction
     float z =
-        -(modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
-          modelviewMatrix[10] * center[2] + modelviewMatrix[14]) /
-        (modelviewMatrix[3] * center[0] + modelviewMatrix[7] * center[1] +
-         modelviewMatrix[11] * center[2] + modelviewMatrix[15]);
+            -(modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
+              modelviewMatrix[10] * center[2] + modelviewMatrix[14]) /
+            (modelviewMatrix[3] * center[0] + modelviewMatrix[7] * center[1] +
+             modelviewMatrix[11] * center[2] + modelviewMatrix[15]);
 
     float aspect = w / h;
     float near_plane = 0.01 * radius;
@@ -1054,7 +628,7 @@ int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points,
   v = glm::normalize(v);
   double rad = fovy() * M_PI / 180.0f;
   float vLength = std::tan(rad / 2.0f) * zNear;
-  float hLength = vLength * ((double)width() / height());
+  float hLength = vLength * ((double) width() / height());
   v = v * vLength;
   h = h * hLength;
 
@@ -1069,39 +643,13 @@ int QGLViewerWidget::selectByMouse(std::shared_ptr<PointList> points,
   // ray picking starts hear
   int selected_index = -1;
   float dist_to_selected = zFarFactor * radius;  // initiate at zFar
-  for (unsigned int i = 0; i < pointList->size(); ++i) {
-    Point p = (*points)[i];
-
-    // cast ray and check for intersection w/ p
-    glm::vec3 pointPos = vec3(p.x, p.y, p.z);
-    float curr_dist = 0.0f;
-    if (intersectRayPoint(rayPos, rayDir, pointPos, &curr_dist)) {
-      if (curr_dist < dist_to_selected) {
-        dist_to_selected = curr_dist;
-        selected_index = i;
-      }
-    }
-  }
 
   return selected_index;
 }
 
 void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
   if (selectOnRelease == true) {
-    if (pointList == nullptr || pointList->size() == 0) {
-      std::cout << "No OFF file loaded. Won't draw. Please load a file before "
-                   "changing values"
-                << std::endl;
-      return;
-    }
-
-    auto tempIndex =
-        selectByMouse(pointList, event->pos().x(), event->pos().y());
-
-    if (tempIndex >= 0) {
-      selectedPointIndex = tempIndex;
-      updateTreeState(currentSliderValue);
-    }
+    // Implement something here later
   }
 
   // finish up
@@ -1114,7 +662,7 @@ void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
 void QGLViewerWidget::wheelEvent(QWheelEvent *_event) {
   // Use the mouse wheel to zoom in/out
 
-  float d = -(float)_event->delta() / 120.0 * 0.2 * radius;
+  float d = -(float) _event->delta() / 120.0 * 0.2 * radius;
   translate(vec3(0.0, 0.0, d));
   updateGL();
   _event->accept();
@@ -1136,14 +684,6 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       setScenePos(center, defaultRadius);
       break;
 
-    case Key_J:
-      if (drawLevelsOfTree > 0) drawLevelsOfTree--;
-      break;
-
-    case Key_K:
-      if (drawLevelsOfTree < 8) drawLevelsOfTree++;
-      break;
-
     case Key_M:
       if (rayMode == MARCHING) {
         rayMode = SPHERE;
@@ -1152,22 +692,6 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
         rayMode = MARCHING;
         std::cout << "ray casting mode: ray marching" << std::endl;
       }
-      break;
-
-    case Key_R:
-      flag_drawIntersections = (flag_drawIntersections) ? false : true;
-      std::cout << "flag_drawIntersections = " << flag_drawIntersections
-                << std::endl;
-      break;
-
-    case Key_S:
-      flag_drawIntersections = true;
-      flag_shootRays = (flag_shootRays) ? false : true;
-      std::cout << "flag_shootRays = " << flag_shootRays << std::endl;
-      break;
-
-    case Key_T:
-      flag_drawTree = flag_drawTree ? false : true;
       break;
 
     case Key_H:
@@ -1203,11 +727,11 @@ void QGLViewerWidget::rotate(const vec3 &_axis, float _angle) {
   // Update modelviewMatrix
 
   vec3 t(modelviewMatrix[0] * center[0] + modelviewMatrix[4] * center[1] +
-             modelviewMatrix[8] * center[2] + modelviewMatrix[12],
+         modelviewMatrix[8] * center[2] + modelviewMatrix[12],
          modelviewMatrix[1] * center[0] + modelviewMatrix[5] * center[1] +
-             modelviewMatrix[9] * center[2] + modelviewMatrix[13],
+         modelviewMatrix[9] * center[2] + modelviewMatrix[13],
          modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
-             modelviewMatrix[10] * center[2] + modelviewMatrix[14]);
+         modelviewMatrix[10] * center[2] + modelviewMatrix[14]);
 
   makeCurrent();
   glLoadIdentity();
@@ -1247,7 +771,7 @@ void QGLViewerWidget::updateProjectionMatrix() {
   makeCurrent();
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(fovy(), (GLfloat)width() / (GLfloat)height(),
+  gluPerspective(fovy(), (GLfloat) width() / (GLfloat) height(),
                  zNearFactor * radius, zFarFactor * radius);
   glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
   glMatrixMode(GL_MODELVIEW);
@@ -1257,12 +781,12 @@ void QGLViewerWidget::updateProjectionMatrix() {
 
 void QGLViewerWidget::viewAll() {
   translate(vec3(
-      -(modelviewMatrix[0] * center[0] + modelviewMatrix[4] * center[1] +
-        modelviewMatrix[8] * center[2] + modelviewMatrix[12]),
-      -(modelviewMatrix[1] * center[0] + modelviewMatrix[5] * center[1] +
-        modelviewMatrix[9] * center[2] + modelviewMatrix[13]),
-      -(modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
-        modelviewMatrix[10] * center[2] + modelviewMatrix[14] + 3.0 * radius)));
+          -(modelviewMatrix[0] * center[0] + modelviewMatrix[4] * center[1] +
+            modelviewMatrix[8] * center[2] + modelviewMatrix[12]),
+          -(modelviewMatrix[1] * center[0] + modelviewMatrix[5] * center[1] +
+            modelviewMatrix[9] * center[2] + modelviewMatrix[13]),
+          -(modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
+            modelviewMatrix[10] * center[2] + modelviewMatrix[14] + 3.0 * radius)));
 }
 
 //----------------------------------------------------------------------------
@@ -1323,60 +847,6 @@ QAction *QGLViewerWidget::findAction(const char *name) {
 //----------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------
-
-void QGLViewerWidget::updateTreeState(int value) {
-  if (pointList == nullptr || pointList->size() == 0) {
-    std::cout << "No OFF file loaded. Won't draw. Please load a file before "
-                 "changing values"
-              << std::endl;
-    return;
-  }
-
-  currentSliderValue = value;
-  if (drawMode == 0) {
-    drawLevelsOfTree = value;
-  } else {
-    std::cout << (performLinearSearch ? "[Linear]" : "[KDTree]");
-    std::chrono::high_resolution_clock::time_point start;
-    std::chrono::high_resolution_clock::time_point end;
-    if (drawMode == 1) {
-      float v = static_cast<float>(currentSliderValue / 10.0f);
-      std::cout << " Collect in radius=" << v << " ";
-      if (performLinearSearch) {
-        start = std::chrono::high_resolution_clock::now();
-        selectedPointList =
-            kdtree->collectInRadiusSimple((*pointList)[selectedPointIndex], v);
-        end = std::chrono::high_resolution_clock::now();
-      } else {
-        start = std::chrono::high_resolution_clock::now();
-        selectedPointList =
-            kdtree->collectInRadius((*pointList)[selectedPointIndex], v);
-        end = std::chrono::high_resolution_clock::now();
-      }
-    } else {
-      std::cout << " KNearestNeighbors k=" << currentSliderValue << " ";
-      if (performLinearSearch) {
-        start = std::chrono::high_resolution_clock::now();
-        selectedPointList = kdtree->collectKNearestSimple(
-            (*pointList)[selectedPointIndex], currentSliderValue);
-        end = std::chrono::high_resolution_clock::now();
-      } else {
-        start = std::chrono::high_resolution_clock::now();
-        selectedPointList = kdtree->collectKNearest(
-            (*pointList)[selectedPointIndex], currentSliderValue);
-        end = std::chrono::high_resolution_clock::now();
-      }
-    }
-    auto duration =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
-    std::cout << "-> execution duration: " << duration << " micro seconds"
-              << std::endl;
-  }
-
-  // Need to redraw after changing settings
-  updateGL();
-}
 
 void QGLViewerWidget::setDrawMesh(bool value) {
   std::cout << "Setting draw mesh value " << value << std::endl;

@@ -119,28 +119,8 @@ protected:
 
   void drawIntersections();
 
-  void drawMarchingCubesMesh();
-
   // draw the scene: will be called by the paintGL() method.
   virtual void drawScene();
-
-  bool drawPointSetNormals();
-
-  // draws the given point list
-  bool drawPointSet();
-
-  // draws the selected point list
-  bool drawSelectedPointSet();
-
-  // list of data points
-  std::shared_ptr<PointList> pointList;
-
-  // list of intersection points
-  std::vector<struct Intersection> intersections;
-  struct rayCastingFrustum frustum;
-
-  // list of selected data points
-  PointPointerList selectedPointList;
 
   void setDefaultMaterial(void);
   void setDefaultLight(void);
@@ -162,14 +142,13 @@ private slots:
   void queryOpenPointSetFile() {
     QString fileName =
         QFileDialog::getOpenFileName(this, tr("Open point set file"), tr(""),
-                                     tr("OFF Files (*.off);;"
+                                     tr("OBJ Files (*.obj);;"
                                         "All Files (*)"));
     if (!fileName.isEmpty()) {
       loadPointSet(fileName.toLocal8Bit());
     }
   }
 
-  void updateTreeState(int value);
   void drawTriangleMesh(std::vector<Triangle> mesh);
 
   void setDrawMesh(bool value);
@@ -192,15 +171,10 @@ private slots:
   void setManifoldHarmonics(bool value);
   void cotanLaplaceReset();
 
-  bool rayMarching(glm::vec3 rayPos, glm::vec3 rayDir, float *dist);
-  bool sphereTracing(glm::vec3 rayPos, glm::vec3 rayDir, float *dist);
-  void clearRayCasting();
-  void raycasting();
-
 private:
   void init();
 
-  void animateLight();
+  //void animateLight();
 
   // initialize OpenGL states (triggered by Qt)
   void initializeGL();
@@ -248,7 +222,6 @@ private:
   ActionMap namesToActions;
 
   glm::vec3 center = glm::vec3(0.0, 0.0, 0.0);
-  glm::vec3 cloudSize = glm::vec3(0.0, 0.0, 0.0);
 
   float radius;
   float defaultRadius;
@@ -261,35 +234,14 @@ private:
   int drawMode = 0;
   int currentSliderValue = 0;
 
-  bool flag_shootRays = false;
-  bool flag_drawIntersections = false;
   RayMode rayMode = SPHERE;
-  bool flag_drawPointSetNormals = true;
-  bool drawGrid = false;
-  int gridM = 10;
-  int gridN = 10;
-  float gridR = 0.5;
-  int gridSubdivision = 10;
-  float implicitRadius = 0.02;
-  int kMLS = 1;
-  int kBTPS = 1;
-  bool flag_drawSelectedPoints = true;
-  bool flag_drawTree = false;
   bool lastPointOk;
-  bool performLinearSearch = false;
   bool selectOnRelease = false;
   bool flag_animate = false;
   std::vector<std::thread> threads;
 
   GLdouble zNearFactor = 0.01;
   GLdouble zFarFactor = 10000.0;
-
-  unsigned drawLevelsOfTree = 0;
-  int64_t selectedPointIndex = -1;
-
-  std::shared_ptr<KDTree> kdtree;
-  std::shared_ptr<Surfaces> surfaces;
-  std::shared_ptr<ImplicitSurface> implicitSurface;
 };
 
 //=============================================================================
