@@ -125,6 +125,7 @@ private slots:
   }
 
   void drawMesh();
+  void drawUnweightedVertexNormals();
 
   void setDrawMesh(bool value);
   void setMeshAlpha(double value);
@@ -207,6 +208,7 @@ private:
   struct Flags {
     bool drawMesh = true;
     bool animate = false;
+    bool drawUnweightedNormals = false;
   }flags;
 
   std::vector<std::thread> threads;

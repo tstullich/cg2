@@ -50,6 +50,8 @@ public:
    */
   const glm::uint &operator[](int idx) const { return vertices[idx]; }
 
+  glm::vec3 normal;
+
 private:
   std::vector<glm::uint> vertices;
 };

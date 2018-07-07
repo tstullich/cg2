@@ -11,6 +11,8 @@ class Mesh {
   public:
     Mesh(std::vector<Point> vertices, std::vector<Face> faces);
 
+    void computeUnweightedNormals();
+
     glm::vec3 getCenter();
     float getBoundingRadius();
 

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <vector>
 
 #include <glm/glm.hpp>
 
@@ -39,5 +40,7 @@ public:
 
   float dist;
   glm::vec3 normal;
+
+  std::vector<glm::uint> adjacentFaces;
 };
 #endif // POINT_HPP

@@ -82,6 +82,9 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 
   this->mesh = std::make_shared<Mesh>(vertices, faces);
 
+  // compute normals
+  this->mesh->computeUnweightedNormals();
+
   // set mesh dependent parameters
   this->defaultRadius = 1.5 * this->mesh->getBoundingRadius();
   setScenePos(mesh->getCenter(), defaultRadius);
@@ -432,11 +435,30 @@ void QGLViewerWidget::drawMesh() {
   glEnd();
 }
 
+void QGLViewerWidget::drawUnweightedVertexNormals() {
+  glDisable(GL_LIGHTING);
+  glBegin(GL_LINES);
+  glColor3f(0.75f, 0.75f, 0.75f);
+  float lengthScalar = 0.1 * mesh->getBoundingRadius();
+  std::vector<Point> vertices = mesh->getVertices();
+  for (unsigned int i = 0; i < vertices.size(); i++) {
+    Point v = vertices[i];
+    glVertex3f(v.x, v.y, v.z);
+    glVertex3f(v.x + lengthScalar * v.normal[0],
+               v.y + lengthScalar * v.normal[1],
+               v.z + lengthScalar * v.normal[2]);
+  }
+  glEnd();
+}
+
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
   if (flags.drawMesh) {
     drawMesh();
+  }
+  if (flags.drawUnweightedNormals) {
+    drawUnweightedVertexNormals();
   }
 
   if (!flags.drawMesh) {
@@ -796,6 +818,7 @@ QAction *QGLViewerWidget::findAction(const char *name) {
 void QGLViewerWidget::setDrawMesh(bool value) {
   std::cout << "setting flags.drawMesh to " << value << std::endl;
   flags.drawMesh = value;
+  updateGL();
 }
 
 void QGLViewerWidget::setMeshAlpha(double value) {
@@ -804,6 +827,8 @@ void QGLViewerWidget::setMeshAlpha(double value) {
 
 void QGLViewerWidget::setDrawUnweightedNormals(bool value) {
   std::cout << "Setting draw unweighted normals " << value << std::endl;
+  flags.drawUnweightedNormals = value;
+  updateGL();
 }
 
 void QGLViewerWidget::setDrawWeightedNormals(bool value) {
