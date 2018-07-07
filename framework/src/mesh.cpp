@@ -19,8 +19,9 @@ Mesh::Mesh(std::vector<Point> _vertices, std::vector<Face> _faces) :
       vertices[faces[i][j]].adjacentFaces.push_back(i);
     }
     if(faces[i].numVertices() == 3) {
-      faces[i].normal = glm::cross(vertices[faces[i][2]].toVec3() - vertices[faces[i][0]].toVec3(),
-          vertices[faces[i][1]].toVec3() - vertices[faces[i][0]].toVec3());
+      faces[i].normal = glm::cross(vertices[faces[i][1]].toVec3() - vertices[faces[i][0]].toVec3(),
+          vertices[faces[i][2]].toVec3() - vertices[faces[i][0]].toVec3());
+      faces[i].normal /= glm::length(faces[i].normal);
     }
   }
 }
