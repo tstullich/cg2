@@ -82,8 +82,9 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 
   this->mesh = std::make_shared<Mesh>(vertices, faces);
 
-  // compute normals
   this->mesh->computeUnweightedNormals();
+  unsigned int numEigenVectors = 5;
+  this->mesh->computeUniformLaplacian(numEigenVectors);
 
   // set mesh dependent parameters
   this->defaultRadius = 1.5 * this->mesh->getBoundingRadius();
@@ -451,6 +452,50 @@ void QGLViewerWidget::drawUnweightedVertexNormals() {
   glEnd();
 }
 
+void QGLViewerWidget::drawLaplacian() {
+  // No mesh to draw. Just return
+  if (this->mesh == nullptr || this->mesh->verticesUniformLaplacian.size() == 0) {
+    return;
+  }
+
+  std::vector<Point> vertices = mesh->verticesUniformLaplacian;
+  std::vector<Face> faces = mesh->getFaces();
+
+  glBegin(GL_TRIANGLES);
+  for (Face f : faces) {
+    assert(f.numVertices() == 3);
+    Point p0 = vertices[f[0]];
+    Point p1 = vertices[f[1]];
+    Point p2 = vertices[f[2]];
+
+    auto normal = triangleNormal(p0, p1, p2);
+
+    auto col0 = gourad(p0, normal);
+    glColor3f(col0[0], col0[1], col0[2]);
+    glVertex3f(p0.x, p0.y, p0.z);
+
+    auto col1 = gourad(p1, normal);
+    glColor3f(col1[0], col1[1], col1[2]);
+    glVertex3f(p1.x, p1.y, p1.z);
+
+    auto col2 = gourad(p2, normal);
+    glColor3f(col2[0], col2[1], col2[2]);
+    glVertex3f(p2.x, p2.y, p2.z);
+  }
+  glEnd();
+
+  /* // calc distance for perspectiv point size */
+  /* float distToLight = glm::length(lightPos - computeCamPos()); */
+  /* distToLight *= distToLight * 0.5f; */
+  /* glPointSize(32.0f / distToLight); */
+  glPointSize(10.0f);
+  glEnable(GL_POINT_SMOOTH);
+  glBegin(GL_POINTS);
+  glColor3f(1.0f, 1.0f, 1.0f);
+  glVertex3f(lightPos[0], lightPos[1], lightPos[2]);
+  glEnd();
+}
+
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
@@ -460,6 +505,8 @@ void QGLViewerWidget::drawScene() {
   if (flags.drawUnweightedNormals) {
     drawUnweightedVertexNormals();
   }
+
+  drawLaplacian();
 
   if (!flags.drawMesh) {
     // Draw a coordinate system

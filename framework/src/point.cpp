@@ -52,3 +52,10 @@ float Point::distNode(const Node &n) const {
 glm::vec3 Point::toVec3() const {
   return glm::vec3(x, y, z);
 }
+
+void Point::addVertex(glm::uint id) {
+  // add vertex id only if not yet present
+  if(std::find(adjacentVertices.begin(), adjacentVertices.end(), id) == adjacentVertices.end()) {
+    adjacentVertices.push_back(id);
+  }
+}

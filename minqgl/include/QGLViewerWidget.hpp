@@ -126,6 +126,7 @@ private slots:
 
   void drawMesh();
   void drawUnweightedVertexNormals();
+  void drawLaplacian();
 
   void setDrawMesh(bool value);
   void setMeshAlpha(double value);

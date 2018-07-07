@@ -29,6 +29,7 @@ public:
   float distPoint(const Point &b) const;
   float distNode(const Node &b) const;
   glm::vec3 toVec3() const;
+  void addVertex(glm::uint id);
 
   float x;
   float y;
@@ -42,5 +43,6 @@ public:
   glm::vec3 normal;
 
   std::vector<glm::uint> adjacentFaces;
+  std::vector<glm::uint> adjacentVertices;
 };
 #endif // POINT_HPP

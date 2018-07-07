@@ -51,6 +51,7 @@ public:
   const glm::uint &operator[](int idx) const { return vertices[idx]; }
 
   glm::vec3 normal;
+  float area;
 
 private:
   std::vector<glm::uint> vertices;
