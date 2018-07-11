@@ -180,12 +180,15 @@ void QGLViewerWidget::initializeGL() {
             << renderer << " | "
             << "GLSL " << glsl << std::endl;
   // OpenGL state
-  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glClearColor(1.0, 1.0, 1.0, 1.0);
   assert(glGetError() == GL_NO_ERROR);
   glDisable(GL_DITHER);
   assert(glGetError() == GL_NO_ERROR);
   glEnable(GL_DEPTH_TEST);
   assert(glGetError() == GL_NO_ERROR);
+  glEnable(GL_CULL_FACE);
+  assert(glGetError() == GL_NO_ERROR);
+  glFrontFace(GL_CCW);
 
   // Material
   setDefaultMaterial();
@@ -332,8 +335,8 @@ glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2,
 
 glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   glm::vec3 vertPos(v1.x, v1.y, v1.z);
-  glm::vec3 ambientColor(0.1f, 0.0f, 0.0f);
-  glm::vec3 diffuseColor(1.0f, 0.0f, 0.0f);
+  glm::vec3 ambientColor(0.2f, 0.2f, 0.2f);
+  glm::vec3 diffuseColor(0.5f, 0.5f, 0.5f);
   glm::vec3 specularColor(1.0f, 1.0f, 1.0f);
 
   // camera positions
@@ -343,6 +346,9 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   glm::vec3 vertToLight = glm::normalize(lightPos - vertPos);
 
   glm::vec3 N(glm::normalize(normal));
+  if (flags.frontFaceCCW == false) {
+    N = -N;
+  }
   glm::vec3 L(glm::normalize(vertToLight));
   glm::vec3 E(glm::normalize(vertToCam));
   glm::vec3 R(0.0f, 0.0f, 0.0f);
@@ -351,7 +357,7 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
     R = glm::normalize((2.0f * (N * NL)) - L);
   }
 
-  glm::vec3 diffuse = diffuseColor * glm::max(glm::dot(normal, L), 0.0f);
+  glm::vec3 diffuse = diffuseColor * glm::max(glm::dot(N, L), 0.0f);
 
   glm::vec3 specular =
           specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 50.0f);
@@ -401,28 +407,39 @@ void QGLViewerWidget::drawMesh() {
   std::vector<Point> vertices = mesh->getVertices();
   std::vector<Face> faces = mesh->getFaces();
 
-  glBegin(GL_TRIANGLES);
   for (Face f : faces) {
     assert(f.numVertices() == 3);
     Point p0 = vertices[f[0]];
     Point p1 = vertices[f[1]];
     Point p2 = vertices[f[2]];
 
-    auto normal = triangleNormal(p0, p1, p2);
+    // draw wire mesh
+    glBegin(GL_LINE_LOOP);
+    glColor3f(1.0, 1.0, 1.0);
+    glVertex3f(p0.x, p0.y, p0.z);
+    glVertex3f(p1.x, p1.y, p1.z);
+    glVertex3f(p2.x, p2.y, p2.z);
+    glVertex3f(p0.x, p0.y, p0.z);
+    glEnd();
 
+    // draw Face
+    glBegin(GL_TRIANGLES);
+    // calc normal
+    auto normal = triangleNormal(p0, p1, p2);
+    // present first point
     auto col0 = gourad(p0, normal);
     glColor3f(col0[0], col0[1], col0[2]);
     glVertex3f(p0.x, p0.y, p0.z);
-
+    // present second point
     auto col1 = gourad(p1, normal);
     glColor3f(col1[0], col1[1], col1[2]);
     glVertex3f(p1.x, p1.y, p1.z);
-
+    // present third point
     auto col2 = gourad(p2, normal);
     glColor3f(col2[0], col2[1], col2[2]);
     glVertex3f(p2.x, p2.y, p2.z);
+    glEnd();
   }
-  glEnd();
 
   /* // calc distance for perspectiv point size */
   /* float distToLight = glm::length(lightPos - computeCamPos()); */
@@ -706,6 +723,16 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
 
     case Key_C:
       setScenePos(center, defaultRadius);
+      break;
+
+    case Key_F:
+      if (flags.frontFaceCCW) {
+        glCullFace(GL_FRONT);
+        flags.frontFaceCCW = false;
+      } else {
+        flags.frontFaceCCW = true;
+        glCullFace(GL_BACK);
+      }
       break;
 
     case Key_H:

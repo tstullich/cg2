@@ -210,6 +210,7 @@ private:
     bool drawMesh = true;
     bool animate = false;
     bool drawUnweightedNormals = false;
+    bool frontFaceCCW = true;
   }flags;
 
   std::vector<std::thread> threads;
