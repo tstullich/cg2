@@ -21,6 +21,7 @@ class Mesh {
     Mesh(std::vector<Point> vertices, std::vector<Face> faces);
 
     void computeUnweightedNormals();
+    void computeWeightedNormals();
     void computeUniformLaplacian(unsigned int numEigenVectors);
 
     float getSurroundingArea(Point &P);
@@ -33,6 +34,11 @@ class Mesh {
 
     std::vector<Point> verticesUniformLaplacian;
   private:
+    /**
+     * calculate area weighted face normal vector
+     */
+    glm::vec3 computeAreaNormal(Face face);
+
     glm::vec3 center = glm::vec3(0.0, 0.0, 0.0);
     float boundingRadius = 0.0;
 

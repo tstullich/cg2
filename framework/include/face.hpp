@@ -34,7 +34,7 @@ public:
    * Returns the number of vertices in the current
    * vector
    */
-  int numVertices() { return vertices.size(); }
+  glm::uint numVertices() { return vertices.size(); }
 
   /**
    * An overloaded operator to allow direct indexng

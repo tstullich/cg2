@@ -47,8 +47,37 @@ void Mesh::computeUnweightedNormals() {
     for (glm::uint j = 0; j < vertices[i].adjacentFaces.size(); ++j) {
       v += faces[vertices[i].adjacentFaces[j]].normal;
     }
-    v /= vertices[i].adjacentFaces.size();
-    vertices[i].normal = v;
+    vertices[i].normal = glm::normalize(v);
+  }
+}
+
+glm::vec3 Mesh::computeAreaNormal(Face face) {
+  Point p1 = vertices[face[0]];
+  Point p2 = vertices[face[1]];
+  Point p3 = vertices[face[2]];
+  glm::vec3 v1 = p2.toVec3() - p1.toVec3();
+  glm::vec3 v2 = p3.toVec3() - p1.toVec3();
+  glm::vec3 nv2 = glm::normalize(v2);
+
+  // project v1 onto v2
+  glm::vec3 vP = glm::dot(v1, nv2) * nv2;
+
+  // triangle height and base side length
+  float h = glm::length(v1 - vP);
+  float b = glm::length(v2);
+
+  float area = 0.5 * h * b;
+
+  return face.normal * area;
+}
+
+void Mesh::computeWeightedNormals() {
+  for (glm::uint i = 0; i < vertices.size(); ++i) {
+    glm::vec3 newNormal(0.0, 0.0, 0.0);
+    for (glm::uint j = 0; j < vertices[i].adjacentFaces.size(); ++j) {
+      newNormal += computeAreaNormal(faces[vertices[i].adjacentFaces[j]]);
+    }
+    vertices[i].weightedNormal = glm::normalize(newNormal);
   }
 }
 

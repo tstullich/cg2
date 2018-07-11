@@ -83,6 +83,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   this->mesh = std::make_shared<Mesh>(vertices, faces);
 
   this->mesh->computeUnweightedNormals();
+  this->mesh->computeWeightedNormals();
   unsigned int numEigenVectors = 5;
   this->mesh->computeUniformLaplacian(numEigenVectors);
 
@@ -456,15 +457,29 @@ void QGLViewerWidget::drawMesh() {
 void QGLViewerWidget::drawUnweightedVertexNormals() {
   glDisable(GL_LIGHTING);
   glBegin(GL_LINES);
-  glColor3f(0.75f, 0.75f, 0.75f);
+  glColor3f(0.0f, 0.0f, 1.0f);
   float lengthScalar = 0.1 * mesh->getBoundingRadius();
   std::vector<Point> vertices = mesh->getVertices();
-  for (unsigned int i = 0; i < vertices.size(); i++) {
-    Point v = vertices[i];
+  for (Point v : vertices) {
     glVertex3f(v.x, v.y, v.z);
     glVertex3f(v.x + lengthScalar * v.normal[0],
                v.y + lengthScalar * v.normal[1],
                v.z + lengthScalar * v.normal[2]);
+  }
+  glEnd();
+}
+
+void QGLViewerWidget::drawWeightedVertexNormals() {
+  glDisable(GL_LIGHTING);
+  glBegin(GL_LINES);
+  glColor3f(1.0f, 0.0f, 0.0f);
+  float lengthScalar = 0.1 * mesh->getBoundingRadius();
+  std::vector<Point> vertices = mesh->getVertices();
+  for (Point v : vertices) {
+    glVertex3f(v.x, v.y, v.z);
+    glVertex3f(v.x + lengthScalar * v.weightedNormal[0],
+               v.y + lengthScalar * v.weightedNormal[1],
+               v.z + lengthScalar * v.weightedNormal[2]);
   }
   glEnd();
 }
@@ -521,6 +536,9 @@ void QGLViewerWidget::drawScene() {
   }
   if (flags.drawUnweightedNormals) {
     drawUnweightedVertexNormals();
+  }
+  if (flags.drawWeightedNormals) {
+    drawWeightedVertexNormals();
   }
 
   drawLaplacian();
@@ -900,13 +918,15 @@ void QGLViewerWidget::setMeshAlpha(double value) {
 }
 
 void QGLViewerWidget::setDrawUnweightedNormals(bool value) {
-  std::cout << "Setting draw unweighted normals " << value << std::endl;
+  std::cout << "setting drawUnweightedNormals to " << value << std::endl;
   flags.drawUnweightedNormals = value;
   updateGL();
 }
 
 void QGLViewerWidget::setDrawWeightedNormals(bool value) {
-  std::cout << "Setting draw weighted normals " << value << std::endl;
+  std::cout << "setting drawWeightedNormals to " << value << std::endl;
+  flags.drawWeightedNormals = value;
+  updateGL();
 }
 
 void QGLViewerWidget::setDrawGraphLaplace(bool value) {

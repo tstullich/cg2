@@ -126,6 +126,7 @@ private slots:
 
   void drawMesh();
   void drawUnweightedVertexNormals();
+  void drawWeightedVertexNormals();
   void drawLaplacian();
 
   void setDrawMesh(bool value);
@@ -210,6 +211,7 @@ private:
     bool drawMesh = true;
     bool animate = false;
     bool drawUnweightedNormals = false;
+    bool drawWeightedNormals = false;
     bool frontFaceCCW = true;
   }flags;
 

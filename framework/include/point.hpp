@@ -41,6 +41,7 @@ public:
 
   float dist;
   glm::vec3 normal;
+  glm::vec3 weightedNormal;
 
   std::vector<glm::uint> adjacentFaces;
   std::vector<glm::uint> adjacentVertices;
