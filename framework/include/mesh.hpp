@@ -22,7 +22,9 @@ class Mesh {
 
     void computeUnweightedNormals();
     void computeWeightedNormals();
-    void computeUniformLaplacian(unsigned int numEigenVectors);
+    void computeUniformLaplacian(uint numEigenVectors);
+    void computeExplicitCotan(double stepSize, uint numEigenVectors);
+    void computeImplicitCotan(double stepSize, uint numEigenVectors);
 
     float getSurroundingArea(Point &P);
 
@@ -33,11 +35,17 @@ class Mesh {
     std::vector<Face> getFaces();
 
     std::vector<Point> verticesUniformLaplacian;
+    std::vector<Point> verticesExplicitLaplace;
   private:
     /**
      * calculate area weighted face normal vector
      */
     glm::vec3 computeAreaNormal(Face face);
+
+    /**
+     * Compute the Laplacian matrix L
+     */
+    SparseMatrix<double> computeLMatrix(uint n);
 
     glm::vec3 center = glm::vec3(0.0, 0.0, 0.0);
     float boundingRadius = 0.0;

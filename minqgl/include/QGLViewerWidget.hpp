@@ -128,6 +128,7 @@ private slots:
   void drawUnweightedVertexNormals();
   void drawWeightedVertexNormals();
   void drawLaplacian();
+  void drawCotanLaplace();
 
   void setDrawMesh(bool value);
   void setMeshAlpha(double value);
@@ -213,12 +214,17 @@ private:
     bool drawUnweightedNormals = false;
     bool drawWeightedNormals = false;
     bool frontFaceCCW = true;
+    bool drawCotanLaplace = false;
   }flags;
 
   std::vector<std::thread> threads;
 
   GLdouble zNearFactor = 0.01;
   GLdouble zFarFactor = 10000.0;
+
+  double explicitStepSize;
+  double implicitStepSize;
+  uint basisFunctions = 10;
 
   std::shared_ptr<Mesh> mesh;
 };

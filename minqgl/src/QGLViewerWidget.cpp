@@ -49,7 +49,7 @@ QGLViewerWidget::QGLViewerWidget(QWidget *_parent) : QGLWidget(_parent) {
 }
 
 QGLViewerWidget::QGLViewerWidget(QGLFormat &_fmt, QWidget *_parent)
-        : QGLWidget(_fmt, _parent) {
+    : QGLWidget(_fmt, _parent) {
   assert(glGetError() == GL_NO_ERROR);
   init();
 }
@@ -61,7 +61,7 @@ void QGLViewerWidget::init() {
   setAcceptDrops(true);
   setCursor(PointingHandCursor);
   assert(glGetError() == GL_NO_ERROR);
-  //threads.push_back(std::thread(&QGLViewerWidget::animateLight, this));
+  // threads.push_back(std::thread(&QGLViewerWidget::animateLight, this));
 }
 
 QGLViewerWidget::~QGLViewerWidget() {}
@@ -97,7 +97,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
   return true;
 }
 
-//void QGLViewerWidget::animateLight() {
+// void QGLViewerWidget::animateLight() {
 //  unsigned frameCounter = 25;
 //  while (true) {
 //    if (flags.animate) {
@@ -113,11 +113,11 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 //  }
 //}
 
-//bool QGLViewerWidget::drawPointSetNormals() {
-//glDisable(GL_LIGHTING);
-//glBegin(GL_LINES);
-//glColor3f(0.75f, 0.75f, 0.75f);
-//for (unsigned int i = 0; i < pointList->size(); i++) {
+// bool QGLViewerWidget::drawPointSetNormals() {
+// glDisable(GL_LIGHTING);
+// glBegin(GL_LINES);
+// glColor3f(0.75f, 0.75f, 0.75f);
+// for (unsigned int i = 0; i < pointList->size(); i++) {
 //  Point p = (*pointList)[i];
 //  if (p.type == originalPoint) {
 //    if (glm::length(p.normal) == 0) {
@@ -128,7 +128,7 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 //               p.z + lengthScalar * p.normal[2]);
 //  }
 //}
-//glEnd();
+// glEnd();
 
 //  return true;
 //}
@@ -330,7 +330,8 @@ void recursiveDrawKDTree(std::shared_ptr<Node> node, unsigned remainingLevels) {
 
 glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2,
                                           const Point &v3) {
-  glm::vec3 N = glm::cross((v2.toVec3() - v1.toVec3()), (v3.toVec3() - v1.toVec3()));
+  glm::vec3 N =
+      glm::cross((v2.toVec3() - v1.toVec3()), (v3.toVec3() - v1.toVec3()));
   return glm::normalize(N);
 }
 
@@ -361,7 +362,7 @@ glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
   glm::vec3 diffuse = diffuseColor * glm::max(glm::dot(N, L), 0.0f);
 
   glm::vec3 specular =
-          specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 50.0f);
+      specularColor * glm::pow(glm::max(glm::dot(R, E), 0.0f), 50.0f);
 
   return ambientColor + diffuse + specular;
 }
@@ -393,7 +394,8 @@ bool intersectRayTriangle(glm::vec3 rayPos, glm::vec3 rayDir, glm::vec3 p0,
   if (t > 0.00001) {
     return true;
   } else {
-    return false;;
+    return false;
+    ;
   }
 }
 
@@ -486,7 +488,8 @@ void QGLViewerWidget::drawWeightedVertexNormals() {
 
 void QGLViewerWidget::drawLaplacian() {
   // No mesh to draw. Just return
-  if (this->mesh == nullptr || this->mesh->verticesUniformLaplacian.size() == 0) {
+  if (this->mesh == nullptr ||
+      this->mesh->verticesUniformLaplacian.size() == 0) {
     return;
   }
 
@@ -528,6 +531,45 @@ void QGLViewerWidget::drawLaplacian() {
   glEnd();
 }
 
+void QGLViewerWidget::drawCotanLaplace() {
+  if (this->mesh == nullptr || this->mesh->verticesExplicitLaplace.empty()) {
+    return;
+  }
+
+  std::vector<Point> vertices = mesh->verticesExplicitLaplace;
+  std::vector<Face> faces = mesh->getFaces();
+
+  glBegin(GL_TRIANGLES);
+  for (Face f : faces) {
+    assert(f.numVertices() == 3);
+    Point p0 = vertices[f[0]];
+    Point p1 = vertices[f[1]];
+    Point p2 = vertices[f[2]];
+
+    auto normal = triangleNormal(p0, p1, p2);
+
+    auto col0 = gourad(p0, normal);
+    glColor3f(col0[0], col0[1], col0[2]);
+    glVertex3f(p0.x, p0.y, p0.z);
+
+    auto col1 = gourad(p1, normal);
+    glColor3f(col1[0], col1[1], col1[2]);
+    glVertex3f(p1.x, p1.y, p1.z);
+
+    auto col2 = gourad(p2, normal);
+    glColor3f(col2[0], col2[1], col2[2]);
+    glVertex3f(p2.x, p2.y, p2.z);
+  }
+  glEnd();
+
+  glPointSize(10.0f);
+  glEnable(GL_POINT_SMOOTH);
+  glBegin(GL_POINTS);
+  glColor3f(1.0f, 1.0f, 1.0f);
+  glVertex3f(lightPos[0], lightPos[1], lightPos[2]);
+  glEnd();
+}
+
 void QGLViewerWidget::drawScene() {
   glDisable(GL_LIGHTING);
 
@@ -539,6 +581,9 @@ void QGLViewerWidget::drawScene() {
   }
   if (flags.drawWeightedNormals) {
     drawWeightedVertexNormals();
+  }
+  if (flags.drawCotanLaplace) {
+    drawCotanLaplace();
   }
 
   drawLaplacian();
@@ -602,10 +647,10 @@ void QGLViewerWidget::mouseMoveEvent(QMouseEvent *event) {
               event->modifiers() == AltModifier)) {
     // move in x,y direction
     float z =
-            -(modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
-              modelviewMatrix[10] * center[2] + modelviewMatrix[14]) /
-            (modelviewMatrix[3] * center[0] + modelviewMatrix[7] * center[1] +
-             modelviewMatrix[11] * center[2] + modelviewMatrix[15]);
+        -(modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
+          modelviewMatrix[10] * center[2] + modelviewMatrix[14]) /
+        (modelviewMatrix[3] * center[0] + modelviewMatrix[7] * center[1] +
+         modelviewMatrix[11] * center[2] + modelviewMatrix[15]);
 
     float aspect = w / h;
     float near_plane = 0.01 * radius;
@@ -721,7 +766,7 @@ void QGLViewerWidget::mouseReleaseEvent(QMouseEvent *event) {
 void QGLViewerWidget::wheelEvent(QWheelEvent *_event) {
   // Use the mouse wheel to zoom in/out
 
-  float d = -(float) _event->delta() / 120.0 * 0.2 * radius;
+  float d = -(float)_event->delta() / 120.0 * 0.2 * radius;
   translate(vec3(0.0, 0.0, d));
   updateGL();
   _event->accept();
@@ -786,11 +831,11 @@ void QGLViewerWidget::rotate(const vec3 &_axis, float _angle) {
   // Update modelviewMatrix
 
   vec3 t(modelviewMatrix[0] * center[0] + modelviewMatrix[4] * center[1] +
-         modelviewMatrix[8] * center[2] + modelviewMatrix[12],
+             modelviewMatrix[8] * center[2] + modelviewMatrix[12],
          modelviewMatrix[1] * center[0] + modelviewMatrix[5] * center[1] +
-         modelviewMatrix[9] * center[2] + modelviewMatrix[13],
+             modelviewMatrix[9] * center[2] + modelviewMatrix[13],
          modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
-         modelviewMatrix[10] * center[2] + modelviewMatrix[14]);
+             modelviewMatrix[10] * center[2] + modelviewMatrix[14]);
 
   makeCurrent();
   glLoadIdentity();
@@ -830,7 +875,7 @@ void QGLViewerWidget::updateProjectionMatrix() {
   makeCurrent();
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(fovy(), (GLfloat) width() / (GLfloat) height(),
+  gluPerspective(fovy(), (GLfloat)width() / (GLfloat)height(),
                  zNearFactor * radius, zFarFactor * radius);
   glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
   glMatrixMode(GL_MODELVIEW);
@@ -840,12 +885,12 @@ void QGLViewerWidget::updateProjectionMatrix() {
 
 void QGLViewerWidget::viewAll() {
   translate(vec3(
-          -(modelviewMatrix[0] * center[0] + modelviewMatrix[4] * center[1] +
-            modelviewMatrix[8] * center[2] + modelviewMatrix[12]),
-          -(modelviewMatrix[1] * center[0] + modelviewMatrix[5] * center[1] +
-            modelviewMatrix[9] * center[2] + modelviewMatrix[13]),
-          -(modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
-            modelviewMatrix[10] * center[2] + modelviewMatrix[14] + 3.0 * radius)));
+      -(modelviewMatrix[0] * center[0] + modelviewMatrix[4] * center[1] +
+        modelviewMatrix[8] * center[2] + modelviewMatrix[12]),
+      -(modelviewMatrix[1] * center[0] + modelviewMatrix[5] * center[1] +
+        modelviewMatrix[9] * center[2] + modelviewMatrix[13]),
+      -(modelviewMatrix[2] * center[0] + modelviewMatrix[6] * center[1] +
+        modelviewMatrix[10] * center[2] + modelviewMatrix[14] + 3.0 * radius)));
 }
 
 //----------------------------------------------------------------------------
@@ -946,19 +991,21 @@ void QGLViewerWidget::graphLaplaceReset() {
 }
 
 void QGLViewerWidget::setDrawCotanLaplace(bool value) {
-  std::cout << "Setting draw cotan laplace " << value << std::endl;
+  flags.drawCotanLaplace = true;
+  updateGL();
 }
 
 void QGLViewerWidget::setExplicitStep(double value) {
-  std::cout << "Setting explicit step " << value << std::endl;
+  explicitStepSize = value;
 }
 
 void QGLViewerWidget::cotanLaplaceExplicitStep() {
-  std::cout << "Calling cotan laplace explicit step" << std::endl;
+  mesh->computeExplicitCotan(explicitStepSize, basisFunctions);
+  updateGL();
 }
 
 void QGLViewerWidget::setImplicitStep(double value) {
-  std::cout << "Setting implicit step " << value << std::endl;
+  implicitStepSize = value;
 }
 
 void QGLViewerWidget::cotanLaplaceImplicitStep() {
@@ -966,7 +1013,7 @@ void QGLViewerWidget::cotanLaplaceImplicitStep() {
 }
 
 void QGLViewerWidget::setBasisFunctions(int value) {
-  std::cout << "Setting basis functions " << value << std::endl;
+  basisFunctions = (unsigned int)value;
 }
 
 void QGLViewerWidget::setManifoldHarmonics(bool value) {
