@@ -148,12 +148,23 @@ void Mesh::computeUniformLaplacian(unsigned int numEigenVectors) {
 
 void Mesh::computeExplicitCotan(double stepSize, uint basisFunctions) {
   const uint n = vertices.size();
-  // Setup points matrix
   MatrixXd points(n, 3);
-  for (uint i = 0; i < n; i++) {
-    points(i, 0) = vertices[i].x;
-    points(i, 1) = vertices[i].y;
-    points(i, 2) = vertices[i].z;
+  if (verticesExplicitLaplace.empty()) {
+    // Setup points matrix, but only if we haven't
+    // run through a step of the integration already
+    verticesExplicitLaplace = std::vector<Point>(n, Point(0.0, 0.0, 0.0));
+    for (uint i = 0; i < n; i++) {
+      points(i, 0) = vertices[i].x;
+      points(i, 1) = vertices[i].y;
+      points(i, 2) = vertices[i].z;
+    }
+  } else {
+    // Build matrix by using previous integration result
+    for (uint i = 0; i < n; i++) {
+      points(i, 0) = verticesExplicitLaplace[i].x;
+      points(i, 1) = verticesExplicitLaplace[i].y;
+      points(i, 2) = verticesExplicitLaplace[i].z;
+    }
   }
 
   // Setup L matrix
@@ -165,13 +176,19 @@ void Mesh::computeExplicitCotan(double stepSize, uint basisFunctions) {
   auto explicitResult = (identity + stepSize * laplacian) * points;
 
   // Create result mesh
-  // TODO Incorporate multiple steps
-  verticesExplicitLaplace.clear();
   for (uint i = 0; i < n; i++) {
     auto pointRow = explicitResult.row(i);
-    Point p(pointRow[0], pointRow[1], pointRow[2]);
-    verticesExplicitLaplace.push_back(p);
+    auto p = verticesExplicitLaplace[i];
+    p.x = pointRow[0];
+    p.y = pointRow[1];
+    p.z = pointRow[2];
+    verticesExplicitLaplace[i] = p;
   }
+}
+
+void Mesh::resetCotanLaplace() {
+  // TODO Add implicit laplace here as well
+  verticesExplicitLaplace.clear();
 }
 
 void Mesh::computeImplicitCotan(double stepSize, uint basisFunctions) {}

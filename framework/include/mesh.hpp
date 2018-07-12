@@ -25,6 +25,7 @@ class Mesh {
     void computeUniformLaplacian(uint numEigenVectors);
     void computeExplicitCotan(double stepSize, uint numEigenVectors);
     void computeImplicitCotan(double stepSize, uint numEigenVectors);
+    void resetCotanLaplace();
 
     float getSurroundingArea(Point &P);
 

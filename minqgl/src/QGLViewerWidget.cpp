@@ -1022,6 +1022,8 @@ void QGLViewerWidget::setManifoldHarmonics(bool value) {
 
 void QGLViewerWidget::cotanLaplaceReset() {
   std::cout << "Calling cotan laplace reset" << std::endl;
+  mesh->resetCotanLaplace();
+  updateGL();
 }
 
 void QGLViewerWidget::slotSnapshot(void) {
