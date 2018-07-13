@@ -531,12 +531,15 @@ void QGLViewerWidget::drawLaplacian() {
   glEnd();
 }
 
+// This function assumes that only one of Implicit or Explicit integration is running at a time
+// Will see breakage here if we performed implicit and explicit integration at the same time
 void QGLViewerWidget::drawCotanLaplace() {
-  if (this->mesh == nullptr || this->mesh->verticesExplicitLaplace.empty()) {
+  if (this->mesh == nullptr && (this->mesh->verticesExplicitLaplace.empty() || this->mesh->verticesImplicitLaplace.empty())) {
     return;
   }
 
-  std::vector<Point> vertices = mesh->verticesExplicitLaplace;
+  // Check which mesh to use
+  std::vector<Point> vertices = !mesh->verticesExplicitLaplace.empty() ? mesh->verticesExplicitLaplace : mesh->verticesImplicitLaplace;
   std::vector<Face> faces = mesh->getFaces();
 
   glBegin(GL_TRIANGLES);
@@ -1009,7 +1012,8 @@ void QGLViewerWidget::setImplicitStep(double value) {
 }
 
 void QGLViewerWidget::cotanLaplaceImplicitStep() {
-  std::cout << "Calling cotan laplace implicit step" << std::endl;
+  mesh->computeImplicitCotan(implicitStepSize, basisFunctions);
+  updateGL();
 }
 
 void QGLViewerWidget::setBasisFunctions(int value) {
@@ -1021,7 +1025,6 @@ void QGLViewerWidget::setManifoldHarmonics(bool value) {
 }
 
 void QGLViewerWidget::cotanLaplaceReset() {
-  std::cout << "Calling cotan laplace reset" << std::endl;
   mesh->resetCotanLaplace();
   updateGL();
 }

@@ -9,6 +9,7 @@
 #include "face.hpp"
 
 #include <Eigen/Core>
+#include <Eigen/SparseCholesky>
 #include <Eigen/SparseCore>
 #include <Spectra/SymEigsSolver.h>
 #include <Spectra/MatOp/SparseSymMatProd.h>
@@ -37,6 +38,7 @@ class Mesh {
 
     std::vector<Point> verticesUniformLaplacian;
     std::vector<Point> verticesExplicitLaplace;
+    std::vector<Point> verticesImplicitLaplace;
   private:
     /**
      * calculate area weighted face normal vector

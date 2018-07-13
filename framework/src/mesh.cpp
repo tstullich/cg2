@@ -186,12 +186,53 @@ void Mesh::computeExplicitCotan(double stepSize, uint basisFunctions) {
   }
 }
 
-void Mesh::resetCotanLaplace() {
-  // TODO Add implicit laplace here as well
-  verticesExplicitLaplace.clear();
+void Mesh::computeImplicitCotan(double stepSize, uint basisFunctions) {
+  const uint n = vertices.size();
+  SparseMatrix<double> points(n, 3);
+  if (verticesImplicitLaplace.empty()) {
+    verticesImplicitLaplace = std::vector<Point>(n, Point(0.0, 0.0, 0.0));
+    for (uint i = 0; i < n; i++) {
+      points.insert(i, 0) = vertices[i].x;
+      points.insert(i, 1) = vertices[i].y;
+      points.insert(i, 2) = vertices[i].z;
+    }
+  } else {
+    // Build matrix by using previous integration result
+    for (uint i = 0; i < n; i++) {
+      points.insert(i, 0) = verticesImplicitLaplace[i].x;
+      points.insert(i, 1) = verticesImplicitLaplace[i].y;
+      points.insert(i, 2) = verticesImplicitLaplace[i].z;
+    }
+  }
+
+  // Setup of our matrices
+  auto laplacian = computeLMatrix(n);
+  auto identity = MatrixXd::Identity(n, n);
+
+  // Calculate LHS of linear system
+  auto inner = identity - stepSize * laplacian;
+
+  // Apply sparse Cholesky solver
+  Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> chol(inner);
+  // Use decomp to solve with our point matrix
+  MatrixXd choleskyResult = chol.solve(points);
+
+  // Create result mesh
+  for (uint i = 0; i < n; i++) {
+    auto pointRow = choleskyResult.row(i);
+    auto p = verticesImplicitLaplace[i];
+    p.x = pointRow[0];
+    p.y = pointRow[1];
+    p.z = pointRow[2];
+    verticesImplicitLaplace[i] = p;
+  }
 }
 
-void Mesh::computeImplicitCotan(double stepSize, uint basisFunctions) {}
+
+void Mesh::resetCotanLaplace() {
+  verticesExplicitLaplace.clear();
+  verticesImplicitLaplace.clear();
+}
 
 float Mesh::getSurroundingArea(Point &p) {
   float area = 0.0;
