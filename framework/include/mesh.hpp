@@ -23,9 +23,9 @@ class Mesh {
 
     void computeUnweightedNormals();
     void computeWeightedNormals();
-    void computeUniformLaplacian(uint numEigenVectors);
-    void computeExplicitCotan(double stepSize, uint numEigenVectors);
-    void computeImplicitCotan(double stepSize, uint numEigenVectors);
+    void computeUniformLaplacian(glm::uint numEigenVectors);
+    void computeExplicitCotan(double stepSize, glm::uint numEigenVectors);
+    void computeImplicitCotan(double stepSize, glm::uint numEigenVectors);
     void resetCotanLaplace();
 
     float getSurroundingArea(Point &P);
@@ -48,7 +48,7 @@ class Mesh {
     /**
      * Compute the Laplacian matrix L
      */
-    SparseMatrix<double> computeLMatrix(uint n);
+    SparseMatrix<double> computeLMatrix(glm::uint n);
 
     glm::vec3 center = glm::vec3(0.0, 0.0, 0.0);
     float boundingRadius = 0.0;

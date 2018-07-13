@@ -83,7 +83,7 @@ void Mesh::computeWeightedNormals() {
   }
 }
 
-SparseMatrix<double> Mesh::computeLMatrix(uint n) {
+SparseMatrix<double> Mesh::computeLMatrix(glm::uint n) {
   SparseMatrix<double> M(n, n);
   SparseMatrix<double> D(n, n);
   for (unsigned int i = 0; i < n; i++) {
@@ -146,21 +146,21 @@ void Mesh::computeUniformLaplacian(unsigned int numEigenVectors) {
   }
 }
 
-void Mesh::computeExplicitCotan(double stepSize, uint basisFunctions) {
-  const uint n = vertices.size();
+void Mesh::computeExplicitCotan(double stepSize, glm::uint basisFunctions) {
+  const glm::uint n = vertices.size();
   MatrixXd points(n, 3);
   if (verticesExplicitLaplace.empty()) {
     // Setup points matrix, but only if we haven't
     // run through a step of the integration already
     verticesExplicitLaplace = std::vector<Point>(n, Point(0.0, 0.0, 0.0));
-    for (uint i = 0; i < n; i++) {
+    for (glm::uint i = 0; i < n; i++) {
       points(i, 0) = vertices[i].x;
       points(i, 1) = vertices[i].y;
       points(i, 2) = vertices[i].z;
     }
   } else {
     // Build matrix by using previous integration result
-    for (uint i = 0; i < n; i++) {
+    for (glm::uint i = 0; i < n; i++) {
       points(i, 0) = verticesExplicitLaplace[i].x;
       points(i, 1) = verticesExplicitLaplace[i].y;
       points(i, 2) = verticesExplicitLaplace[i].z;
@@ -176,7 +176,7 @@ void Mesh::computeExplicitCotan(double stepSize, uint basisFunctions) {
   auto explicitResult = (identity + stepSize * laplacian) * points;
 
   // Create result mesh
-  for (uint i = 0; i < n; i++) {
+  for (glm::uint i = 0; i < n; i++) {
     auto pointRow = explicitResult.row(i);
     auto p = verticesExplicitLaplace[i];
     p.x = pointRow[0];
@@ -186,19 +186,19 @@ void Mesh::computeExplicitCotan(double stepSize, uint basisFunctions) {
   }
 }
 
-void Mesh::computeImplicitCotan(double stepSize, uint basisFunctions) {
-  const uint n = vertices.size();
+void Mesh::computeImplicitCotan(double stepSize, glm::uint basisFunctions) {
+  const glm::uint n = vertices.size();
   SparseMatrix<double> points(n, 3);
   if (verticesImplicitLaplace.empty()) {
     verticesImplicitLaplace = std::vector<Point>(n, Point(0.0, 0.0, 0.0));
-    for (uint i = 0; i < n; i++) {
+    for (glm::uint i = 0; i < n; i++) {
       points.insert(i, 0) = vertices[i].x;
       points.insert(i, 1) = vertices[i].y;
       points.insert(i, 2) = vertices[i].z;
     }
   } else {
     // Build matrix by using previous integration result
-    for (uint i = 0; i < n; i++) {
+    for (glm::uint i = 0; i < n; i++) {
       points.insert(i, 0) = verticesImplicitLaplace[i].x;
       points.insert(i, 1) = verticesImplicitLaplace[i].y;
       points.insert(i, 2) = verticesImplicitLaplace[i].z;
@@ -218,7 +218,7 @@ void Mesh::computeImplicitCotan(double stepSize, uint basisFunctions) {
   MatrixXd choleskyResult = chol.solve(points);
 
   // Create result mesh
-  for (uint i = 0; i < n; i++) {
+  for (glm::uint i = 0; i < n; i++) {
     auto pointRow = choleskyResult.row(i);
     auto p = verticesImplicitLaplace[i];
     p.x = pointRow[0];

@@ -129,6 +129,7 @@ private slots:
   void drawWeightedVertexNormals();
   void drawLaplacian();
   void drawCotanLaplace();
+  void drawColorCube();
 
   void setDrawMesh(bool value);
   void setMeshAlpha(double value);
@@ -215,6 +216,7 @@ private:
     bool drawWeightedNormals = false;
     bool frontFaceCCW = true;
     bool drawCotanLaplace = false;
+    bool drawColorCube = false;
   }flags;
 
   std::vector<std::thread> threads;

@@ -534,7 +534,7 @@ void QGLViewerWidget::drawLaplacian() {
 // This function assumes that only one of Implicit or Explicit integration is running at a time
 // Will see breakage here if we performed implicit and explicit integration at the same time
 void QGLViewerWidget::drawCotanLaplace() {
-  if (this->mesh == nullptr && (this->mesh->verticesExplicitLaplace.empty() || this->mesh->verticesImplicitLaplace.empty())) {
+  if (this->mesh == nullptr || (this->mesh->verticesExplicitLaplace.empty() && this->mesh->verticesImplicitLaplace.empty())) {
     return;
   }
 
@@ -587,6 +587,9 @@ void QGLViewerWidget::drawScene() {
   }
   if (flags.drawCotanLaplace) {
     drawCotanLaplace();
+  }
+  if (flags.drawColorCube && this->mesh == nullptr) {
+    drawColorCube();
   }
 
   drawLaplacian();
@@ -806,6 +809,10 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
       std::cout << "  Print\tMake snapshot\n";
       break;
 
+    case Key_P:
+      flags.drawColorCube = (flags.drawColorCube)? false : true;
+      break;
+
     case Key_Q:
     case Key_Escape:
       qApp->quit();
@@ -813,6 +820,67 @@ void QGLViewerWidget::keyPressEvent(QKeyEvent *_event) {
   _event->ignore();
 
   updateGL();
+}
+
+void QGLViewerWidget::drawColorCube() {
+  glBegin(GL_QUADS);
+  // x = 0
+  glColor3f( 0.0, 0.0, 0.0);
+  glVertex3f(-0.5, -0.5, -0.5);
+  glColor3f( 0.0, 0.0, 1.0);
+  glVertex3f(-0.5, -0.5, 0.5);
+  glColor3f( 0.0, 1.0, 1.0);
+  glVertex3f(-0.5, 0.5, 0.5);
+  glColor3f( 0.0, 1.0, 0.0);
+  glVertex3f(-0.5, 0.5, -0.5);
+  // x = 1
+  glColor3f( 1.0, 0.0, 0.0);
+  glVertex3f(0.5, -0.5, -0.5);
+  glColor3f( 1.0, 1.0, 0.0);
+  glVertex3f(0.5, 0.5, -0.5);
+  glColor3f( 1.0, 1.0, 1.0);
+  glVertex3f(0.5, 0.5, 0.5);
+  glColor3f( 1.0, 0.0, 1.0);
+  glVertex3f(0.5, -0.5, 0.5);
+  // y = 0
+  glColor3f( 0.0, 0.0, 0.0);
+  glVertex3f(-0.5, -0.5, -0.5);
+  glColor3f( 1.0, 0.0, 0.0);
+  glVertex3f(0.5, -0.5, -0.5);
+  glColor3f( 1.0, 0.0, 1.0);
+  glVertex3f(0.5, -0.5, 0.5);
+  glColor3f( 0.0, 0.0, 1.0);
+  glVertex3f(-0.5, -0.5, 0.5);
+  // y = 1
+  glColor3f( 0.0, 1.0, 0.0);
+  glVertex3f(-0.5, 0.5, -0.5);
+  glColor3f( 0.0, 1.0, 1.0);
+  glVertex3f(-0.5, 0.5, 0.5);
+  glColor3f( 1.0, 1.0, 1.0);
+  glVertex3f(0.5, 0.5, 0.5);
+  glColor3f( 1.0, 1.0, 0.0);
+  glVertex3f(0.5, 0.5, -0.5);
+  // z=0 face
+  glColor3f(0.0, 0.0, 0.0);
+  glVertex3f(-0.5, -0.5, -0.5);
+  glColor3f(0.0, 1.0, 0.0);
+  glVertex3f(-0.5, 0.5, -0.5);
+  glColor3f(1.0, 1.0, 0.0);
+  glVertex3f(0.5, 0.5, -0.5);
+  glColor3f(1.0, 0.0, 0.0);
+  glVertex3f(0.5, -0.5, -0.5);
+  // z=1 face
+  glColor3f(0.0, 0.0, 1.0);
+  glVertex3f(-0.5, -0.5, 0.5);
+  glColor3f(1.0, 0.0, 1.0);
+  glVertex3f(0.5, -0.5, 0.5);
+  glColor3f(1.0, 1.0, 1.0);
+  glVertex3f(0.5, 0.5, 0.5);
+  glColor3f(0.0, 1.0, 1.0);
+  glVertex3f(-0.5, 0.5, 0.5);
+  glEnd();
+
+  return;
 }
 
 //----------------------------------------------------------------------------
