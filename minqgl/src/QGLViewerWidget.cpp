@@ -533,13 +533,9 @@ void QGLViewerWidget::drawLaplacian() {
 
 // This function assumes that only one of Implicit or Explicit integration is running at a time
 // Will see breakage here if we performed implicit and explicit integration at the same time
-void QGLViewerWidget::drawCotanLaplace() {
-  if (this->mesh == nullptr || (this->mesh->verticesExplicitLaplace.empty() && this->mesh->verticesImplicitLaplace.empty())) {
-    return;
-  }
-
+void QGLViewerWidget::drawCotanLaplace(const std::vector<Point> &vertices) {
   // Check which mesh to use
-  std::vector<Point> vertices = !mesh->verticesExplicitLaplace.empty() ? mesh->verticesExplicitLaplace : mesh->verticesImplicitLaplace;
+  //std::vector<Point> vertices = !mesh->verticesExplicitLaplace.empty() ? mesh->verticesExplicitLaplace : mesh->verticesImplicitLaplace;
   std::vector<Face> faces = mesh->getFaces();
 
   glBegin(GL_TRIANGLES);
@@ -586,7 +582,14 @@ void QGLViewerWidget::drawScene() {
     drawWeightedVertexNormals();
   }
   if (flags.drawCotanLaplace) {
-    drawCotanLaplace();
+    std::vector<Point> verts;
+    if (this->mesh != nullptr && !this->mesh->verticesExplicitLaplace.empty()) {
+      verts = this->mesh->verticesExplicitLaplace;
+      drawCotanLaplace(verts);
+    } else if (this->mesh != nullptr && !this->mesh->verticesImplicitLaplace.empty()) {
+      verts = this->mesh->verticesImplicitLaplace;
+      drawCotanLaplace(verts);
+    }
   }
   if (flags.drawColorCube && this->mesh == nullptr) {
     drawColorCube();

@@ -178,11 +178,9 @@ void Mesh::computeExplicitCotan(double stepSize, glm::uint basisFunctions) {
   // Create result mesh
   for (glm::uint i = 0; i < n; i++) {
     auto pointRow = explicitResult.row(i);
-    auto p = verticesExplicitLaplace[i];
-    p.x = pointRow[0];
-    p.y = pointRow[1];
-    p.z = pointRow[2];
-    verticesExplicitLaplace[i] = p;
+    verticesExplicitLaplace[i].x = pointRow[0];
+    verticesExplicitLaplace[i].y = pointRow[1];
+    verticesExplicitLaplace[i].z = pointRow[2];
   }
 }
 
@@ -210,21 +208,19 @@ void Mesh::computeImplicitCotan(double stepSize, glm::uint basisFunctions) {
   auto identity = MatrixXd::Identity(n, n);
 
   // Calculate LHS of linear system
-  auto inner = identity - stepSize * laplacian;
+  auto lhs = identity - stepSize * laplacian;
 
   // Apply sparse Cholesky solver
-  Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> chol(inner);
-  // Use decomp to solve with our point matrix
+  Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> chol(lhs);
+  // Use decomposition to solve with the point matrix
   MatrixXd choleskyResult = chol.solve(points);
 
   // Create result mesh
   for (glm::uint i = 0; i < n; i++) {
     auto pointRow = choleskyResult.row(i);
-    auto p = verticesImplicitLaplace[i];
-    p.x = pointRow[0];
-    p.y = pointRow[1];
-    p.z = pointRow[2];
-    verticesImplicitLaplace[i] = p;
+    verticesImplicitLaplace[i].x = pointRow[0];
+    verticesImplicitLaplace[i].y = pointRow[1];
+    verticesImplicitLaplace[i].z = pointRow[2];
   }
 }
 
