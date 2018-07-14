@@ -40,15 +40,23 @@ class Mesh {
     std::vector<Point> verticesExplicitLaplace;
     std::vector<Point> verticesImplicitLaplace;
   private:
+    float computeFaceArea(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
     /**
      * calculate area weighted face normal vector
      */
     glm::vec3 computeAreaNormal(Face face);
 
     /**
-     * Compute the Laplacian matrix L
+     * takes vertex indices of edge and computes sum of cot-values
+     * at the remaining vertices
      */
-    SparseMatrix<double> computeLMatrix(glm::uint n);
+    float computeCotSum(glm::uint i, glm::uint j);
+
+    /**
+     * Compute the Laplacian matrix L for cotan and uniform
+     */
+    SparseMatrix<double> computeCotanLMatrix(glm::uint n);
+    SparseMatrix<double> computeUniformLMatrix(glm::uint n);
 
     glm::vec3 center = glm::vec3(0.0, 0.0, 0.0);
     float boundingRadius = 0.0;

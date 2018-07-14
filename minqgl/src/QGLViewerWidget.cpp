@@ -486,7 +486,7 @@ void QGLViewerWidget::drawWeightedVertexNormals() {
   glEnd();
 }
 
-void QGLViewerWidget::drawLaplacian() {
+void QGLViewerWidget::drawUniformLaplacian() {
   // No mesh to draw. Just return
   if (this->mesh == nullptr ||
       this->mesh->verticesUniformLaplacian.size() == 0) {
@@ -581,6 +581,9 @@ void QGLViewerWidget::drawScene() {
   if (flags.drawWeightedNormals) {
     drawWeightedVertexNormals();
   }
+  if (flags.drawUniformLaplacian) {
+    drawUniformLaplacian();
+  }
   if (flags.drawCotanLaplace) {
     std::vector<Point> verts;
     if (this->mesh != nullptr && !this->mesh->verticesExplicitLaplace.empty()) {
@@ -594,8 +597,6 @@ void QGLViewerWidget::drawScene() {
   if (flags.drawColorCube && this->mesh == nullptr) {
     drawColorCube();
   }
-
-  drawLaplacian();
 
   if (!flags.drawMesh) {
     // Draw a coordinate system
@@ -1050,6 +1051,8 @@ void QGLViewerWidget::setDrawWeightedNormals(bool value) {
 
 void QGLViewerWidget::setDrawGraphLaplace(bool value) {
   std::cout << "Setting draw graph laplace " << value << std::endl;
+  flags.drawUniformLaplacian = value;
+  updateGL();
 }
 
 void QGLViewerWidget::setStepSize(double value) {
@@ -1065,7 +1068,7 @@ void QGLViewerWidget::graphLaplaceReset() {
 }
 
 void QGLViewerWidget::setDrawCotanLaplace(bool value) {
-  flags.drawCotanLaplace = true;
+  flags.drawCotanLaplace = value;
   updateGL();
 }
 

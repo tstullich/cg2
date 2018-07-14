@@ -127,7 +127,7 @@ private slots:
   void drawMesh();
   void drawUnweightedVertexNormals();
   void drawWeightedVertexNormals();
-  void drawLaplacian();
+  void drawUniformLaplacian();
   void drawCotanLaplace(const std::vector<Point> &vertices);
   void drawColorCube();
 
@@ -215,6 +215,7 @@ private:
     bool drawUnweightedNormals = false;
     bool drawWeightedNormals = false;
     bool frontFaceCCW = true;
+    bool drawUniformLaplacian = false;
     bool drawCotanLaplace = false;
     bool drawColorCube = false;
   }flags;

@@ -38,7 +38,7 @@ Mesh::Mesh(std::vector<Point> _vertices, std::vector<Face> _faces)
           vertices[faces[i][2]].toVec3() - vertices[faces[i][0]].toVec3());
       // area is half of the magnitude of the crossproduct
       faces[i].area = glm::length(faces[i].normal) / 2.0;
-      faces[i].normal /= glm::length(faces[i].normal);
+      faces[i].normal = glm::normalize(faces[i].normal);
     }
   }
 }
@@ -53,12 +53,9 @@ void Mesh::computeUnweightedNormals() {
   }
 }
 
-glm::vec3 Mesh::computeAreaNormal(Face face) {
-  Point p1 = vertices[face[0]];
-  Point p2 = vertices[face[1]];
-  Point p3 = vertices[face[2]];
-  glm::vec3 v1 = p2.toVec3() - p1.toVec3();
-  glm::vec3 v2 = p3.toVec3() - p1.toVec3();
+float Mesh::computeFaceArea(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) {
+  glm::vec3 v1 = p2 - p1;
+  glm::vec3 v2 = p3 - p1;
   glm::vec3 nv2 = glm::normalize(v2);
 
   // project v1 onto v2
@@ -69,6 +66,16 @@ glm::vec3 Mesh::computeAreaNormal(Face face) {
   float b = glm::length(v2);
 
   float area = 0.5 * h * b;
+
+  return area;
+}
+
+glm::vec3 Mesh::computeAreaNormal(Face face) {
+  Point p1 = vertices[face[0]];
+  Point p2 = vertices[face[1]];
+  Point p3 = vertices[face[2]];
+
+  float area = computeFaceArea(p1.toVec3(), p2.toVec3(), p3.toVec3());
 
   return face.normal * area;
 }
@@ -83,7 +90,64 @@ void Mesh::computeWeightedNormals() {
   }
 }
 
-SparseMatrix<double> Mesh::computeLMatrix(glm::uint n) {
+float Mesh::computeCotSum(glm::uint v1, glm::uint v2) {
+  unsigned cntSharedFaces = 0;
+  std::vector<unsigned> remaining(2); // remaining vertex index of face 0 and 1
+  for (int i = 0; i < vertices[v1].adjacentFaces.size(); ++i) {
+    for (int j = 0; j < vertices[v2].adjacentFaces.size(); ++j) {
+      unsigned f1 = vertices[v1].adjacentFaces[i];
+      unsigned f2 = vertices[v2].adjacentFaces[j];
+      if (f1 == f2) { // shared face
+        assert(cntSharedFaces <= 1);
+
+        // determine remaining face vertex
+        if (faces[f1][0] != v1 && faces[f1][0] != v2) {
+          assert((faces[f1][1] == v1 || faces[f1][1] == v2) &&
+                 (faces[f1][2] == v1 || faces[f1][2] == v2));
+          remaining[cntSharedFaces] = faces[f1][0];
+        } else if (faces[f1][1] != v1 && faces[f1][1] != v2) {
+          assert((faces[f1][0] == v1 || faces[f1][0] == v2) &&
+                 (faces[f1][2] == v1 || faces[f1][2] == v2));
+          remaining[cntSharedFaces] = faces[f1][1];
+        } else {
+          assert(faces[f1][2] != v1 && faces[f1][2] != v2);
+          remaining[cntSharedFaces] = faces[f1][2];
+        }
+
+        cntSharedFaces++; // used to make sure we only have two shared faces
+      }
+    }
+  }
+  assert(cntSharedFaces == 0 || cntSharedFaces == 2);
+
+  float cosAlpha = glm::dot(glm::normalize(vertices[remaining[0]].toVec3() - vertices[v1].toVec3()),
+                            glm::normalize(vertices[remaining[0]].toVec3() - vertices[v2].toVec3()));
+  float cosBeta = glm::dot(glm::normalize(vertices[remaining[1]].toVec3() - vertices[v1].toVec3()),
+                           glm::normalize(vertices[remaining[1]].toVec3() - vertices[v2].toVec3()));
+
+  float alpha = acos(cosAlpha);
+  float beta = acos(cosBeta);
+
+  return atan(alpha) + atan(beta);
+}
+
+SparseMatrix<double> Mesh::computeCotanLMatrix(glm::uint n) {
+  SparseMatrix<double> M(n, n);
+  SparseMatrix<double> D(n, n);
+  for (unsigned int i = 0; i < n; i++) {
+    float totalCotSum = 0.0;
+    for (unsigned int j = 0; j < vertices[i].adjacentVertices.size(); j++) {
+      float cotSum = computeCotSum(i, vertices[i].adjacentVertices[j]);
+      totalCotSum += cotSum;
+      M.insert(i, vertices[i].adjacentVertices[j]) = cotSum;
+    }
+    M.insert(i, i) = -totalCotSum;
+    D.insert(i, i) = 1.0 / (2.0 * getSurroundingArea(vertices[i]));
+  }
+  return D * M;
+}
+
+SparseMatrix<double> Mesh::computeUniformLMatrix(glm::uint n) {
   SparseMatrix<double> M(n, n);
   SparseMatrix<double> D(n, n);
   for (unsigned int i = 0; i < n; i++) {
@@ -99,7 +163,7 @@ SparseMatrix<double> Mesh::computeLMatrix(glm::uint n) {
 
 void Mesh::computeUniformLaplacian(unsigned int numEigenVectors) {
   const unsigned int n = vertices.size();
-  auto L = computeLMatrix(n);
+  auto L = computeUniformLMatrix(n);
   // std::cout << L << std::endl;
 
   SparseSymMatProd<double> op(L);
@@ -168,7 +232,7 @@ void Mesh::computeExplicitCotan(double stepSize, glm::uint basisFunctions) {
   }
 
   // Setup L matrix
-  auto laplacian = computeLMatrix(n);
+  auto laplacian = computeUniformLMatrix(n);
   // Setup Identity matrix
   auto identity = MatrixXd::Identity(n, n);
 
@@ -204,7 +268,7 @@ void Mesh::computeImplicitCotan(double stepSize, glm::uint basisFunctions) {
   }
 
   // Setup of our matrices
-  auto laplacian = computeLMatrix(n);
+  auto laplacian = computeUniformLMatrix(n);
   auto identity = MatrixXd::Identity(n, n);
 
   // Calculate LHS of linear system
