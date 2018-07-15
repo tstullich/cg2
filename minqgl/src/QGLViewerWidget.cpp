@@ -335,10 +335,9 @@ glm::vec3 QGLViewerWidget::triangleNormal(const Point &v1, const Point &v2,
   return glm::normalize(N);
 }
 
-glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal) {
+glm::vec3 QGLViewerWidget::gourad(const Point &v1, const glm::vec3 &normal, const glm::vec3 &diffuseColor) {
   glm::vec3 vertPos(v1.x, v1.y, v1.z);
   glm::vec3 ambientColor(0.2f, 0.2f, 0.2f);
-  glm::vec3 diffuseColor(0.5f, 0.5f, 0.5f);
   glm::vec3 specularColor(1.0f, 1.0f, 1.0f);
 
   // camera positions
@@ -430,15 +429,16 @@ void QGLViewerWidget::drawMesh() {
     // calc normal
     auto normal = triangleNormal(p0, p1, p2);
     // present first point
-    auto col0 = gourad(p0, normal);
+    glm::vec3 diffuseColor(0.5f, 0.5f, 0.5f);
+    auto col0 = gourad(p0, normal, diffuseColor);
     glColor3f(col0[0], col0[1], col0[2]);
     glVertex3f(p0.x, p0.y, p0.z);
     // present second point
-    auto col1 = gourad(p1, normal);
+    auto col1 = gourad(p1, normal, diffuseColor);
     glColor3f(col1[0], col1[1], col1[2]);
     glVertex3f(p1.x, p1.y, p1.z);
     // present third point
-    auto col2 = gourad(p2, normal);
+    auto col2 = gourad(p2, normal, diffuseColor);
     glColor3f(col2[0], col2[1], col2[2]);
     glVertex3f(p2.x, p2.y, p2.z);
     glEnd();
@@ -505,15 +505,16 @@ void QGLViewerWidget::drawUniformLaplacian() {
 
     auto normal = triangleNormal(p0, p1, p2);
 
-    auto col0 = gourad(p0, normal);
+    glm::vec3 diffuseColor(1.0f, 0.0f, 1.0f);
+    auto col0 = gourad(p0, normal, diffuseColor);
     glColor3f(col0[0], col0[1], col0[2]);
     glVertex3f(p0.x, p0.y, p0.z);
 
-    auto col1 = gourad(p1, normal);
+    auto col1 = gourad(p1, normal, diffuseColor);
     glColor3f(col1[0], col1[1], col1[2]);
     glVertex3f(p1.x, p1.y, p1.z);
 
-    auto col2 = gourad(p2, normal);
+    auto col2 = gourad(p2, normal, diffuseColor);
     glColor3f(col2[0], col2[1], col2[2]);
     glVertex3f(p2.x, p2.y, p2.z);
   }
@@ -534,8 +535,6 @@ void QGLViewerWidget::drawUniformLaplacian() {
 // This function assumes that only one of Implicit or Explicit integration is running at a time
 // Will see breakage here if we performed implicit and explicit integration at the same time
 void QGLViewerWidget::drawCotanLaplace(const std::vector<Point> &vertices) {
-  // Check which mesh to use
-  //std::vector<Point> vertices = !mesh->verticesExplicitLaplace.empty() ? mesh->verticesExplicitLaplace : mesh->verticesImplicitLaplace;
   std::vector<Face> faces = mesh->getFaces();
 
   glBegin(GL_TRIANGLES);
@@ -547,15 +546,16 @@ void QGLViewerWidget::drawCotanLaplace(const std::vector<Point> &vertices) {
 
     auto normal = triangleNormal(p0, p1, p2);
 
-    auto col0 = gourad(p0, normal);
+    glm::vec3 diffuseColor(1.0f, 1.0f, 0.0f);
+    auto col0 = gourad(p0, normal, diffuseColor);
     glColor3f(col0[0], col0[1], col0[2]);
     glVertex3f(p0.x, p0.y, p0.z);
 
-    auto col1 = gourad(p1, normal);
+    auto col1 = gourad(p1, normal, diffuseColor);
     glColor3f(col1[0], col1[1], col1[2]);
     glVertex3f(p1.x, p1.y, p1.z);
 
-    auto col2 = gourad(p2, normal);
+    auto col2 = gourad(p2, normal, diffuseColor);
     glColor3f(col2[0], col2[1], col2[2]);
     glVertex3f(p2.x, p2.y, p2.z);
   }

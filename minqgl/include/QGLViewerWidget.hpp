@@ -176,7 +176,7 @@ private:
 
   glm::vec3 triangleNormal(const Point &v1, const Point &v2, const Point &v3);
 
-  glm::vec3 gourad(const Point &v1, const glm::vec3 &normal);
+  glm::vec3 gourad(const Point &v1, const glm::vec3 &normal, const glm::vec3 &diffuseColor);
 
   glm::mat4 computeModelViewInv();
 
