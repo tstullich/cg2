@@ -120,6 +120,7 @@ float Mesh::computeCotSum(glm::uint v1, glm::uint v2) {
   }
   assert(cntSharedFaces == 0 || cntSharedFaces == 2);
 
+  // in "remaining" are the vertices for angle alpha and beta now
   float cosAlpha = glm::dot(glm::normalize(vertices[remaining[0]].toVec3() - vertices[v1].toVec3()),
                             glm::normalize(vertices[remaining[0]].toVec3() - vertices[v2].toVec3()));
   float cosBeta = glm::dot(glm::normalize(vertices[remaining[1]].toVec3() - vertices[v1].toVec3()),
@@ -128,7 +129,7 @@ float Mesh::computeCotSum(glm::uint v1, glm::uint v2) {
   float alpha = acos(cosAlpha);
   float beta = acos(cosBeta);
 
-  return atan(alpha) + atan(beta);
+  return (1.0/tan(alpha)) + (1.0/tan(beta));
 }
 
 SparseMatrix<double> Mesh::computeCotanLMatrix(glm::uint n) {
