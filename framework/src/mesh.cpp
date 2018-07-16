@@ -92,12 +92,12 @@ void Mesh::computeWeightedNormals() {
 
 float Mesh::computeCotSum(glm::uint v1, glm::uint v2) {
   unsigned cntSharedFaces = 0;
-  std::vector<unsigned> remaining(2); // remaining vertex index of face 0 and 1
+  std::vector<unsigned> remaining(2);  // remaining vertex index of face 0 and 1
   for (int i = 0; i < vertices[v1].adjacentFaces.size(); ++i) {
     for (int j = 0; j < vertices[v2].adjacentFaces.size(); ++j) {
       unsigned f1 = vertices[v1].adjacentFaces[i];
       unsigned f2 = vertices[v2].adjacentFaces[j];
-      if (f1 == f2) { // shared face
+      if (f1 == f2) {  // shared face
         assert(cntSharedFaces <= 1);
 
         // determine remaining face vertex
@@ -114,22 +114,24 @@ float Mesh::computeCotSum(glm::uint v1, glm::uint v2) {
           remaining[cntSharedFaces] = faces[f1][2];
         }
 
-        cntSharedFaces++; // used to make sure we only have two shared faces
+        cntSharedFaces++;  // used to make sure we only have two shared faces
       }
     }
   }
   assert(cntSharedFaces == 0 || cntSharedFaces == 2);
 
   // in "remaining" are the vertices for angle alpha and beta now
-  float cosAlpha = glm::dot(glm::normalize(vertices[remaining[0]].toVec3() - vertices[v1].toVec3()),
-                            glm::normalize(vertices[remaining[0]].toVec3() - vertices[v2].toVec3()));
-  float cosBeta = glm::dot(glm::normalize(vertices[remaining[1]].toVec3() - vertices[v1].toVec3()),
-                           glm::normalize(vertices[remaining[1]].toVec3() - vertices[v2].toVec3()));
+  float cosAlpha = glm::dot(
+      glm::normalize(vertices[remaining[0]].toVec3() - vertices[v1].toVec3()),
+      glm::normalize(vertices[remaining[0]].toVec3() - vertices[v2].toVec3()));
+  float cosBeta = glm::dot(
+      glm::normalize(vertices[remaining[1]].toVec3() - vertices[v1].toVec3()),
+      glm::normalize(vertices[remaining[1]].toVec3() - vertices[v2].toVec3()));
 
   float alpha = acos(cosAlpha);
   float beta = acos(cosBeta);
 
-  return (1.0/tan(alpha)) + (1.0/tan(beta));
+  return (1.0 / tan(alpha)) + (1.0 / tan(beta));
 }
 
 SparseMatrix<double> Mesh::computeCotanLMatrix(glm::uint n) {
@@ -213,22 +215,22 @@ void Mesh::computeUniformLaplacian(unsigned int numEigenVectors) {
 
 void Mesh::computeExplicitCotan(double stepSize, glm::uint basisFunctions) {
   const glm::uint n = vertices.size();
-  MatrixXd points(n, 3);
+  SparseMatrix<double> points(n, 3);
   if (verticesExplicitLaplace.empty()) {
     // Setup points matrix, but only if we haven't
     // run through a step of the integration already
     verticesExplicitLaplace = std::vector<Point>(n, Point(0.0, 0.0, 0.0));
     for (glm::uint i = 0; i < n; i++) {
-      points(i, 0) = vertices[i].x;
-      points(i, 1) = vertices[i].y;
-      points(i, 2) = vertices[i].z;
+      points.insert(i, 0) = vertices[i].x;
+      points.insert(i, 1) = vertices[i].y;
+      points.insert(i, 2) = vertices[i].z;
     }
   } else {
     // Build matrix by using previous integration result
     for (glm::uint i = 0; i < n; i++) {
-      points(i, 0) = verticesExplicitLaplace[i].x;
-      points(i, 1) = verticesExplicitLaplace[i].y;
-      points(i, 2) = verticesExplicitLaplace[i].z;
+      points.insert(i, 0) = verticesExplicitLaplace[i].x;
+      points.insert(i, 1) = verticesExplicitLaplace[i].y;
+      points.insert(i, 2) = verticesExplicitLaplace[i].z;
     }
   }
 
@@ -238,7 +240,7 @@ void Mesh::computeExplicitCotan(double stepSize, glm::uint basisFunctions) {
   auto identity = MatrixXd::Identity(n, n);
 
   // Perform integratrion
-  auto explicitResult = (identity + stepSize * laplacian) * points;
+  MatrixXd explicitResult = (identity + stepSize * laplacian) * points;
 
   // Create result mesh
   for (glm::uint i = 0; i < n; i++) {
@@ -288,7 +290,6 @@ void Mesh::computeImplicitCotan(double stepSize, glm::uint basisFunctions) {
     verticesImplicitLaplace[i].z = pointRow[2];
   }
 }
-
 
 void Mesh::resetCotanLaplace() {
   verticesExplicitLaplace.clear();
