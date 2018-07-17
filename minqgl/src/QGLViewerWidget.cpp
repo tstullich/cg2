@@ -1053,10 +1053,6 @@ void QGLViewerWidget::setDrawGraphLaplace(bool value) {
   updateGL();
 }
 
-void QGLViewerWidget::setStepSize(double value) {
-  uniformStepSize = value;
-}
-
 void QGLViewerWidget::graphLaplaceMove() {
   this->mesh->computeUniformLaplacian(basisFunctions);
   updateGL();

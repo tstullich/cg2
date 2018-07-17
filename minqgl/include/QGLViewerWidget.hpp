@@ -138,7 +138,6 @@ private slots:
   void setDrawWeightedNormals(bool value);
 
   void setDrawGraphLaplace(bool value);
-  void setStepSize(double value);
   void graphLaplaceMove();
   void graphLaplaceReset();
 
@@ -225,7 +224,6 @@ private:
   GLdouble zNearFactor = 0.01;
   GLdouble zFarFactor = 10000.0;
 
-  double uniformStepSize = 0.01;
   double explicitStepSize = 0.01;
   double implicitStepSize = 0.01;
   uint basisFunctions = 10;

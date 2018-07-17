@@ -39,12 +39,12 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
   auto graphLaplaceLayout = new QVBoxLayout;
   graphLaplaceLayout->addWidget(drawGraphLaplaceBox);
 
-  auto stepSizeLayout = new QHBoxLayout;
-  stepSizeLayout->addWidget(new QLabel("Step Size:"));
-  stepSizeLayout->addWidget(stepSizeBox);
-  auto stepSizeWrapper = new QWidget;
-  stepSizeWrapper->setLayout(stepSizeLayout);
-  graphLaplaceLayout->addWidget(stepSizeWrapper);
+  auto basisFunctionsLayout = new QHBoxLayout;
+  basisFunctionsLayout->addWidget(new QLabel("Basis Functions:"));
+  basisFunctionsLayout->addWidget(basisFunctionsBox);
+  auto basisFunctionsWrapper = new QWidget;
+  basisFunctionsWrapper->setLayout(basisFunctionsLayout);
+  graphLaplaceLayout->addWidget(basisFunctionsWrapper);
 
   graphLaplaceLayout->addWidget(graphLaplaceMoveButton);
   graphLaplaceLayout->addWidget(graphLaplaceResetButton);
@@ -73,14 +73,6 @@ SidebarWidget::SidebarWidget(QWidget *parent) : QDockWidget(parent) {
 
   cotanLaplaceLayout->addWidget(implicitStepButton);
 
-  auto basisFunctionsLayout = new QHBoxLayout;
-  basisFunctionsLayout->addWidget(new QLabel("Basis Functions:"));
-  basisFunctionsLayout->addWidget(basisFunctionsBox);
-  auto basisFunctionsWrapper = new QWidget;
-  basisFunctionsWrapper->setLayout(basisFunctionsLayout);
-  cotanLaplaceLayout->addWidget(basisFunctionsWrapper);
-
-  cotanLaplaceLayout->addWidget(basisFunctionsBox);
   cotanLaplaceLayout->addWidget(manifoldHarmonicsBox);
   cotanLaplaceLayout->addWidget(cotanLaplaceResetButton);
   cotanLaplaceBox->setLayout(cotanLaplaceLayout);
@@ -124,14 +116,13 @@ void SidebarWidget::initGraphLaplaceBox(QWidget *parent) {
   connect(drawGraphLaplaceBox, SIGNAL(toggled(bool)), parent,
           SLOT(setDrawGraphLaplace(bool)));
 
-  stepSizeBox = new QDoubleSpinBox(this);
-  stepSizeBox->setRange(0.0001, 5.0);
-  stepSizeBox->setValue(0.1);
-  stepSizeBox->setSingleStep(0.1);
-  connect(stepSizeBox, SIGNAL(valueChanged(double)), parent,
-          SLOT(setStepSize(double)));
+  basisFunctionsBox = new QSpinBox(this);
+  basisFunctionsBox->setRange(2, 100);
+  basisFunctionsBox->setValue(10);
+  connect(basisFunctionsBox, SIGNAL(valueChanged(int)), parent,
+          SLOT(setBasisFunctions(int)));
 
-  graphLaplaceMoveButton = new QPushButton("Move", this);
+  graphLaplaceMoveButton = new QPushButton("Calculate", this);
   connect(graphLaplaceMoveButton, SIGNAL(clicked()), parent,
           SLOT(graphLaplaceMove()));
 
@@ -166,12 +157,6 @@ void SidebarWidget::initCotanLaplaceBox(QWidget *parent) {
   implicitStepButton = new QPushButton("Implicit Step", this);
   connect(implicitStepButton, SIGNAL(clicked()), parent,
           SLOT(cotanLaplaceImplicitStep()));
-
-  basisFunctionsBox = new QSpinBox(this);
-  basisFunctionsBox->setRange(2, 100);
-  basisFunctionsBox->setValue(10);
-  connect(basisFunctionsBox, SIGNAL(valueChanged(int)), parent,
-          SLOT(setBasisFunctions(int)));
 
   manifoldHarmonicsBox = new QCheckBox("Manifold Harmonics", this);
   connect(manifoldHarmonicsBox, SIGNAL(toggled(bool)), parent,

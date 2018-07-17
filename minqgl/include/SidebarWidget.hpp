@@ -45,7 +45,7 @@ private:
   QCheckBox *drawWeightedNormalsBox;
 
   QCheckBox *drawGraphLaplaceBox;
-  QDoubleSpinBox *stepSizeBox;
+  QSpinBox *basisFunctionsBox;
   QPushButton *graphLaplaceMoveButton;
   QPushButton *graphLaplaceResetButton;
 
@@ -54,7 +54,6 @@ private:
   QPushButton *explicitStepButton;
   QDoubleSpinBox *implicitStepBox;
   QPushButton *implicitStepButton;
-  QSpinBox *basisFunctionsBox;
   QCheckBox *manifoldHarmonicsBox;
   QPushButton *cotanLaplaceResetButton;
 
