@@ -24,6 +24,7 @@ class Mesh {
     void computeUnweightedNormals();
     void computeWeightedNormals();
     void computeUniformLaplacian(glm::uint numEigenVectors);
+    void resetUniformLaplace();
     void computeExplicitCotan(double stepSize, glm::uint numEigenVectors);
     void computeImplicitCotan(double stepSize, glm::uint numEigenVectors);
     void resetCotanLaplace();

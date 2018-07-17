@@ -84,8 +84,6 @@ bool QGLViewerWidget::loadPointSet(const char *filename) {
 
   this->mesh->computeUnweightedNormals();
   this->mesh->computeWeightedNormals();
-  unsigned int numEigenVectors = 5;
-  this->mesh->computeUniformLaplacian(numEigenVectors);
 
   // set mesh dependent parameters
   this->defaultRadius = 1.5 * this->mesh->getBoundingRadius();
@@ -1056,15 +1054,17 @@ void QGLViewerWidget::setDrawGraphLaplace(bool value) {
 }
 
 void QGLViewerWidget::setStepSize(double value) {
-  std::cout << "Setting step size " << value << std::endl;
+  uniformStepSize = value;
 }
 
 void QGLViewerWidget::graphLaplaceMove() {
-  std::cout << "Calling graph laplace move" << std::endl;
+  this->mesh->computeUniformLaplacian(basisFunctions);
+  updateGL();
 }
 
 void QGLViewerWidget::graphLaplaceReset() {
-  std::cout << "Calling graph laplace reset" << std::endl;
+  mesh->resetUniformLaplace();
+  updateGL();
 }
 
 void QGLViewerWidget::setDrawCotanLaplace(bool value) {

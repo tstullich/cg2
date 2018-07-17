@@ -169,7 +169,6 @@ SparseMatrix<double> Mesh::computeUniformLMatrix(glm::uint n) {
 void Mesh::computeUniformLaplacian(unsigned int numEigenVectors) {
   const unsigned int n = vertices.size();
   auto L = computeUniformLMatrix(n);
-  // std::cout << L << std::endl;
 
   SparseSymMatProd<double> op(L);
   // choose smallest eigenvalues
@@ -183,9 +182,6 @@ void Mesh::computeUniformLaplacian(unsigned int numEigenVectors) {
     eigenValues = eigs.eigenvalues();
     eigenVectors = eigs.eigenvectors();
   }
-
-  /* std::cout << "Eigenvalues found:\n" << eigenValues << std::endl; */
-  /* std::cout << "Eigenvectors found:\n" << eigenVectors << std::endl; */
 
   // fill a matrix with original vertices
   MatrixXd originalVertices(n, 3);
@@ -213,6 +209,10 @@ void Mesh::computeUniformLaplacian(unsigned int numEigenVectors) {
     verticesUniformLaplacian.push_back(
         Point(xValues(i), yValues(i), zValues(i)));
   }
+}
+
+void Mesh::resetUniformLaplace() {
+  verticesUniformLaplacian.clear();
 }
 
 void Mesh::computeExplicitCotan(double stepSize, glm::uint basisFunctions) {

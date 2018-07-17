@@ -225,8 +225,9 @@ private:
   GLdouble zNearFactor = 0.01;
   GLdouble zFarFactor = 10000.0;
 
-  double explicitStepSize;
-  double implicitStepSize;
+  double uniformStepSize = 0.01;
+  double explicitStepSize = 0.01;
+  double implicitStepSize = 0.01;
   uint basisFunctions = 10;
 
   std::shared_ptr<Mesh> mesh;

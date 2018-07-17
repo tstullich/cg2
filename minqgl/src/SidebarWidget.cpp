@@ -168,7 +168,7 @@ void SidebarWidget::initCotanLaplaceBox(QWidget *parent) {
           SLOT(cotanLaplaceImplicitStep()));
 
   basisFunctionsBox = new QSpinBox(this);
-  basisFunctionsBox->setRange(2, 20);
+  basisFunctionsBox->setRange(2, 100);
   basisFunctionsBox->setValue(10);
   connect(basisFunctionsBox, SIGNAL(valueChanged(int)), parent,
           SLOT(setBasisFunctions(int)));
