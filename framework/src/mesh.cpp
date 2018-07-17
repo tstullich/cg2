@@ -131,7 +131,7 @@ float Mesh::computeCotSum(glm::uint v1, glm::uint v2) {
   float alpha = acos(cosAlpha);
   float beta = acos(cosBeta);
 
-  return (1.0 / tan(alpha)) + (1.0 / tan(beta));
+  return (1.0/tan(alpha)) + (1.0/tan(beta));
 }
 
 SparseMatrix<double> Mesh::computeCotanLMatrix(glm::uint n) {
@@ -147,7 +147,8 @@ SparseMatrix<double> Mesh::computeCotanLMatrix(glm::uint n) {
     M.insert(i, i) = -totalCotSum;
     D.insert(i, i) = 1.0 / (2.0 * getSurroundingArea(vertices[i]));
   }
-  return D * M;
+  // works better w/o D
+  return M;
 }
 
 SparseMatrix<double> Mesh::computeUniformLMatrix(glm::uint n) {
@@ -161,7 +162,8 @@ SparseMatrix<double> Mesh::computeUniformLMatrix(glm::uint n) {
     }
     D.insert(i, i) = 1.0 / (2.0 * getSurroundingArea(vertices[i]));
   }
-  return D * M;
+  // works better w/o D
+  return M;
 }
 
 void Mesh::computeUniformLaplacian(unsigned int numEigenVectors) {
@@ -182,8 +184,8 @@ void Mesh::computeUniformLaplacian(unsigned int numEigenVectors) {
     eigenVectors = eigs.eigenvectors();
   }
 
-  std::cout << "Eigenvalues found:\n" << eigenValues << std::endl;
-  // std::cout << "Eigenvectors found:\n" << eigenVectors.col(0) << std::endl;
+  /* std::cout << "Eigenvalues found:\n" << eigenValues << std::endl; */
+  /* std::cout << "Eigenvectors found:\n" << eigenVectors << std::endl; */
 
   // fill a matrix with original vertices
   MatrixXd originalVertices(n, 3);
@@ -235,7 +237,7 @@ void Mesh::computeExplicitCotan(double stepSize, glm::uint basisFunctions) {
   }
 
   // Setup L matrix
-  auto laplacian = computeUniformLMatrix(n);
+  auto laplacian = computeCotanLMatrix(n);
   // Setup Identity matrix
   auto identity = MatrixXd::Identity(n, n);
 
@@ -271,14 +273,14 @@ void Mesh::computeImplicitCotan(double stepSize, glm::uint basisFunctions) {
   }
 
   // Setup of our matrices
-  auto laplacian = computeUniformLMatrix(n);
+  auto laplacian = computeCotanLMatrix(n);
   auto identity = MatrixXd::Identity(n, n);
 
   // Calculate LHS of linear system
   auto lhs = identity - stepSize * laplacian;
 
   // Apply sparse Cholesky solver
-  Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> chol(lhs);
+  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> chol(lhs);
   // Use decomposition to solve with the point matrix
   MatrixXd choleskyResult = chol.solve(points);
 
