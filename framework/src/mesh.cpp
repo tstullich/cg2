@@ -21,14 +21,16 @@ Mesh::Mesh(std::vector<Point> _vertices, std::vector<Face> _faces)
       vertices[faces[i][j]].adjacentFaces.push_back(i);
 
       // add adjacent vertices
-      if (j == 0)
+      if (j == 0) {
         vertices[faces[i][j]].addVertex(faces[i][faces[i].numVertices() - 1]);
-      else
+      } else {
         vertices[faces[i][j]].addVertex(faces[i][j - 1]);
-      if (j == faces[i].numVertices() - 1)
+      }
+      if (j == faces[i].numVertices() - 1) {
         vertices[faces[i][j]].addVertex(faces[i][0]);
-      else
+      } else {
         vertices[faces[i][j]].addVertex(faces[i][j + 1]);
+      }
     }
 
     if (faces[i].numVertices() == 3) {
@@ -131,7 +133,7 @@ float Mesh::computeCotSum(glm::uint v1, glm::uint v2) {
   float alpha = acos(cosAlpha);
   float beta = acos(cosBeta);
 
-  return (1.0/tan(alpha)) + (1.0/tan(beta));
+  return (1.0 / tan(alpha)) + (1.0 / tan(beta));
 }
 
 SparseMatrix<double> Mesh::computeCotanLMatrix(glm::uint n) {
@@ -211,9 +213,7 @@ void Mesh::computeUniformLaplacian(unsigned int numEigenVectors) {
   }
 }
 
-void Mesh::resetUniformLaplace() {
-  verticesUniformLaplacian.clear();
-}
+void Mesh::resetUniformLaplace() { verticesUniformLaplacian.clear(); }
 
 void Mesh::computeExplicitCotan(double stepSize, glm::uint basisFunctions) {
   const glm::uint n = vertices.size();
@@ -280,7 +280,7 @@ void Mesh::computeImplicitCotan(double stepSize, glm::uint basisFunctions) {
   auto lhs = identity - stepSize * laplacian;
 
   // Apply sparse Cholesky solver
-  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> chol(lhs);
+  Eigen::SimplicialCholesky<Eigen::SparseMatrix<double>> chol(lhs);
   // Use decomposition to solve with the point matrix
   MatrixXd choleskyResult = chol.solve(points);
 
@@ -302,8 +302,7 @@ float Mesh::getSurroundingArea(Point &p) {
   float area = 0.0;
   for (unsigned int i = 0; i < p.adjacentFaces.size(); i++)
     area += faces[p.adjacentFaces[i]].area;
-  // TODO mean?
-  return area;  // /float(p.adjacentFaces.size());
+  return area / 3;
 }
 
 glm::vec3 Mesh::getCenter() { return center; }
